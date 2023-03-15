@@ -1,6 +1,8 @@
 package clusterplugin
 
-import "github.com/twpayne/go-vfs"
+import (
+	"github.com/twpayne/go-vfs/v4"
+)
 
 var filesystem vfs.FS
 
