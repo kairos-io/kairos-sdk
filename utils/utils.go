@@ -55,9 +55,14 @@ func OSRelease(key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	v, exists := release[key]
+	kairosKey := "KAIROS_" + key
+	v, exists := release[kairosKey]
 	if !exists {
-		return "", fmt.Errorf("key not found")
+		// We try with the old naming without the prefix in case the key wasn't found
+		v, exists = release[key]
+		if !exists {
+			return "", fmt.Errorf("key not found")
+		}
 	}
 	return v, nil
 }
