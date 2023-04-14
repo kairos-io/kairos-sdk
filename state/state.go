@@ -154,10 +154,8 @@ func detectSystem(r *Runtime) {
 
 func detectKairos(r *Runtime) {
 	k := &Kairos{}
-	flavor, err := utils.OSRelease("FLAVOR")
-	if err == nil {
-		k.Flavor = flavor
-	}
+	k.Flavor = utils.Flavor()
+
 	v, err := utils.OSRelease("VERSION")
 	if err == nil {
 		k.Version = v

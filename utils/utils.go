@@ -101,6 +101,15 @@ func WriteEnv(envFile string, config map[string]string) error {
 }
 
 func Flavor() string {
+	v, err := OSRelease("FLAVOR")
+	if err != nil {
+		return ""
+	}
+
+	return v
+}
+
+func Name() string {
 	v, err := OSRelease("NAME")
 	if err != nil {
 		return ""
@@ -110,8 +119,8 @@ func Flavor() string {
 }
 
 func IsOpenRCBased() bool {
-	f := Flavor()
-	return strings.Contains(f, "alpine")
+	n := Name()
+	return strings.Contains(n, "alpine")
 }
 
 func ShellSTDIN(s, c string) (string, error) {
