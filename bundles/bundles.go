@@ -153,6 +153,12 @@ func NewBundleInstaller(bc BundleConfig) (BundleInstaller, error) {
 type OCIImageExtractor struct{}
 
 func (e OCIImageExtractor) Install(config *BundleConfig) error {
+	if !utils.Exists(config.RootPath) {
+		err := os.MkdirAll(config.RootPath, os.ModeDir|os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("could not create destination path %s: %s", config.RootPath, err)
+		}
+	}
 	return utils.ExtractOCIImage(config.Target, config.RootPath, utils.GetCurrentPlatform(), config.LocalFile)
 }
 
