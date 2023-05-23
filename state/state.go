@@ -68,7 +68,6 @@ func detectPartition(b *block.Partition) PartitionState {
 	readOnly := b.IsReadOnly
 	if b.MountPoint == "" && b.FilesystemLabel != "" {
 		out, err := utils.SH(fmt.Sprintf("findmnt /dev/disk/by-label/%s -f -J -o TARGET,FS-OPTIONS", b.FilesystemLabel))
-		fmt.Println(out)
 		mnt := &FndMnt{}
 		if err == nil {
 			err = json.Unmarshal([]byte(out), mnt)
