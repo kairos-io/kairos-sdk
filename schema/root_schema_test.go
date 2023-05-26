@@ -79,7 +79,7 @@ users:
 		var err error
 
 		type TestSchema struct {
-			Key interface{} `json:"key,omitemtpy" required:"true"`
+			Key interface{} `json:"key,omitempty" required:"true"`
 		}
 
 		JustBeforeEach(func() {

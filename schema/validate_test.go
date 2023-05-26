@@ -1,7 +1,6 @@
 package schema_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -48,7 +47,7 @@ users:
 			})
 
 			It("is successful reading it from file", func() {
-				f, err := ioutil.TempDir("", "tests")
+				f, err := os.MkdirTemp("", "tests")
 				Expect(err).ToNot(HaveOccurred())
 				defer os.RemoveAll(f)
 
@@ -71,7 +70,7 @@ users:
 			})
 
 			It("is fails", func() {
-				f, err := ioutil.TempDir("", "tests")
+				f, err := os.MkdirTemp("", "tests")
 				Expect(err).ToNot(HaveOccurred())
 				defer os.RemoveAll(f)
 
@@ -92,7 +91,7 @@ users:
 			})
 
 			It("is fails", func() {
-				f, err := ioutil.TempDir("", "tests")
+				f, err := os.MkdirTemp("", "tests")
 				Expect(err).ToNot(HaveOccurred())
 				defer os.RemoveAll(f)
 
