@@ -1,73 +1,12 @@
 package schema_test
 
 import (
-	"fmt"
-	"reflect"
 	"strings"
 
 	. "github.com/kairos-io/kairos-sdk/schema"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
-
-func getTagName(s string) string {
-	if len(s) < 1 {
-		return ""
-	}
-
-	if s == "-" {
-		return ""
-	}
-
-	f := func(c rune) bool {
-		return c == '"' || c == ','
-	}
-	return s[:strings.IndexFunc(s, f)]
-}
-
-func structContainsField(f, t string, str interface{}) bool {
-	values := reflect.ValueOf(str)
-	types := values.Type()
-
-	for j := 0; j < values.NumField(); j++ {
-		tagName := getTagName(types.Field(j).Tag.Get("json"))
-		if types.Field(j).Name == f || tagName == t {
-			return true
-		} else {
-			if types.Field(j).Type.Kind() == reflect.Struct {
-				if types.Field(j).Type.Name() != "" {
-					model := reflect.New(types.Field(j).Type)
-					if instance, ok := model.Interface().(OneOfModel); ok {
-						for _, childSchema := range instance.JSONSchemaOneOf() {
-							if structContainsField(f, t, childSchema) {
-								return true
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return false
-}
-
-func structFieldsContainedInOtherStruct(left, right interface{}) {
-	leftValues := reflect.ValueOf(left)
-	leftTypes := leftValues.Type()
-
-	for i := 0; i < leftValues.NumField(); i++ {
-		leftTagName := getTagName(leftTypes.Field(i).Tag.Get("yaml"))
-		leftFieldName := leftTypes.Field(i).Name
-		if leftTypes.Field(i).IsExported() {
-			It(fmt.Sprintf("Checks that the new schema contians the field %s", leftFieldName), func() {
-				Expect(
-					structContainsField(leftFieldName, leftTagName, right),
-				).To(BeTrue())
-			})
-		}
-	}
-}
 
 var _ = Describe("Schema", func() {
 	Context("NewConfigFromYAML", func() {
