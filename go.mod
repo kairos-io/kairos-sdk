@@ -11,12 +11,15 @@ require (
 	github.com/itchyny/gojq v0.12.12
 	github.com/jaypipes/ghw v0.10.0
 	github.com/joho/godotenv v1.5.1
+	github.com/kairos-io/kairos/v2 v2.0.3
 	github.com/mudler/go-pluggable v0.0.0-20230126220627-7710299a0ae5
 	github.com/mudler/yip v1.1.0
 	github.com/onsi/ginkgo/v2 v2.9.5
-	github.com/onsi/gomega v1.27.6
+	github.com/onsi/gomega v1.27.7
 	github.com/pterm/pterm v0.12.61
 	github.com/qeesung/image2ascii v1.0.1
+	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
+	github.com/swaggest/jsonschema-go v0.3.51
 	github.com/twpayne/go-vfs/v4 v4.2.0
 	github.com/zcalusic/sysinfo v0.9.5
 	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
@@ -52,7 +55,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
-	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
+	github.com/google/pprof v0.0.0-20230228050547-1710fef4ab10 // indirect
 	github.com/gookit/color v1.5.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/itchyny/timefmt-go v0.1.5 // indirect
@@ -64,12 +67,12 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/moby/sys/sequential v0.5.0 // indirect
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
-	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
+	github.com/swaggest/refl v1.1.0 // indirect
 	github.com/twpayne/go-vfs v1.7.2 // indirect
 	github.com/vbatts/tar-split v0.11.3 // indirect
 	github.com/wayneashleyberry/terminal-dimensions v1.1.0 // indirect
