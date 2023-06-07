@@ -61,7 +61,19 @@ type FndMnt struct {
 	} `json:"filesystems,omitempty"`
 }
 
-func detectPartition(b *block.Partition) PartitionState {
+// Lsblk is the struct to marshal the output of lsblk
+type Lsblk struct {
+	BlockDevices []struct {
+		Path       string `json:"path,omitempty"`
+		Mountpoint string `json:"mountpoint,omitempty"`
+		FsType     string `json:"fstype,omitempty"`
+		Size       string `json:"size,omitempty"`
+		Label      string `json:"label,omitempty"`
+		RO         bool   `json:"ro,omitempty"`
+	} `json:"blockdevices,omitempty"`
+}
+
+func detectPartitionByFindmnt(b *block.Partition) PartitionState {
 	// If mountpoint seems empty, try to get the mountpoint of the partition label also the RO status
 	// This is a current shortcoming of ghw which only identifies mountpoints via device, not by label/uuid/anything else
 	mountpoint := b.MountPoint
@@ -131,17 +143,48 @@ func detectRuntimeState(r *Runtime) error {
 		for _, part := range d.Partitions {
 			switch part.FilesystemLabel {
 			case "COS_PERSISTENT":
-				r.Persistent = detectPartition(part)
+				r.Persistent = detectPartitionByFindmnt(part)
 			case "COS_RECOVERY":
-				r.Recovery = detectPartition(part)
+				r.Recovery = detectPartitionByFindmnt(part)
 			case "COS_OEM":
-				r.OEM = detectPartition(part)
+				r.OEM = detectPartitionByFindmnt(part)
 			case "COS_STATE":
-				r.State = detectPartition(part)
+				r.State = detectPartitionByFindmnt(part)
 			}
 		}
 	}
+	if !r.OEM.Found {
+		r.OEM = detectPartitionByLsblk("COS_OEM")
+	}
+	if !r.Recovery.Found {
+		r.Recovery = detectPartitionByLsblk("COS_RECOVERY")
+	}
 	return nil
+}
+
+// detectPartitionByLsblk will try to detect info about a partition by using lsblk
+// Useful for LVM partitions which ghw is unable to find
+func detectPartitionByLsblk(label string) PartitionState {
+	out, err := utils.SH(fmt.Sprintf("lsblk /dev/disk/by-label/%s -o PATH,FSTYPE,MOUNTPOINT,SIZE,RO,LABEL -J", label))
+	mnt := &Lsblk{}
+	part := PartitionState{}
+	if err == nil {
+		err = json.Unmarshal([]byte(out), mnt)
+		// This should not happen, if there were no targets, the command would have returned an error, but you never know...
+		if err == nil && len(mnt.BlockDevices) == 1 {
+			blk := mnt.BlockDevices[0]
+			part.Found = true
+			part.Name = blk.Path
+			part.Mounted = blk.Mountpoint != ""
+			part.MountPoint = blk.Mountpoint
+			part.Type = blk.FsType
+			part.FilesystemLabel = blk.Label
+			// this seems to report always false. We can try to use findmnt here to know if its ro/rw
+			part.IsReadOnly = blk.RO
+		}
+	}
+
+	return part
 }
 
 func detectSystem(r *Runtime) {
