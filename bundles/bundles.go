@@ -159,7 +159,7 @@ func (e OCIImageExtractor) Install(config *BundleConfig) error {
 			return fmt.Errorf("could not create destination path %s: %s", config.RootPath, err)
 		}
 	}
-	return utils.ExtractOCIImage(config.Target, config.RootPath, utils.GetCurrentPlatform(), config.LocalFile)
+	return utils.ExtractOCIImage(config.Target, config.RootPath, utils.GetCurrentPlatform())
 }
 
 // OCIImageRunner will extract an OCI image and then run its run.sh
@@ -172,7 +172,7 @@ func (e OCIImageRunner) Install(config *BundleConfig) error {
 	}
 	defer os.RemoveAll(tempDir)
 
-	err = utils.ExtractOCIImage(config.Target, tempDir, utils.GetCurrentPlatform(), config.LocalFile)
+	err = utils.ExtractOCIImage(config.Target, tempDir, utils.GetCurrentPlatform())
 	if err != nil {
 		return err
 	}
