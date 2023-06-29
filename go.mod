@@ -21,7 +21,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
 	github.com/swaggest/jsonschema-go v0.3.51
 	github.com/twpayne/go-vfs/v4 v4.2.0
-	github.com/zcalusic/sysinfo v0.9.5
+	github.com/zcalusic/sysinfo v1.0.1
 	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
