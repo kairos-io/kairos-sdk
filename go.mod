@@ -9,7 +9,7 @@ require (
 	github.com/google/go-containerregistry v0.15.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/itchyny/gojq v0.12.12
+	github.com/itchyny/gojq v0.12.13
 	github.com/jaypipes/ghw v0.10.0
 	github.com/joho/godotenv v1.5.1
 	github.com/mudler/go-pluggable v0.0.0-20230126220627-7710299a0ae5
@@ -63,7 +63,7 @@ require (
 	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lithammer/fuzzysearch v1.1.8 // indirect
-	github.com/mattn/go-isatty v0.0.17 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/moby/sys/sequential v0.5.0 // indirect
