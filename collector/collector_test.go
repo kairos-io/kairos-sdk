@@ -257,6 +257,50 @@ info:
 			})
 		})
 
+		Context("map of slices of maps 2", func() {
+			a := []interface{}{
+				map[string]interface{}{
+					"initramfs": []interface{}{
+						map[string]interface{}{
+							"name": "example 1",
+							"sysctl": map[string]interface{}{
+								"foo": "bar",
+							},
+						},
+					},
+				},
+			}
+			b := []interface{}{
+				map[string]interface{}{
+					"initramfs": []interface{}{
+						map[string]interface{}{
+							"name": "example 2",
+							"sysctl": map[string]interface{}{
+								"one": "two",
+							},
+						},
+					},
+				},
+			}
+
+			It("merges too", func() {
+				c, err := DeepMerge(a, b)
+				Expect(err).ToNot(HaveOccurred())
+				users := c.([]interface{})[0].(map[string]interface{})["users"]
+				Expect(users).To(HaveLen(1))
+				Expect(users).To(Equal([]interface{}{
+					map[string]interface{}{
+						"kairos": map[string]interface{}{
+							"passwd": "kairos",
+						},
+						"foo": map[string]interface{}{
+							"passwd": "bar",
+						},
+					},
+				}))
+			})
+		})
+
 		Context("empty map", func() {
 			a := map[string]interface{}{}
 			b := map[string]interface{}{
@@ -300,6 +344,75 @@ info:
 	})
 
 	Describe("Scan", func() {
+		Context("debug", func() {
+			var cmdLinePath, tmpDir1 string
+			var err error
+
+			BeforeEach(func() {
+				tmpDir1, err = os.MkdirTemp("", "config1")
+				Expect(err).ToNot(HaveOccurred())
+				err := os.WriteFile(path.Join(tmpDir1, "local_config_1.yaml"), []byte(`#cloud-config
+stages:
+  initramfs:
+  - users:
+      kairos:
+        passwd: kairos
+  - name: set_inotify_max_values
+    if: '[ ! -f /oem/80_stylus.yaml ]'
+    sysctl:
+      fs.inotify.max_user_instances: "8192"
+`), os.ModePerm)
+				Expect(err).ToNot(HaveOccurred())
+				err = os.WriteFile(path.Join(tmpDir1, "local_config_2.yaml"), []byte(`#cloud-config
+stages:
+  initramfs:
+  - commands:
+    - ln -s /etc/kubernetes/admin.conf /run/kubeconfig
+    sysctl:
+      kernel.panic: "10"
+      kernel.panic_on_oops: "1"
+      vm.overcommit_memory: "1"
+`), os.ModePerm)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			AfterEach(func() {
+				err = os.RemoveAll(tmpDir1)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("should not assume the if", func() {
+				o := &Options{}
+				err := o.Apply(
+					MergeBootLine,
+					WithBootCMDLineFile(cmdLinePath),
+					Directories(tmpDir1),
+				)
+				Expect(err).ToNot(HaveOccurred())
+
+				c, err := Scan(o, FilterKeysTestMerge)
+				Expect(err).ToNot(HaveOccurred())
+
+				fmt.Println(c.String())
+				Expect(c.String()).To(Equal(`#cloud-config
+
+stages:
+    initramfs:
+        - users:
+            kairos:
+                groups:
+                    - admin
+                    - sudo
+                passwd: kairos
+        - if: '[ ! -f /oem/80_stylus.yaml ]'
+          name: set_inotify_max_values
+          sysctl:
+            fs.inotify.max_user_instances: "8192"
+            fs.inotify.max_user_watches: "524288"
+`))
+			})
+		})
+
 		Context("duplicated configs", func() {
 			var cmdLinePath, tmpDir1 string
 			var err error
@@ -393,6 +506,7 @@ stages:
 `))
 			})
 		})
+
 		Context("Deep merge maps within arrays", func() {
 			var cmdLinePath, tmpDir1 string
 			var err error

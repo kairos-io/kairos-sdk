@@ -113,34 +113,38 @@ func deepMergeSlices(sliceA, sliceB []interface{}) ([]interface{}, error) {
 	// Do we need to do the same for other types?
 	firstItem := sliceA[0]
 	if reflect.ValueOf(firstItem).Kind() == reflect.Map {
-		temp := make(map[string]interface{})
+		fmt.Println("################################## ", firstItem)
+		// temp := make(map[string]interface{})
+		union := append(sliceA, sliceB...)
 
-		// first we put in temp all the keys present in a, and assign them their existing values
-		for _, item := range sliceA {
-			for k, v := range item.(map[string]interface{}) {
-				temp[k] = v
-			}
-		}
+		return union, nil
 
-		// then we go through b to merge each of its keys
-		for _, item := range sliceB {
-			for k, v := range item.(map[string]interface{}) {
-				current, ok := temp[k]
-				if ok {
-					// if the key exists, we deep merge it
-					dm, err := DeepMerge(current, v)
-					if err != nil {
-						return []interface{}{}, fmt.Errorf("cannot merge %s with %s", current, v)
-					}
-					temp[k] = dm
-				} else {
-					// otherwise we just set it
-					temp[k] = v
-				}
-			}
-		}
+		// // first we put in temp all the keys present in a, and assign them their existing values
+		// for _, item := range sliceA {
+		// 	for k, v := range item.(map[string]interface{}) {
+		// 		temp[k] = v
+		// 	}
+		// }
 
-		return []interface{}{temp}, nil
+		// // then we go through b to merge each of its keys
+		// for _, item := range sliceB {
+		// 	for k, v := range item.(map[string]interface{}) {
+		// 		current, ok := temp[k]
+		// 		if ok {
+		// 			// if the key exists, we deep merge it
+		// 			dm, err := DeepMerge(current, v)
+		// 			if err != nil {
+		// 				return []interface{}{}, fmt.Errorf("cannot merge %s with %s", current, v)
+		// 			}
+		// 			temp[k] = dm
+		// 		} else {
+		// 			// otherwise we just set it
+		// 			temp[k] = v
+		// 		}
+		// 	}
+		// }
+
+		// return []interface{}{temp}, nil
 	}
 
 	// This implementation is needed because Go 1.19 does not implement compare for {}interface. Once
