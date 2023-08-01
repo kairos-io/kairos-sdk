@@ -110,24 +110,24 @@ func (c *Config) MergeConfig(newConfig *Config) error {
 
 func deepMergeSlices(sliceA, sliceB []interface{}) ([]interface{}, error) {
 	// We use the first item in the slice to determine if there are maps present.
-	// Do we need to do the same for other types?
 	firstItem := sliceA[0]
+	// If the first item is a map, we concatenate both slices
 	if reflect.ValueOf(firstItem).Kind() == reflect.Map {
-		// temp := make(map[string]interface{})
 		union := append(sliceA, sliceB...)
 
 		return union, nil
 	}
 
-	// This implementation is needed because Go 1.19 does not implement compare for {}interface. Once
-	// FIPS can be upgraded to 1.20, we should be able to use this other code:
-	// // for simple slices
+	// For any other type, we check if the every item in sliceB is already present in sliceA and if not, we add it.
+	// Implementation for 1.20:
 	// for _, v := range sliceB {
 	// 	i := slices.Index(sliceA, v)
 	// 	if i < 0 {
 	// 		sliceA = append(sliceA, v)
 	// 	}
 	// }
+	// This implementation is needed because Go 1.19 does not implement compare for {}interface. Once
+	// FIPS can be upgraded to 1.20, we should be able to use the code above instead.
 	for _, vB := range sliceB {
 		found := false
 		for _, vA := range sliceA {

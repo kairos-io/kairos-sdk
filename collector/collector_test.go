@@ -309,7 +309,7 @@ info:
 	})
 
 	Describe("Scan", func() {
-		Context("issue 1341", func() {
+		Context("When users are created for the same stage on different files (issue kairos-io/kairos#1341)", func() {
 			var cmdLinePath, tmpDir1 string
 			var err error
 
@@ -351,7 +351,7 @@ stages:
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			It("should keep the two users", func() {
+			It("keeps the two users", func() {
 				o := &Options{}
 				err := o.Apply(
 					MergeBootLine,
@@ -389,7 +389,8 @@ stages:
 `))
 			})
 		})
-		Context("debug", func() {
+
+		Context("When a YIP if expression is contained", func() {
 			var cmdLinePath, tmpDir1 string
 			var err error
 
@@ -426,7 +427,7 @@ stages:
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			It("should not assume the if", func() {
+			It("it remains within its scope after merging", func() {
 				o := &Options{}
 				err := o.Apply(
 					MergeBootLine,
@@ -518,7 +519,7 @@ install:
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			It("should be the same as just one of them", func() {
+			It("remain duplicated, and are the responsibility of the user", func() {
 				o := &Options{}
 				err := o.Apply(
 					MergeBootLine,
