@@ -108,7 +108,7 @@ func (c *Config) MergeConfig(newConfig *Config) error {
 	return c.applyMap(cMap)
 }
 
-func deepMergeSlices(sliceA, sliceB []interface{}) ([]interface{}, error) {
+func mergeSlices(sliceA, sliceB []interface{}) ([]interface{}, error) {
 	// We use the first item in the slice to determine if there are maps present.
 	firstItem := sliceA[0]
 	// If the first item is a map, we concatenate both slices
@@ -180,7 +180,7 @@ func DeepMerge(a, b interface{}) (interface{}, error) {
 	}
 
 	if typeA.Kind() == reflect.Slice {
-		return deepMergeSlices(a.([]interface{}), b.([]interface{}))
+		return mergeSlices(a.([]interface{}), b.([]interface{}))
 	}
 
 	if typeA.Kind() == reflect.Map {
