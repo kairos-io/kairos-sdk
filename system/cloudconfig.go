@@ -35,14 +35,11 @@ func addCloudConfig(cloudConfig, filename string) error {
 
 func writeCloudConfig(oem state.PartitionState, cloudConfig, subpath, filename string) error {
 	mountPath := "/tmp/oem"
+	defer mounts.Umount(state.PartitionState{Mounted: true, MountPoint: mountPath}) //nolint:errcheck
 
 	if err := mounts.PrepareWrite(oem, mountPath); err != nil {
 		return err
 	}
-	defer func() {
-		oem.MountPoint = mountPath
-		mounts.Umount(oem) //nolint:errcheck
-	}()
 	_ = os.MkdirAll(filepath.Join(mountPath, subpath), 0650)
 	return os.WriteFile(filepath.Join(mountPath, subpath, fmt.Sprintf("%s.yaml", filename)), []byte(cloudConfig), 0650)
 }
