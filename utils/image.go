@@ -110,10 +110,10 @@ func GetOCIImageSize(targetImage, targetPlatform string) (int64, error) {
 	if err != nil {
 		return size, err
 	}
-
-	size, err = img.Size()
-	if err != nil {
-		return size, err
+	layers, _ := img.Layers()
+	for _, layer := range layers {
+		s, _ := layer.Size()
+		size += s
 	}
 
 	return size, nil
