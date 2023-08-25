@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/avast/retry-go v2.7.0+incompatible
-	github.com/containerd/containerd v1.7.1
+	github.com/containerd/containerd v1.7.5
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/google/go-containerregistry v0.15.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
@@ -39,7 +39,7 @@ require (
 	github.com/chuckpreslar/emission v0.0.0-20170206194824-a7ddd980baf9 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/containerd/console v1.0.3 // indirect
-	github.com/containerd/continuity v0.3.0 // indirect
+	github.com/containerd/continuity v0.4.2 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/docker/cli v23.0.5+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
