@@ -10,6 +10,7 @@ import (
 	"github.com/itchyny/gojq"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/block"
+	"github.com/kairos-io/kairos-sdk/types"
 	"github.com/kairos-io/kairos-sdk/utils"
 	"github.com/zcalusic/sysinfo"
 	"gopkg.in/yaml.v3"
@@ -129,6 +130,27 @@ func detectBoot() Boot {
 		return LiveCD
 	default:
 		return Unknown
+	}
+}
+
+// DetectBootWithVFS will detect the boot state using a vfs so it can be used for tests as well
+func DetectBootWithVFS(fs types.KairosFS) (Boot, error) {
+	cmdline, err := fs.ReadFile("/proc/cmdline")
+	if err != nil {
+		return Unknown, err
+	}
+	cmdlineS := string(cmdline)
+	switch {
+	case strings.Contains(cmdlineS, "COS_ACTIVE"):
+		return Active, nil
+	case strings.Contains(cmdlineS, "COS_PASSIVE"):
+		return Passive, nil
+	case strings.Contains(cmdlineS, "COS_RECOVERY"), strings.Contains(cmdlineS, "COS_SYSTEM"):
+		return Recovery, nil
+	case strings.Contains(cmdlineS, "live:LABEL"), strings.Contains(cmdlineS, "live:CDLABEL"), strings.Contains(cmdlineS, "netboot"):
+		return LiveCD, nil
+	default:
+		return Unknown, nil
 	}
 }
 
