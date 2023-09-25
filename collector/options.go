@@ -1,6 +1,9 @@
 package collector
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+)
 
 type Options struct {
 	ScanDir          []string
@@ -8,6 +11,7 @@ type Options struct {
 	MergeBootCMDLine bool
 	NoLogs           bool
 	StrictValidation bool
+	Readers          []io.Reader
 }
 
 type Option func(o *Options) error
@@ -58,6 +62,13 @@ func StrictValidation(v bool) Option {
 func Directories(d ...string) Option {
 	return func(o *Options) error {
 		o.ScanDir = d
+		return nil
+	}
+}
+
+func Readers(r ...io.Reader) Option {
+	return func(o *Options) error {
+		o.Readers = r
 		return nil
 	}
 }

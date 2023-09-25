@@ -1,10 +1,12 @@
 package collector_test
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	. "github.com/kairos-io/kairos-sdk/collector"
 	. "github.com/onsi/ginkgo/v2"
@@ -185,6 +187,91 @@ info:
 
 				Expect(*originalConfig).To(HaveLen(4))
 			})
+		})
+	})
+
+	Describe("Readers", func() {
+		It("Reads from several reader objects and merges them (yaml)", func() {
+			obj1 := bytes.NewReader([]byte(`mario: bros`))
+			obj2 := bytes.NewReader([]byte(`luigi: bros`))
+			obj3 := strings.NewReader(`princess: peach`)
+			o := &Options{}
+			err := o.Apply(
+				Readers(obj1, obj2, obj3),
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			c, err := Scan(o, func(d []byte) ([]byte, error) {
+				return d, nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(*c).To(HaveKey("mario"))
+			Expect(*c).To(HaveKey("luigi"))
+			Expect(*c).To(HaveKey("princess"))
+			Expect((*c)["mario"]).To(Equal("bros"))
+			Expect((*c)["luigi"]).To(Equal("bros"))
+			Expect((*c)["princess"]).To(Equal("peach"))
+		})
+		It("Reads from several reader objects and merges them (json)", func() {
+			obj1 := bytes.NewReader([]byte(`{"mario":"bros"}`))
+			obj2 := bytes.NewReader([]byte(`{"luigi":"bros"}`))
+			obj3 := strings.NewReader(`{"princess":"peach"}`)
+			o := &Options{}
+			err := o.Apply(
+				Readers(obj1, obj2, obj3),
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			c, err := Scan(o, func(d []byte) ([]byte, error) {
+				return d, nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(*c).To(HaveKey("mario"))
+			Expect(*c).To(HaveKey("luigi"))
+			Expect(*c).To(HaveKey("princess"))
+			Expect((*c)["mario"]).To(Equal("bros"))
+			Expect((*c)["luigi"]).To(Equal("bros"))
+			Expect((*c)["princess"]).To(Equal("peach"))
+		})
+		It("Reads from several reader objects and merges them (json+yaml)", func() {
+			obj1 := bytes.NewReader([]byte(`{"mario":"bros"}`))
+			obj2 := bytes.NewReader([]byte(`luigi: bros`))
+			obj3 := strings.NewReader(`{"princess":"peach"}`)
+			o := &Options{}
+			err := o.Apply(
+				Readers(obj1, obj2, obj3),
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			c, err := Scan(o, func(d []byte) ([]byte, error) {
+				return d, nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(*c).To(HaveKey("mario"))
+			Expect(*c).To(HaveKey("luigi"))
+			Expect(*c).To(HaveKey("princess"))
+			Expect((*c)["mario"]).To(Equal("bros"))
+			Expect((*c)["luigi"]).To(Equal("bros"))
+			Expect((*c)["princess"]).To(Equal("peach"))
+		})
+		It("Fails to read from a reader which is neither json or yaml", func() {
+			obj1 := bytes.NewReader([]byte(`blip`))
+			obj2 := bytes.NewReader([]byte(`blop`))
+			obj3 := strings.NewReader(`piripipop`)
+			o := &Options{}
+			err := o.Apply(
+				Readers(obj1, obj2, obj3),
+				NoLogs, // Avoid polluting testing output
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			c, err := Scan(o, func(d []byte) ([]byte, error) {
+				return d, nil
+			})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(*c).ToNot(HaveKey("mario"))
+			Expect(*c).ToNot(HaveKey("luigi"))
+			Expect(*c).ToNot(HaveKey("princess"))
 		})
 	})
 

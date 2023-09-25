@@ -221,6 +221,7 @@ func Scan(o *Options, filter func(d []byte) ([]byte, error)) (*Config, error) {
 	configs := Configs{}
 
 	configs = append(configs, parseFiles(o.ScanDir, o.NoLogs)...)
+	configs = append(configs, parseReaders(o.Readers, o.NoLogs)...)
 
 	if o.MergeBootCMDLine {
 		cConfig, err := ParseCmdLine(o.BootCMDLineFile, filter)
@@ -281,6 +282,36 @@ func parseFiles(dir []string, nologs bool) Configs {
 				fmt.Printf("warning: skipping %s (extension).\n", f)
 			}
 		}
+	}
+
+	return result
+}
+
+// parseReaders returns a list of Configs parsed from Reader interfaces
+// We assume as this has been passed explicitly to the collector that the
+// checks for it being a config is already done, so no header checks here.
+func parseReaders(readers []io.Reader, nologs bool) Configs {
+	result := Configs{}
+	for _, R := range readers {
+		var newConfig Config
+		read, err := io.ReadAll(R)
+		if err != nil {
+			if !nologs {
+				fmt.Printf("Error reading config: %s", err.Error())
+			}
+			continue
+		}
+		err = yaml.Unmarshal(read, &newConfig)
+		if err != nil {
+			err = json.Unmarshal(read, &newConfig)
+			if err != nil {
+				if !nologs {
+					fmt.Printf("Error unmarshalling config(error: %s): %s", err.Error(), string(read))
+				}
+				continue
+			}
+		}
+		result = append(result, &newConfig)
 	}
 
 	return result
