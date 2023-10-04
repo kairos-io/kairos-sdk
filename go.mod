@@ -18,7 +18,7 @@ require (
 	github.com/onsi/gomega v1.27.8
 	github.com/pterm/pterm v0.12.63
 	github.com/qeesung/image2ascii v1.0.1
-	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
+	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/swaggest/jsonschema-go v0.3.59
 	github.com/twpayne/go-vfs/v4 v4.2.0
 	github.com/zcalusic/sysinfo v1.0.1
