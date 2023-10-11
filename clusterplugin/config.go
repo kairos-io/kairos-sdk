@@ -48,8 +48,12 @@ type Cluster struct {
 	// Role informs the sdk what kind of installation to manage on this device.
 	Role Role `yaml:"role,omitempty" json:"role,omitempty"`
 
-	// Options are arbitrary values the sdk may be interested in.  These values are not validated by Kairos and are simply forwarded to the sdk.
+	// Options are arbitrary values the sdk may be interested in. These values are not validated by Kairos and are simply forwarded to the sdk.
 	Options string `yaml:"config,omitempty" json:"config,omitempty"`
+
+	// ProviderOptions are arbitrary, provider-specific values the sdk may be interested in. These values are not validated by Kairos and are simply forwarded to the sdk.
+	// ProviderOptions are meant to handle non-cluster values, while Options can be used for cluster-specific configuration values.
+	ProviderOptions map[string]string `yaml:"providerConfig,omitempty" json:"providerConfig,omitempty"`
 
 	// Env contains the list of environment variables to be set on the cluster
 	Env map[string]string `yaml:"env,omitempty" json:"env,omitempty"`
