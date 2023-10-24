@@ -42,6 +42,7 @@ type PartitionState struct {
 type Kairos struct {
 	Flavor  string `yaml:"flavor" json:"flavor"`
 	Version string `yaml:"version" json:"version"`
+	Init    string `yaml:"init" json:"init"`
 }
 
 type Runtime struct {
@@ -224,6 +225,7 @@ func detectKairos(r *Runtime) {
 	if err == nil {
 		k.Version = v
 	}
+	k.Init = utils.GetInit()
 	r.Kairos = *k
 }
 

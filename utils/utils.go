@@ -20,6 +20,12 @@ import (
 	"github.com/qeesung/image2ascii/convert"
 )
 
+const (
+	systemd = "systemd"
+	openrc  = "openrc"
+	unknown = "unknown"
+)
+
 func SH(c string) (string, error) {
 	cmd := exec.Command("/bin/sh", "-c", c)
 	cmd.Env = os.Environ()
@@ -110,6 +116,27 @@ func Flavor() string {
 	return v
 }
 
+// GetInit Return the init system used by the OS
+func GetInit() string {
+	for _, file := range []string{"/run/systemd/system", "/sbin/systemctl", "/usr/bin/systemctl", "/usr/sbin/systemctl", "/usr/bin/systemctl"} {
+		_, err := os.Stat(file)
+		// Found systemd
+		if err == nil {
+			return systemd
+		}
+	}
+
+	for _, file := range []string{"/sbin/openrc", "/usr/sbin/openrc", "/bin/openrc", "/usr/bin/openrc"} {
+		_, err := os.Stat(file)
+		// Found openrc
+		if err == nil {
+			return openrc
+		}
+	}
+
+	return unknown
+}
+
 func Name() string {
 	v, err := OSRelease("NAME")
 	if err != nil {
@@ -120,8 +147,7 @@ func Name() string {
 }
 
 func IsOpenRCBased() bool {
-	n := Name()
-	return strings.Contains(n, "alpine")
+	return GetInit() == openrc
 }
 
 func ShellSTDIN(s, c string) (string, error) {
