@@ -241,8 +241,12 @@ github.com/stretchr/testify v1.8.2 h1:+h33VjcLVPDHtOdpUCuF+7gSuG3yGIftsP1YvFihtJ
 github.com/swaggest/assertjson v1.9.0 h1:dKu0BfJkIxv/xe//mkCrK5yZbs79jL7OVf9Ija7o2xQ=
 github.com/swaggest/jsonschema-go v0.3.59 h1:BoPhtNvWbZRo1Wl6xvR3g6WL01COJTOAs6vMUnZgocM=
 github.com/swaggest/jsonschema-go v0.3.59/go.mod h1:5WFFGBBte5JAWAV8gDpNRJ/tlQnb1AHDdf/ghgsVUik=
+github.com/swaggest/jsonschema-go v0.3.62 h1:eIE0aRklWa2eLJg2L/zqyWpKvgUPbq2oKOtrJGJkPH0=
+github.com/swaggest/jsonschema-go v0.3.62/go.mod h1:DYuKqdpms/edvywsX6p1zHXCZkdwB28wRaBdFCe3Duw=
 github.com/swaggest/refl v1.2.0 h1:Qqqhfwi7REXF6/4cwJmj3gQMzl0Q0cYquxTYdD0kvi0=
 github.com/swaggest/refl v1.2.0/go.mod h1:CkC6g7h1PW33KprTuYRSw8UUOslRUt4lF3oe7tTIgNU=
+github.com/swaggest/refl v1.3.0 h1:PEUWIku+ZznYfsoyheF97ypSduvMApYyGkYF3nabS0I=
+github.com/swaggest/refl v1.3.0/go.mod h1:3Ujvbmh1pfSbDYjC6JGG7nMgPvpG0ehQL4iNonnLNbg=
 github.com/twpayne/go-vfs v1.7.2 h1:ZNYMAXcu2Av8c109USrSGYm8dIIIV0xPlG19I2088Kw=
 github.com/twpayne/go-vfs v1.7.2/go.mod h1:1eni2ntkiiAHZG27xfLOO4CYvMR4Kw8V7rYiLeeolsQ=
 github.com/twpayne/go-vfs/v4 v4.2.0 h1:cIjUwaKSCq0y6dT+ev6uLSmKjGTbHCR4xaocROqHFsE=

@@ -19,7 +19,7 @@ require (
 	github.com/pterm/pterm v0.12.63
 	github.com/qeesung/image2ascii v1.0.1
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
-	github.com/swaggest/jsonschema-go v0.3.59
+	github.com/swaggest/jsonschema-go v0.3.62
 	github.com/twpayne/go-vfs/v4 v4.2.0
 	github.com/zcalusic/sysinfo v1.0.1
 	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
@@ -74,7 +74,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/swaggest/refl v1.2.0 // indirect
+	github.com/swaggest/refl v1.3.0 // indirect
 	github.com/twpayne/go-vfs v1.7.2 // indirect
 	github.com/vbatts/tar-split v0.11.3 // indirect
 	github.com/wayneashleyberry/terminal-dimensions v1.1.0 // indirect
