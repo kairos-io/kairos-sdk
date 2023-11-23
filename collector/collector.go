@@ -255,7 +255,7 @@ func parseFiles(dir []string, nologs bool) Configs {
 			}
 			continue
 		}
-		if strings.Contains(f, "userdata") || filepath.Ext(f) == ".yml" || filepath.Ext(f) == ".yaml" {
+		if filepath.Ext(f) == ".yml" || filepath.Ext(f) == ".yaml" {
 			b, err := os.ReadFile(f)
 			if err != nil {
 				if !nologs {
