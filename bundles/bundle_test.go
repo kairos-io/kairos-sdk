@@ -29,5 +29,17 @@ var _ = Describe("Bundle", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(filepath.Join(dir, "usr", "bin", "edgevpn")).To(BeARegularFile())
 		})
+
+		It("installs a 'container:' bundle from local tarball", func() {
+			// TODO
+		})
+
+		It("installs a 'docker:' bundle from local tarball", func() {
+			// TODO
+		})
+
+		It("installs a 'run:' bundle from local tarball", func() {
+			// TODO
+		})
 	})
 })
