@@ -4,6 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"runtime"
+	"strings"
+	"syscall"
+	"time"
+
 	"github.com/containerd/containerd/archive"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/logs"
@@ -13,12 +20,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
-	"io"
-	"net/http"
-	"runtime"
-	"strings"
-	"syscall"
-	"time"
 )
 
 var defaultRetryBackoff = remote.Backoff{
@@ -41,27 +42,17 @@ var defaultRetryPredicate = func(err error) bool {
 }
 
 // ExtractOCIImage will extract a given targetImage into a given targetDestination
-func ExtractOCIImage(targetImage, targetDestination, targetPlatform string) error {
-	var img v1.Image
-	var err error
-
-	img, err = getimage(targetImage, targetPlatform)
-	if err != nil {
-		return err
-	}
-
+func ExtractOCIImage(img v1.Image, targetDestination string) error {
 	reader := mutate.Extract(img)
 
-	_, err = archive.Apply(context.Background(), targetDestination, reader)
-	if err != nil {
-		return err
-	}
-	return nil
+	_, err := archive.Apply(context.Background(), targetDestination, reader)
+
+	return err
 }
 
-// image returns the proper image to pull with transport and auth
+// GetImage if returns the proper image to pull with transport and auth
 // tries local daemon first and then fallbacks into remote
-func getimage(targetImage, targetPlatform string) (v1.Image, error) {
+func GetImage(targetImage, targetPlatform string) (v1.Image, error) {
 	var platform *v1.Platform
 	var image v1.Image
 	var err error
@@ -106,7 +97,7 @@ func GetOCIImageSize(targetImage, targetPlatform string) (int64, error) {
 	var img v1.Image
 	var err error
 
-	img, err = getimage(targetImage, targetPlatform)
+	img, err = GetImage(targetImage, targetPlatform)
 	if err != nil {
 		return size, err
 	}

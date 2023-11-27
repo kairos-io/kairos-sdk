@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	"github.com/hashicorp/go-multierror"
 	"github.com/kairos-io/kairos-sdk/utils"
 )
@@ -169,23 +171,24 @@ func NewBundleInstaller(bc BundleConfig) (BundleInstaller, error) {
 	}
 	switch strings.ToLower(dat[0]) {
 	case "container":
-		return &OCIImageExtractor{}, nil
+		return &OCIImageExtractor{
+			Local: bc.LocalFile,
+		}, nil
 	case "run":
-		if bc.LocalFile {
-			return &LocalRunner{}, nil
-		}
-
-		return &OCIImageRunner{}, nil
+		return &OCIImageRunner{
+			Local: bc.LocalFile,
+		}, nil
 	case "package":
 		return &LuetInstaller{}, nil
-
 	}
 
 	return &LuetInstaller{}, nil
 }
 
 // OCIImageExtractor will extract an OCI image
-type OCIImageExtractor struct{}
+type OCIImageExtractor struct {
+	Local bool
+}
 
 func (e OCIImageExtractor) Install(config *BundleConfig) error {
 	if !utils.Exists(config.RootPath) {
@@ -194,11 +197,25 @@ func (e OCIImageExtractor) Install(config *BundleConfig) error {
 			return fmt.Errorf("could not create destination path %s: %s", config.RootPath, err)
 		}
 	}
-	return utils.ExtractOCIImage(config.Target, config.RootPath, utils.GetCurrentPlatform())
+
+	var img v1.Image
+	var err error
+	if e.Local {
+		img, err = tarball.ImageFromPath(config.Target, nil)
+	} else {
+		img, err = utils.GetImage(config.Target, utils.GetCurrentPlatform())
+	}
+	if err != nil {
+		return err
+	}
+
+	return utils.ExtractOCIImage(img, config.RootPath)
 }
 
 // OCIImageRunner will extract an OCI image and then run its run.sh
-type OCIImageRunner struct{}
+type OCIImageRunner struct {
+	Local bool
+}
 
 func (e OCIImageRunner) Install(config *BundleConfig) error {
 	tempDir, err := os.MkdirTemp("", "containerrunner")
@@ -207,7 +224,17 @@ func (e OCIImageRunner) Install(config *BundleConfig) error {
 	}
 	defer os.RemoveAll(tempDir)
 
-	err = utils.ExtractOCIImage(config.Target, tempDir, utils.GetCurrentPlatform())
+	var img v1.Image
+	if e.Local {
+		img, err = tarball.ImageFromPath(config.Target, nil)
+	} else {
+		img, err = utils.GetImage(config.Target, utils.GetCurrentPlatform())
+	}
+	if err != nil {
+		return err
+	}
+
+	err = utils.ExtractOCIImage(img, tempDir)
 	if err != nil {
 		return err
 	}
