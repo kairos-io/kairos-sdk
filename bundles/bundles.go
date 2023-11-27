@@ -132,37 +132,6 @@ func RunBundles(bundles ...[]BundleOption) error {
 	return resErr
 }
 
-type LocalRunner struct{}
-
-func (e LocalRunner) Install(config *BundleConfig) error {
-	tempDir, err := os.MkdirTemp("", "containerrunner")
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(tempDir)
-
-	target := strings.Join([]string{filePrefix, config.Target}, "")
-	out, err := utils.SH(
-		fmt.Sprintf(
-			`luet util unpack %s %s`,
-			target,
-			tempDir,
-		),
-	)
-	if err != nil {
-		return fmt.Errorf("could not unpack bundle: %w - %s", err, out)
-	}
-
-	out, err = utils.SHInDir(
-		filepath.Join(tempDir, "run.sh"),
-		tempDir,
-		fmt.Sprintf("CONTAINERDIR=%s", tempDir), fmt.Sprintf("BUNDLE_TARGET=%s", target))
-	if err != nil {
-		return fmt.Errorf("could not execute container: %w - %s", err, out)
-	}
-	return nil
-}
-
 func NewBundleInstaller(bc BundleConfig) (BundleInstaller, error) {
 
 	dat := strings.Split(bc.Target, "://")
