@@ -170,7 +170,7 @@ func NewBundleInstaller(bc BundleConfig) (BundleInstaller, error) {
 		return nil, fmt.Errorf("could not decode scheme")
 	}
 	switch strings.ToLower(dat[0]) {
-	case "container":
+	case "container", "docker":
 		return &OCIImageExtractor{
 			Local: bc.LocalFile,
 		}, nil
