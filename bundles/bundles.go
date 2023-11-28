@@ -159,8 +159,6 @@ func NewBundleInstaller(bc BundleConfig) (BundleInstaller, error) {
 			Local: bc.LocalFile,
 		}, nil
 	case "package":
-		// TODO: Merge with OCIImageExtractor above?
-		// After all it only extracts the image.
 		return &LuetInstaller{}, nil
 	}
 
