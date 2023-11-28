@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"image"
 	"net"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"os/signal"
 	"runtime"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/denisbrodbeck/machineid"
 	"github.com/joho/godotenv"

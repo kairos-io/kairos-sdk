@@ -1,6 +1,7 @@
 package bundles
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -82,6 +83,22 @@ func (bc *BundleConfig) extractRepo() (string, string, error) {
 	return s[0], s[1], nil
 }
 
+func (bc *BundleConfig) TargetScheme() (string, error) {
+	dat := strings.Split(bc.Target, "://")
+	if len(dat) != 2 {
+		return "", errors.New("invalid target")
+	}
+	return strings.ToLower(dat[0]), nil
+}
+
+func (bc *BundleConfig) TargetNoScheme() (string, error) {
+	dat := strings.Split(bc.Target, "://")
+	if len(dat) != 2 {
+		return "", errors.New("invalid target")
+	}
+	return dat[1], nil
+}
+
 func defaultConfig() *BundleConfig {
 	return &BundleConfig{
 		DBPath:     "/usr/local/.kairos/db",
@@ -115,12 +132,6 @@ func RunBundles(bundles ...[]BundleOption) error {
 			resErr = multierror.Append(err)
 			continue
 		}
-		dat := strings.Split(config.Target, "://")
-		if len(dat) != 2 {
-			resErr = multierror.Append(fmt.Errorf("invalid target"))
-			continue
-		}
-		config.Target = dat[1]
 
 		err = installer.Install(config)
 		if err != nil {
@@ -133,12 +144,12 @@ func RunBundles(bundles ...[]BundleOption) error {
 }
 
 func NewBundleInstaller(bc BundleConfig) (BundleInstaller, error) {
-
-	dat := strings.Split(bc.Target, "://")
-	if len(dat) != 2 {
-		return nil, fmt.Errorf("could not decode scheme")
+	scheme, err := bc.TargetScheme()
+	if err != nil {
+		return nil, err
 	}
-	switch strings.ToLower(dat[0]) {
+
+	switch scheme {
 	case "container", "docker":
 		return &OCIImageExtractor{
 			Local: bc.LocalFile,
@@ -148,6 +159,8 @@ func NewBundleInstaller(bc BundleConfig) (BundleInstaller, error) {
 			Local: bc.LocalFile,
 		}, nil
 	case "package":
+		// TODO: Merge with OCIImageExtractor above?
+		// After all it only extracts the image.
 		return &LuetInstaller{}, nil
 	}
 
@@ -169,10 +182,14 @@ func (e OCIImageExtractor) Install(config *BundleConfig) error {
 
 	var img v1.Image
 	var err error
+	target, err := config.TargetNoScheme()
+	if err != nil {
+		return err
+	}
 	if e.Local {
-		img, err = tarball.ImageFromPath(config.Target, nil)
+		img, err = tarball.ImageFromPath(target, nil)
 	} else {
-		img, err = utils.GetImage(config.Target, utils.GetCurrentPlatform())
+		img, err = utils.GetImage(target, utils.GetCurrentPlatform())
 	}
 	if err != nil {
 		return err
@@ -194,10 +211,14 @@ func (e OCIImageRunner) Install(config *BundleConfig) error {
 	defer os.RemoveAll(tempDir)
 
 	var img v1.Image
+	target, err := config.TargetNoScheme()
+	if err != nil {
+		return err
+	}
 	if e.Local {
-		img, err = tarball.ImageFromPath(config.Target, nil)
+		img, err = tarball.ImageFromPath(target, nil)
 	} else {
-		img, err = utils.GetImage(config.Target, utils.GetCurrentPlatform())
+		img, err = utils.GetImage(target, utils.GetCurrentPlatform())
 	}
 	if err != nil {
 		return err
@@ -210,9 +231,9 @@ func (e OCIImageRunner) Install(config *BundleConfig) error {
 
 	// We want to expect tempDir as context
 	out, err := utils.SHInDir(
-		filepath.Join(tempDir, "run.sh"),
+		"/bin/sh run.sh",
 		tempDir,
-		fmt.Sprintf("CONTAINERDIR=%s", tempDir), fmt.Sprintf("BUNDLE_TARGET=%s", config.Target))
+		fmt.Sprintf("CONTAINERDIR=%s", tempDir), fmt.Sprintf("BUNDLE_TARGET=%s", target))
 	if err != nil {
 		return fmt.Errorf("could not execute container: %w - %s", err, out)
 	}
@@ -246,12 +267,16 @@ func (l *LuetInstaller) Install(config *BundleConfig) error {
 		return fmt.Errorf("could not add repository: %w - %s", err, out)
 	}
 
+	target, err := config.TargetNoScheme()
+	if err != nil {
+		return err
+	}
 	out, err = utils.SH(
 		fmt.Sprintf(
 			`LUET_CONFIG_FROM_HOST=false luet install -y  --system-dbpath %s --system-target %s %s`,
 			config.DBPath,
 			config.RootPath,
-			config.Target,
+			target,
 		),
 	)
 	if err != nil {
