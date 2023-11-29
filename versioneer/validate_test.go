@@ -26,11 +26,6 @@ var _ = Describe("Validate", func() {
 		})
 	})
 
-	It("returns an error when Flavor is empty", func() {
-		artifact.Flavor = ""
-		Expect(artifact.Validate()).To(MatchError("Flavor is empty"))
-	})
-
 	It("returns an error when FlavorRelease is empty", func() {
 		artifact.FlavorRelease = ""
 		Expect(artifact.Validate()).To(MatchError("FlavorRelease is empty"))
@@ -44,11 +39,6 @@ var _ = Describe("Validate", func() {
 	It("returns an error when Model is empty", func() {
 		artifact.Model = ""
 		Expect(artifact.Validate()).To(MatchError("Model is empty"))
-	})
-
-	It("returns an error when BaseImage is empty", func() {
-		artifact.BaseImage = ""
-		Expect(artifact.Validate()).To(MatchError("BaseImage is empty"))
 	})
 
 	It("returns an error when Arch is empty", func() {

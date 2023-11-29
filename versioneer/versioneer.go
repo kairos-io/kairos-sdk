@@ -17,9 +17,6 @@ type Artifact struct {
 }
 
 func (a *Artifact) Validate() error {
-	if a.Flavor == "" {
-		return errors.New("Flavor is empty")
-	}
 	if a.FlavorRelease == "" {
 		return errors.New("FlavorRelease is empty")
 	}
@@ -28,9 +25,6 @@ func (a *Artifact) Validate() error {
 	}
 	if a.Model == "" {
 		return errors.New("Model is empty")
-	}
-	if a.BaseImage == "" {
-		return errors.New("BaseImage is empty")
 	}
 	if a.Arch == "" {
 		return errors.New("Arch is empty")
@@ -42,12 +36,25 @@ func (a *Artifact) Validate() error {
 }
 
 func (a *Artifact) BootableName() (string, error) {
+	commonName, err := a.commonName()
+	if err != nil {
+		return "", err
+	}
+
+	if a.Flavor == "" {
+		return "", errors.New("Flavor is empty")
+	}
+
+	return fmt.Sprintf("kairos-%s-%s", a.Flavor, commonName), nil
+}
+
+func (a *Artifact) commonName() (string, error) {
 	if err := a.Validate(); err != nil {
 		return "", err
 	}
 
-	result := fmt.Sprintf("kairos-%s-%s-%s-%s-%s-%s",
-		a.Flavor, a.FlavorRelease, a.Variant, a.Arch, a.Model, a.Version)
+	result := fmt.Sprintf("%s-%s-%s-%s-%s",
+		a.FlavorRelease, a.Variant, a.Arch, a.Model, a.Version)
 
 	if a.SoftwareVersion != "" {
 		result = fmt.Sprintf("%s-%s", result, a.SoftwareVersion)
