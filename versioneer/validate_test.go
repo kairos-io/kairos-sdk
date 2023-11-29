@@ -14,7 +14,6 @@ var _ = Describe("Validate", func() {
 			FlavorRelease: "leap-15.5",
 			Variant:       "standard",
 			Model:         "generic",
-			BaseImage:     "opensuse/leap:15.5",
 			Arch:          "amd64",
 			Version:       "v2.4.2",
 		}

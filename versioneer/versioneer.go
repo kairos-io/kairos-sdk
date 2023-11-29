@@ -1,6 +1,7 @@
 package versioneer
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -11,10 +12,16 @@ type Artifact struct {
 	FlavorRelease   string
 	Variant         string
 	Model           string
-	BaseImage       string
 	Arch            string
 	Version         string // The Kairos version. E.g. "v2.4.2"
 	SoftwareVersion string // The k3s version. E.g. "k3sv1.26.9+k3s1"
+}
+
+func NewArtifactFromJSON(jsonStr string) (*Artifact, error) {
+	result := &Artifact{}
+	err := json.Unmarshal([]byte(jsonStr), result)
+
+	return result, err
 }
 
 func (a *Artifact) Validate() error {

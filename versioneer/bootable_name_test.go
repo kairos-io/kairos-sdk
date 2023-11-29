@@ -16,7 +16,6 @@ var _ = Describe("BootableName", func() {
 			FlavorRelease:   "leap-15.5",
 			Variant:         "standard",
 			Model:           "generic",
-			BaseImage:       "opensuse/leap:15.5",
 			Arch:            "amd64",
 			Version:         "v2.4.2",
 			SoftwareVersion: "k3sv1.26.9+k3s1",
