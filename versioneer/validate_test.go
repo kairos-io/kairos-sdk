@@ -16,6 +16,7 @@ var _ = Describe("Validate", func() {
 			Model:         "generic",
 			BaseImage:     "opensuse/leap:15.5",
 			Arch:          "amd64",
+			Version:       "v2.4.2",
 		}
 	})
 
@@ -53,5 +54,10 @@ var _ = Describe("Validate", func() {
 	It("returns an error when Arch is empty", func() {
 		artifact.Arch = ""
 		Expect(artifact.Validate()).To(MatchError("Arch is empty"))
+	})
+
+	It("returns an error when Version is empty", func() {
+		artifact.Version = ""
+		Expect(artifact.Validate()).To(MatchError("Version is empty"))
 	})
 })
