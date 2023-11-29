@@ -7,7 +7,7 @@ import (
 )
 
 var _ = Describe("NewArtifactFromJSON", func() {
-	It("returns an object form the given json", func() {
+	It("returns an object from the given json", func() {
 		jsonStr := `{
 		  "flavor":"opensuse-leap",
 			"flavorRelease":"15.5",

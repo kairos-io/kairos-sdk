@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"regexp"
 	"strings"
 )
 
@@ -22,6 +24,41 @@ func NewArtifactFromJSON(jsonStr string) (*Artifact, error) {
 	err := json.Unmarshal([]byte(jsonStr), result)
 
 	return result, err
+}
+
+// NewArtifactFromOSRelease generates an artifact by inpecting the variables
+// in the /etc/os-release file of a Kairos image. The variable should be
+// prefixed with "KAIROS_". E.g. KAIROS_VARIANT would be used to set the Variant
+// field. The function optionally takes an argument to specify a different file
+// path (for testing reasons).
+func NewArtifactFromOSRelease(file ...string) (*Artifact, error) {
+	if len(file) > 1 {
+		return nil, errors.New("too many arguments given")
+	}
+
+	var filePath string
+	if len(file) == 0 {
+		filePath = "/etc/os-release"
+	} else {
+		filePath = file[0]
+	}
+
+	out, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+	content := string(out)
+	result := Artifact{
+		Flavor:          findValueInText("KAIROS_FLAVOR", content),
+		FlavorRelease:   findValueInText("KAIROS_FLAVOR_RELEASE", content),
+		Variant:         findValueInText("KAIROS_VARIANT", content),
+		Model:           findValueInText("KAIROS_MODEL", content),
+		Arch:            findValueInText("KAIROS_ARCH", content),
+		Version:         findValueInText("KAIROS_VERSION", content),
+		SoftwareVersion: findValueInText("KAIROS_SOFTWARE_VERSION", content),
+	}
+
+	return &result, nil
 }
 
 func (a *Artifact) Validate() error {
@@ -84,4 +121,19 @@ func (a *Artifact) commonName() (string, error) {
 	}
 
 	return result, nil
+}
+
+func findValueInText(key string, content string) string {
+	// Define a regular expression pattern
+	pattern := fmt.Sprintf(`%s=(.*)\s`, key)
+	regexpObject := regexp.MustCompile(pattern)
+
+	// Find all matches in a string
+	match := regexpObject.FindStringSubmatch(content)
+
+	if len(match) < 2 {
+		return ""
+	}
+
+	return match[1]
 }
