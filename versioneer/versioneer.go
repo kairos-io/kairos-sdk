@@ -3,6 +3,7 @@ package versioneer
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type Artifact struct {
@@ -46,6 +47,21 @@ func (a *Artifact) BootableName() (string, error) {
 	}
 
 	return fmt.Sprintf("kairos-%s-%s", a.Flavor, commonName), nil
+}
+
+func (a *Artifact) ContainerName(registryAndOrg string) (string, error) {
+	commonName, err := a.commonName()
+	if err != nil {
+		return "", err
+	}
+
+	if a.Flavor == "" {
+		return "", errors.New("Flavor is empty")
+	}
+
+	commonName = strings.ReplaceAll(commonName, "+", "-")
+
+	return fmt.Sprintf("%s/%s:%s", registryAndOrg, a.Flavor, commonName), nil
 }
 
 func (a *Artifact) commonName() (string, error) {
