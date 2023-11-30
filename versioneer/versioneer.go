@@ -94,18 +94,25 @@ func (a *Artifact) BootableName() (string, error) {
 }
 
 func (a *Artifact) ContainerName(registryAndOrg string) (string, error) {
-	commonName, err := a.commonName()
-	if err != nil {
-		return "", err
-	}
-
 	if a.Flavor == "" {
 		return "", errors.New("Flavor is empty")
 	}
 
-	commonName = strings.ReplaceAll(commonName, "+", "-")
+	tag, err := a.Tag()
+	if err != nil {
+		return "", err
+	}
 
-	return fmt.Sprintf("%s/%s:%s", registryAndOrg, a.Flavor, commonName), nil
+	return fmt.Sprintf("%s/%s:%s", registryAndOrg, a.Flavor, tag), nil
+}
+
+func (a *Artifact) Tag() (string, error) {
+	commonName, err := a.commonName()
+	if err != nil {
+		return commonName, err
+	}
+
+	return strings.ReplaceAll(commonName, "+", "-"), nil
 }
 
 func (a *Artifact) commonName() (string, error) {

@@ -1,9 +1,6 @@
 package versioneer_test
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/kairos-io/kairos-sdk/versioneer"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -37,10 +34,10 @@ var _ = Describe("NewerVersions", func() {
 
 	It("returns all tags with a Version higher than the current one", func() {
 		versions, err := artifact.NewerVersions("quay.io/kairos")
-		Expect(err).ToNot(HaveOccurred())
+		Expect(err).ToNot(HaveOccurred(), versions)
 
-		out, _ := json.Marshal(versions)
-		fmt.Printf("%+v\n", string(out))
+		//out, _ := json.Marshal(versions)
+		//fmt.Printf("%+v\n", string(out))
 		// TODO
 	})
 })

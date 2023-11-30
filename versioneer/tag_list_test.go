@@ -15,15 +15,44 @@ var _ = Describe("TagList", func() {
 
 	Describe("Images", func() {
 		It("returns only tags matching images", func() {
-			images := *tagList.Images()
+			images := tagList.Images()
 
-			Expect(len(images)).To(BeNumerically(">", 10))
-			Expect(images).ToNot(ContainElement(ContainSubstring(".att")))
-			Expect(images).ToNot(ContainElement(ContainSubstring(".sbom")))
-			Expect(images).ToNot(ContainElement(ContainSubstring(".sig")))
-			Expect(images).ToNot(ContainElement(ContainSubstring("-img")))
+			// Sanity check, that we didn't filter everything out
+			Expect(len(images)).To(BeNumerically(">", 4))
 
-			Expect(images).To(HaveEach(MatchRegexp((".*-(core|standard)-(amd64|arm64)-.*-v.*"))))
+			expectOnlyImages(images)
+		})
+	})
+
+	Describe("OtherVersions", func() {
+		var artifact versioneer.Artifact
+		BeforeEach(func() {
+			artifact = versioneer.Artifact{
+				Flavor:          "opensuse",
+				FlavorRelease:   "leap-15.5",
+				Variant:         "standard",
+				Model:           "generic",
+				Arch:            "amd64",
+				Version:         "v2.4.2",
+				SoftwareVersion: "k3sv1.27.6-k3s1",
+			}
+		})
+
+		It("returns only tags with different version", func() {
+			otherVersions := tagList.OtherVersions(artifact)
+
+			Expect(otherVersions).To(HaveExactElements(
+				"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.27.6-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-rc2-k3sv1.27.6-k3s1"))
 		})
 	})
 })
+
+func expectOnlyImages(images versioneer.TagList) {
+	Expect(images).ToNot(ContainElement(ContainSubstring(".att")))
+	Expect(images).ToNot(ContainElement(ContainSubstring(".sbom")))
+	Expect(images).ToNot(ContainElement(ContainSubstring(".sig")))
+	Expect(images).ToNot(ContainElement(ContainSubstring("-img")))
+
+	Expect(images).To(HaveEach(MatchRegexp((".*-(core|standard)-(amd64|arm64)-.*-v.*"))))
+}
