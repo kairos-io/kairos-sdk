@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"regexp"
 	"strings"
+
+	"github.com/kairos-io/kairos-sdk/utils"
 )
 
 type Artifact struct {
@@ -32,30 +32,29 @@ func NewArtifactFromJSON(jsonStr string) (*Artifact, error) {
 // field. The function optionally takes an argument to specify a different file
 // path (for testing reasons).
 func NewArtifactFromOSRelease(file ...string) (*Artifact, error) {
-	if len(file) > 1 {
-		return nil, errors.New("too many arguments given")
-	}
+	var err error
+	result := Artifact{}
 
-	var filePath string
-	if len(file) == 0 {
-		filePath = "/etc/os-release"
-	} else {
-		filePath = file[0]
-	}
-
-	out, err := ioutil.ReadFile(filePath)
-	if err != nil {
+	if result.Flavor, err = utils.OSRelease("FLAVOR", file...); err != nil {
 		return nil, err
 	}
-	content := string(out)
-	result := Artifact{
-		Flavor:          findValueInText("KAIROS_FLAVOR", content),
-		FlavorRelease:   findValueInText("KAIROS_FLAVOR_RELEASE", content),
-		Variant:         findValueInText("KAIROS_VARIANT", content),
-		Model:           findValueInText("KAIROS_MODEL", content),
-		Arch:            findValueInText("KAIROS_ARCH", content),
-		Version:         findValueInText("KAIROS_VERSION", content),
-		SoftwareVersion: findValueInText("KAIROS_SOFTWARE_VERSION", content),
+	if result.FlavorRelease, err = utils.OSRelease("FLAVOR_RELEASE", file...); err != nil {
+		return nil, err
+	}
+	if result.Variant, err = utils.OSRelease("VARIANT", file...); err != nil {
+		return nil, err
+	}
+	if result.Model, err = utils.OSRelease("MODEL", file...); err != nil {
+		return nil, err
+	}
+	if result.Arch, err = utils.OSRelease("ARCH", file...); err != nil {
+		return nil, err
+	}
+	if result.Version, err = utils.OSRelease("VERSION", file...); err != nil {
+		return nil, err
+	}
+	if result.SoftwareVersion, err = utils.OSRelease("SOFTWARE_VERSION", file...); err != nil {
+		return nil, err
 	}
 
 	return &result, nil
@@ -121,19 +120,4 @@ func (a *Artifact) commonName() (string, error) {
 	}
 
 	return result, nil
-}
-
-func findValueInText(key string, content string) string {
-	// Define a regular expression pattern
-	pattern := fmt.Sprintf(`%s=(.*)\s`, key)
-	regexpObject := regexp.MustCompile(pattern)
-
-	// Find all matches in a string
-	match := regexpObject.FindStringSubmatch(content)
-
-	if len(match) < 2 {
-		return ""
-	}
-
-	return match[1]
 }

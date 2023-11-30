@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"image"
 	"net"
 	"os"
@@ -13,6 +13,8 @@ import (
 	"os/signal"
 	"runtime"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/denisbrodbeck/machineid"
 	"github.com/joho/godotenv"
@@ -57,8 +59,21 @@ func UUID() string {
 	return fmt.Sprintf("%s-%s", id, hostname)
 }
 
-func OSRelease(key string) (string, error) {
-	release, err := godotenv.Read("/etc/os-release")
+// OSRelease finds the value of the specified key in the /etc/os-release file
+// or, if a second argument is passed, on the file specified by the second argument.
+// (optionally file argument is there for testing reasons).
+func OSRelease(key string, file ...string) (string, error) {
+	var osReleaseFile string
+
+	if len(file) > 1 {
+		return "", errors.New("too many arguments passed")
+	}
+	if len(file) > 0 {
+		osReleaseFile = file[0]
+	} else {
+		osReleaseFile = "/etc/os-release"
+	}
+	release, err := godotenv.Read(osReleaseFile)
 	if err != nil {
 		return "", err
 	}
@@ -68,7 +83,7 @@ func OSRelease(key string) (string, error) {
 		// We try with the old naming without the prefix in case the key wasn't found
 		v, exists = release[key]
 		if !exists {
-			return "", fmt.Errorf("key not found")
+			return "", fmt.Errorf("%s key not found", kairosKey)
 		}
 	}
 	return v, nil
