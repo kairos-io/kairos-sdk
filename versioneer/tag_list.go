@@ -52,3 +52,21 @@ func (tl TagList) OtherVersions(artifact Artifact) TagList {
 
 	return result
 }
+
+// NewerVersions returns OtherVersions filtered to only include tags with
+// Version higher than the given artifact's.
+func (tl TagList) NewerVersions(artifact Artifact) TagList {
+	// TODO:
+	return tl
+}
+
+// SemverSorted returns the TagList sorted:
+// - alphabetically for all non-version fields
+// - Sorted by highest Version first and then by highest SoftwareVersion first
+func (tl TagList) SemverSorted(artifact Artifact) TagList {
+	// TODO:
+	// - Implement this method
+	// - Use it in all methods above to return sorted results
+	// - Adapt test to check that the results are always sorted
+	return tl
+}
