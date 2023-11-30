@@ -8,7 +8,18 @@ package versioneer
 // Given we usually bump k3s versions with every release and that we only
 // maintain the latest 3 minor releases (highest patch release for each),
 // this function might not return any results.
-func (a *Artifact) NewerVersions(registryAndOrg string) {
+func (a *Artifact) NewerVersions(registryAndOrg string) ([]string, error) {
+	var err error
+	var result []string
+
+	result, err = a.tagList(registryAndOrg)
+	if err != nil {
+		return result, err
+	}
+
+	// TODO: Filter
+
+	return result, nil
 }
 
 // NewerSofwareVersions returns all the images in the given container registry
@@ -29,4 +40,12 @@ func (a *Artifact) NewerSofwareVersions(registryAndOrg string) {
 // and if needed upgrade k3s as well. If a newer version of Kairos has been
 // produced, this function should return some results.
 func (a *Artifact) NewerAllVersions(registryAndOrg string) {
+}
+
+func (a *Artifact) tagList(registryAndOrg string) (TagList, error) {
+	if a.RegistryInspector == nil {
+		a.RegistryInspector = &DefaultRegistryInspector{}
+	}
+
+	return a.RegistryInspector.TagList(registryAndOrg, a.Flavor)
 }

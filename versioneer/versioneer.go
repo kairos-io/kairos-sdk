@@ -10,13 +10,14 @@ import (
 )
 
 type Artifact struct {
-	Flavor          string
-	FlavorRelease   string
-	Variant         string
-	Model           string
-	Arch            string
-	Version         string // The Kairos version. E.g. "v2.4.2"
-	SoftwareVersion string // The k3s version. E.g. "k3sv1.26.9+k3s1"
+	Flavor            string
+	FlavorRelease     string
+	Variant           string
+	Model             string
+	Arch              string
+	Version           string // The Kairos version. E.g. "v2.4.2"
+	SoftwareVersion   string // The k3s version. E.g. "k3sv1.26.9+k3s1"
+	RegistryInspector RegistryInspector
 }
 
 func NewArtifactFromJSON(jsonStr string) (*Artifact, error) {
