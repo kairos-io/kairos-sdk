@@ -9,13 +9,16 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-type TagList []string
+type TagList struct {
+	Tags     []string
+	Artifact *Artifact
+}
 
 // implements sort.Interface for TagList
-func (tl TagList) Len() int      { return len(tl) }
-func (tl TagList) Swap(i, j int) { tl[i], tl[j] = tl[j], tl[i] }
+func (tl TagList) Len() int      { return len(tl.Tags) }
+func (tl TagList) Swap(i, j int) { tl.Tags[i], tl.Tags[j] = tl.Tags[j], tl.Tags[i] }
 func (tl TagList) Less(i, j int) bool {
-	return tl[i] < tl[j]
+	return tl.Tags[i] < tl.Tags[j]
 }
 
 // Images returns only tags that represent images, skipping tags representing:
@@ -27,11 +30,11 @@ func (tl TagList) Images() TagList {
 	pattern := `.*-(core|standard)-(amd64|arm64)-.*-v.*`
 	regexpObject := regexp.MustCompile(pattern)
 
-	result := TagList{}
-	for _, t := range tl {
+	result := TagList{Artifact: tl.Artifact}
+	for _, t := range tl.Tags {
 		// We have to filter "-img" tags outside the regexp because golang regexp doesn't support negative lookaheads.
 		if regexpObject.MatchString(t) && !strings.HasSuffix(t, "-img") {
-			result = append(result, t)
+			result.Tags = append(result.Tags, t)
 		}
 	}
 
@@ -102,7 +105,7 @@ func (tl TagList) NewerAnyVersion(artifact Artifact, softwarePrefix string) TagL
 }
 
 func (tl TagList) Print() {
-	for _, t := range tl {
+	for _, t := range tl.Tags {
 		fmt.Println(t)
 	}
 }
@@ -110,21 +113,21 @@ func (tl TagList) Print() {
 // Sorted returns the TagList sorted alphabetically
 // This means lower versions come first.
 func (tl TagList) Sorted() TagList {
-	newTl := make(TagList, len(tl))
-	copy(newTl, tl)
-	sort.Sort(newTl)
+	newTags := make([]string, len(tl.Tags))
+	copy(newTags, tl.Tags)
+	sort.Sort(sort.StringSlice(newTags))
 
-	return newTl
+	return TagList{Artifact: tl.Artifact, Tags: newTags}
 }
 
 // RSorted returns the TagList in the reverse order of Sorted
 // This means higher versions come first.
 func (tl TagList) RSorted() TagList {
-	newTl := make(TagList, len(tl))
-	copy(newTl, tl)
-	sort.Sort(sort.Reverse(newTl))
+	newTags := make([]string, len(tl.Tags))
+	copy(newTags, tl.Tags)
+	sort.Sort(sort.Reverse(sort.StringSlice(newTags)))
 
-	return newTl
+	return TagList{Artifact: tl.Artifact, Tags: newTags}
 }
 
 func (tl TagList) fieldOtherOptions(artifact Artifact, field string) TagList {
@@ -137,10 +140,10 @@ func (tl TagList) fieldOtherOptions(artifact Artifact, field string) TagList {
 	pattern = strings.Replace(pattern, regexp.QuoteMeta(field), ".*", 1)
 	regexpObject := regexp.MustCompile(pattern)
 
-	result := TagList{}
-	for _, t := range tl.Images() {
+	result := TagList{Artifact: tl.Artifact}
+	for _, t := range tl.Images().Tags {
 		if regexpObject.MatchString(t) && t != artifactTag {
-			result = append(result, t)
+			result.Tags = append(result.Tags, t)
 		}
 	}
 
@@ -157,12 +160,12 @@ func (tl TagList) newerVersions(artifact Artifact) TagList {
 	pattern = strings.Replace(pattern, regexp.QuoteMeta(artifact.Version), "(.*)", 1)
 	regexpObject := regexp.MustCompile(pattern)
 
-	result := TagList{}
-	for _, t := range tl {
+	result := TagList{Artifact: tl.Artifact}
+	for _, t := range tl.Tags {
 		version := regexpObject.FindStringSubmatch(t)[1]
 
 		if semver.Compare(version, artifact.Version) == +1 {
-			result = append(result, t)
+			result.Tags = append(result.Tags, t)
 		}
 	}
 
@@ -181,12 +184,12 @@ func (tl TagList) newerSoftwareVersions(artifact Artifact, softwarePrefix string
 
 	trimmedVersion := strings.TrimPrefix(artifact.SoftwareVersion, softwarePrefix)
 
-	result := TagList{}
-	for _, t := range tl {
+	result := TagList{Artifact: tl.Artifact}
+	for _, t := range tl.Tags {
 		version := strings.TrimPrefix(regexpObject.FindStringSubmatch(t)[1], softwarePrefix)
 
 		if semver.Compare(version, trimmedVersion) == +1 {
-			result = append(result, t)
+			result.Tags = append(result.Tags, t)
 		}
 	}
 
@@ -217,8 +220,8 @@ func (tl TagList) newerAllVersions(artifact Artifact, softwarePrefix string) Tag
 
 	trimmedSVersion := strings.TrimPrefix(artifact.SoftwareVersion, softwarePrefix)
 
-	result := TagList{}
-	for _, t := range tl {
+	result := TagList{Artifact: tl.Artifact}
+	for _, t := range tl.Tags {
 		matches := regexpObject.FindStringSubmatch(t)
 		version := matches[1]
 		softwareVersion := matches[2]
@@ -230,7 +233,7 @@ func (tl TagList) newerAllVersions(artifact Artifact, softwarePrefix string) Tag
 		// and softwareVersion is not lower than the current
 		// and at least one of the 2 is higher than the current
 		if versionResult >= 0 && sVersionResult >= 0 && versionResult+sVersionResult > 0 {
-			result = append(result, t)
+			result.Tags = append(result.Tags, t)
 		}
 	}
 

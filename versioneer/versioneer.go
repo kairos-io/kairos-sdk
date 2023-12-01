@@ -115,6 +115,14 @@ func (a *Artifact) Tag() (string, error) {
 	return strings.ReplaceAll(commonName, "+", "-"), nil
 }
 
+func (a *Artifact) TagList(registryAndOrg string) (TagList, error) {
+	if a.RegistryInspector == nil {
+		a.RegistryInspector = &DefaultRegistryInspector{}
+	}
+
+	return a.RegistryInspector.TagList(registryAndOrg, a)
+}
+
 func (a *Artifact) commonName() (string, error) {
 	if err := a.Validate(); err != nil {
 		return "", err

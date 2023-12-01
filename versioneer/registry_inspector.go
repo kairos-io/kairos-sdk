@@ -7,19 +7,19 @@ import (
 )
 
 type RegistryInspector interface {
-	TagList(registryAndOrg, repo string) (TagList, error)
+	TagList(registryAndOrg string, artifact *Artifact) (TagList, error)
 }
 
 type DefaultRegistryInspector struct{}
 
-func (i *DefaultRegistryInspector) TagList(registryAndOrg, repo string) (TagList, error) {
-	var tags TagList
+func (i *DefaultRegistryInspector) TagList(registryAndOrg string, artifact *Artifact) (TagList, error) {
 	var err error
+	tl := TagList{Artifact: artifact}
 
-	tags, err = crane.ListTags(fmt.Sprintf("%s/%s", registryAndOrg, repo))
+	tl.Tags, err = crane.ListTags(fmt.Sprintf("%s/%s", registryAndOrg, artifact.Flavor))
 	if err != nil {
-		return tags, err
+		return tl, err
 	}
 
-	return tags, nil
+	return tl, nil
 }

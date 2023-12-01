@@ -10,7 +10,9 @@ var _ = Describe("TagList", func() {
 	var tagList versioneer.TagList
 
 	BeforeEach(func() {
-		tagList = getFakeTags()
+		tagList = versioneer.TagList{
+			Tags: getFakeTags(),
+		}
 	})
 
 	Describe("Images", func() {
@@ -18,9 +20,9 @@ var _ = Describe("TagList", func() {
 			images := tagList.Images()
 
 			// Sanity check, that we didn't filter everything out
-			Expect(len(images)).To(BeNumerically(">", 4))
+			Expect(len(images.Tags)).To(BeNumerically(">", 4))
 
-			expectOnlyImages(images)
+			expectOnlyImages(images.Tags)
 		})
 	})
 
@@ -30,11 +32,11 @@ var _ = Describe("TagList", func() {
 			sortedImages := images.Sorted()
 
 			// Sanity checks
-			Expect(len(images)).To(BeNumerically(">", 4))
-			Expect(len(sortedImages)).To(Equal(len(images)))
+			Expect(len(images.Tags)).To(BeNumerically(">", 4))
+			Expect(len(sortedImages.Tags)).To(Equal(len(images.Tags)))
 
-			Expect(isSorted(images)).To(BeFalse())
-			Expect(isSorted(sortedImages)).To(BeTrue())
+			Expect(isSorted(images.Tags)).To(BeFalse())
+			Expect(isSorted(sortedImages.Tags)).To(BeTrue())
 		})
 	})
 
@@ -44,11 +46,11 @@ var _ = Describe("TagList", func() {
 			rSortedImages := images.RSorted()
 
 			// Sanity checks
-			Expect(len(images)).To(BeNumerically(">", 4))
-			Expect(len(rSortedImages)).To(Equal(len(images)))
+			Expect(len(images.Tags)).To(BeNumerically(">", 4))
+			Expect(len(rSortedImages.Tags)).To(Equal(len(images.Tags)))
 
-			Expect(isRSorted(images)).To(BeFalse())
-			Expect(isRSorted(rSortedImages)).To(BeTrue())
+			Expect(isRSorted(images.Tags)).To(BeFalse())
+			Expect(isRSorted(rSortedImages.Tags)).To(BeTrue())
 		})
 	})
 
@@ -67,9 +69,9 @@ var _ = Describe("TagList", func() {
 		})
 
 		It("returns only tags with different version", func() {
-			otherVersions := tagList.OtherVersions(artifact)
+			tags := tagList.OtherVersions(artifact).Tags
 
-			Expect(otherVersions).To(HaveExactElements(
+			Expect(tags).To(HaveExactElements(
 				"leap-15.5-standard-amd64-generic-v2.4.2-rc2-k3sv1.27.6-k3s1",
 				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.27.6-k3s1"))
 		})
@@ -90,9 +92,9 @@ var _ = Describe("TagList", func() {
 		})
 
 		It("returns only tags with newer Version field (the rest similar)", func() {
-			versions := tagList.NewerVersions(artifact)
+			tags := tagList.NewerVersions(artifact).Tags
 
-			Expect(versions).To(HaveExactElements(
+			Expect(tags).To(HaveExactElements(
 				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.27.6-k3s1"))
 		})
 	})
@@ -112,7 +114,7 @@ var _ = Describe("TagList", func() {
 		})
 
 		It("returns only tags with different SoftwareVersion", func() {
-			tags := tagList.OtherSoftwareVersions(artifact)
+			tags := tagList.OtherSoftwareVersions(artifact).Tags
 
 			Expect(tags).To(HaveExactElements(
 				"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.26.9-k3s1",
@@ -135,7 +137,7 @@ var _ = Describe("TagList", func() {
 		})
 
 		It("returns only tags with newer SoftwareVersion", func() {
-			tags := tagList.NewerSofwareVersions(artifact, "k3s")
+			tags := tagList.NewerSofwareVersions(artifact, "k3s").Tags
 
 			Expect(tags).To(HaveExactElements(
 				"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.28.2-k3s1"))
@@ -157,7 +159,7 @@ var _ = Describe("TagList", func() {
 		})
 
 		It("returns only tags with different Version and/or SoftwareVersion", func() {
-			tags := tagList.OtherAnyVersion(artifact)
+			tags := tagList.OtherAnyVersion(artifact).Tags
 
 			Expect(tags).To(HaveExactElements(
 				"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.26.9-k3s1",
@@ -188,7 +190,7 @@ var _ = Describe("TagList", func() {
 			})
 
 			It("returns only tags with newer Versions and/or SoftwareVersion", func() {
-				tags := tagList.NewerAnyVersion(artifact, "k3s")
+				tags := tagList.NewerAnyVersion(artifact, "k3s").Tags
 
 				Expect(tags).To(HaveExactElements(
 					"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.28.2-k3s1",
@@ -213,7 +215,7 @@ var _ = Describe("TagList", func() {
 			})
 
 			It("returns only tags with newer Versions and/or SoftwareVersion", func() {
-				tags := tagList.NewerAnyVersion(artifact, "k3s")
+				tags := tagList.NewerAnyVersion(artifact, "k3s").Tags
 
 				Expect(tags).To(HaveExactElements(
 					"leap-15.5-core-amd64-generic-v2.4.2-rc2",
@@ -223,7 +225,7 @@ var _ = Describe("TagList", func() {
 	})
 })
 
-func expectOnlyImages(images versioneer.TagList) {
+func expectOnlyImages(images []string) {
 	Expect(images).ToNot(ContainElement(ContainSubstring(".att")))
 	Expect(images).ToNot(ContainElement(ContainSubstring(".sbom")))
 	Expect(images).ToNot(ContainElement(ContainSubstring(".sig")))
@@ -232,7 +234,7 @@ func expectOnlyImages(images versioneer.TagList) {
 	Expect(images).To(HaveEach(MatchRegexp((".*-(core|standard)-(amd64|arm64)-.*-v.*"))))
 }
 
-func isSorted(tl versioneer.TagList) bool {
+func isSorted(tl []string) bool {
 	for i, tag := range tl {
 		if i > 0 {
 			previousTag := tl[i-1]
@@ -245,7 +247,7 @@ func isSorted(tl versioneer.TagList) bool {
 	return true
 }
 
-func isRSorted(tl versioneer.TagList) bool {
+func isRSorted(tl []string) bool {
 	for i, tag := range tl {
 		if i > 0 {
 			previousTag := tl[i-1]
