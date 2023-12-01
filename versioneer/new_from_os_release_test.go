@@ -1,7 +1,6 @@
 package versioneer_test
 
 import (
-	"io/ioutil"
 	"os"
 
 	"github.com/kairos-io/kairos-sdk/versioneer"
@@ -15,7 +14,7 @@ var _ = Describe("NewArtifactFromOSRelease", func() {
 	var osReleaseContent string
 
 	BeforeEach(func() {
-		tmpOSReleaseFile, err = ioutil.TempFile("", "os-release")
+		tmpOSReleaseFile, err = os.CreateTemp("", "os-release")
 		Expect(err).ToNot(HaveOccurred())
 
 		osReleaseContent = "KAIROS_FLAVOR=opensuse\n" +
@@ -26,7 +25,7 @@ var _ = Describe("NewArtifactFromOSRelease", func() {
 			"KAIROS_VERSION=v2.4.2\n" +
 			"KAIROS_SOFTWARE_VERSION=k3sv1.26.9+k3s1\n"
 
-		err = ioutil.WriteFile(tmpOSReleaseFile.Name(), []byte(osReleaseContent), 0644)
+		err = os.WriteFile(tmpOSReleaseFile.Name(), []byte(osReleaseContent), 0644)
 		Expect(err).ToNot(HaveOccurred())
 	})
 

@@ -20,7 +20,8 @@ func getFakeTags() []string {
 	// below and let the default inspector query the quay.io repository.
 	tagsJSON, err := os.ReadFile("assets/test_tags.json")
 	Expect(err).ToNot(HaveOccurred())
-	json.Unmarshal(tagsJSON, &fakeTags)
+	err = json.Unmarshal(tagsJSON, &fakeTags)
+	Expect(err).ToNot(HaveOccurred())
 
 	return fakeTags
 }
