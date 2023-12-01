@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"golang.org/x/mod/semver"
 )
 
 type TagList []string
@@ -63,8 +65,27 @@ func (tl TagList) OtherVersions(artifact Artifact) TagList {
 // NewerVersions returns OtherVersions filtered to only include tags with
 // Version higher than the given artifact's.
 func (tl TagList) NewerVersions(artifact Artifact) TagList {
-	// TODO:
-	return tl
+	otherVersions := tl.OtherVersions(artifact)
+
+	artifactTag, err := artifact.Tag()
+	if err != nil {
+		panic(fmt.Errorf("invalid artifact passed: %w", err))
+	}
+
+	pattern := regexp.QuoteMeta(artifactTag)
+	pattern = strings.Replace(pattern, regexp.QuoteMeta(artifact.Version), "(.*)", 1)
+	regexpObject := regexp.MustCompile(pattern)
+
+	result := TagList{}
+	for _, t := range otherVersions {
+		version := regexpObject.FindStringSubmatch(t)[1]
+
+		if semver.Compare(version, artifact.Version) == +1 {
+			result = append(result, t)
+		}
+	}
+
+	return result
 }
 
 func (tl TagList) Print() {
