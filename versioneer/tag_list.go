@@ -52,7 +52,7 @@ func (tl TagList) OtherVersions(artifact Artifact) TagList {
 func (tl TagList) NewerVersions(artifact Artifact) TagList {
 	tags := tl.OtherVersions(artifact)
 
-	return tags.newerSemver(artifact, artifact.Version, "")
+	return tags.newerVersions(artifact)
 }
 
 // OtherSoftwareVersions returns tags that match all fields of the given Artifact,
@@ -66,10 +66,39 @@ func (tl TagList) OtherSoftwareVersions(artifact Artifact) TagList {
 
 // NewerSofwareVersions returns OtherSoftwareVersions filtered to only include tags with
 // SoftwareVersion higher than the given artifact's.
-func (tl TagList) NewerSofwareVersions(artifact Artifact, trimPrefix string) TagList {
+func (tl TagList) NewerSofwareVersions(artifact Artifact, softwarePrefix string) TagList {
 	tags := tl.OtherSoftwareVersions(artifact)
 
-	return tags.newerSemver(artifact, artifact.SoftwareVersion, trimPrefix)
+	return tags.newerSoftwareVersions(artifact, softwarePrefix)
+}
+
+// OtherAnyVersion returns tags that match all fields of the given Artifact,
+// except the SoftwareVersion and/or Version.
+// Should be used to return tags with newer versions (Kairos or "software")
+// that one could upgrade to.
+// This method returns all versions, not only newer ones. Use NewerAnyVersion to
+// fetch only versions, newer than the one of the Artifact.
+func (tl TagList) OtherAnyVersion(artifact Artifact) TagList {
+	if artifact.SoftwareVersion != "" {
+		return tl.fieldOtherOptions(artifact,
+			fmt.Sprintf("%s-%s", artifact.Version, artifact.SoftwareVersion))
+	} else {
+		return tl.fieldOtherOptions(artifact, artifact.Version)
+	}
+}
+
+// NewerAnyVersion returns OtherAnyVersion filtered to only include tags with
+// Version and SoftwareVersion equal or higher than the given artifact's.
+// At least one of the 2 versions will be higher than the current one.
+// Splitting the 2 versions is done using the softwarePrefix (first encountered,
+// because our tags have a "k3s1" in the end too)
+func (tl TagList) NewerAnyVersion(artifact Artifact, softwarePrefix string) TagList {
+	tags := tl.OtherAnyVersion(artifact)
+	if artifact.SoftwareVersion != "" {
+		return tags.newerAllVersions(artifact, softwarePrefix)
+	} else {
+		return tags.newerVersions(artifact)
+	}
 }
 
 func (tl TagList) Print() {
@@ -118,25 +147,89 @@ func (tl TagList) fieldOtherOptions(artifact Artifact, field string) TagList {
 	return result
 }
 
-// stripPrefix is a hack because the k3s version in Kairos artifacts appears as
-// "k3sv1.26.9-k3s1" in which the prefix "k3s" makes it an invalid semver.
-func (tl TagList) newerSemver(artifact Artifact, field, stripPrefix string) TagList {
+func (tl TagList) newerVersions(artifact Artifact) TagList {
 	artifactTag, err := artifact.Tag()
 	if err != nil {
 		panic(fmt.Errorf("invalid artifact passed: %w", err))
 	}
 
 	pattern := regexp.QuoteMeta(artifactTag)
-	pattern = strings.Replace(pattern, regexp.QuoteMeta(field), "(.*)", 1)
+	pattern = strings.Replace(pattern, regexp.QuoteMeta(artifact.Version), "(.*)", 1)
 	regexpObject := regexp.MustCompile(pattern)
-
-	trimmedField := strings.TrimPrefix(field, stripPrefix)
 
 	result := TagList{}
 	for _, t := range tl {
-		version := strings.TrimPrefix(regexpObject.FindStringSubmatch(t)[1], stripPrefix)
+		version := regexpObject.FindStringSubmatch(t)[1]
 
-		if semver.Compare(version, trimmedField) == +1 {
+		if semver.Compare(version, artifact.Version) == +1 {
+			result = append(result, t)
+		}
+	}
+
+	return result
+}
+
+func (tl TagList) newerSoftwareVersions(artifact Artifact, softwarePrefix string) TagList {
+	artifactTag, err := artifact.Tag()
+	if err != nil {
+		panic(fmt.Errorf("invalid artifact passed: %w", err))
+	}
+
+	pattern := regexp.QuoteMeta(artifactTag)
+	pattern = strings.Replace(pattern, regexp.QuoteMeta(artifact.SoftwareVersion), "(.*)", 1)
+	regexpObject := regexp.MustCompile(pattern)
+
+	trimmedVersion := strings.TrimPrefix(artifact.SoftwareVersion, softwarePrefix)
+
+	result := TagList{}
+	for _, t := range tl {
+		version := strings.TrimPrefix(regexpObject.FindStringSubmatch(t)[1], softwarePrefix)
+
+		if semver.Compare(version, trimmedVersion) == +1 {
+			result = append(result, t)
+		}
+	}
+
+	return result
+}
+
+// softwarePrefix is what separates the Version from SoftwareVersion in the tag.
+// It has to be removed for the SoftwareVersion to be valid semver.
+// E.g. "k3sv1.26.9-k3s1"
+func (tl TagList) newerAllVersions(artifact Artifact, softwarePrefix string) TagList {
+	artifactTag, err := artifact.Tag()
+	if err != nil {
+		panic(fmt.Errorf("invalid artifact passed: %w", err))
+	}
+	pattern := regexp.QuoteMeta(artifactTag)
+
+	// Example result:
+	// leap-15\.5-standard-amd64-generic-(.*?)-k3sv1.27.6-k3s1
+	pattern = strings.Replace(pattern, regexp.QuoteMeta(artifact.Version), "(.*?)", 1)
+
+	// Example result:
+	// leap-15\.5-standard-amd64-generic-(.*?)-k3s(.*)
+	pattern = strings.Replace(pattern,
+		regexp.QuoteMeta(strings.TrimPrefix(artifact.SoftwareVersion, softwarePrefix)),
+		"(.*)", 1)
+
+	regexpObject := regexp.MustCompile(pattern)
+
+	trimmedSVersion := strings.TrimPrefix(artifact.SoftwareVersion, softwarePrefix)
+
+	result := TagList{}
+	for _, t := range tl {
+		matches := regexpObject.FindStringSubmatch(t)
+		version := matches[1]
+		softwareVersion := matches[2]
+
+		versionResult := semver.Compare(version, artifact.Version)
+		sVersionResult := semver.Compare(softwareVersion, trimmedSVersion)
+
+		// If version is not lower than the current
+		// and softwareVersion is not lower than the current
+		// and at least one of the 2 is higher than the current
+		if versionResult >= 0 && sVersionResult >= 0 && versionResult+sVersionResult > 0 {
 			result = append(result, t)
 		}
 	}

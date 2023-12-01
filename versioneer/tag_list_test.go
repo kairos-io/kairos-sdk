@@ -134,11 +134,91 @@ var _ = Describe("TagList", func() {
 			}
 		})
 
-		It("returns only tags with different SoftwareVersion", func() {
+		It("returns only tags with newer SoftwareVersion", func() {
 			tags := tagList.NewerSofwareVersions(artifact, "k3s")
 
 			Expect(tags).To(HaveExactElements(
 				"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.28.2-k3s1"))
+		})
+	})
+
+	Describe("OtherAnyVersion", func() {
+		var artifact versioneer.Artifact
+		BeforeEach(func() {
+			artifact = versioneer.Artifact{
+				Flavor:          "opensuse",
+				FlavorRelease:   "leap-15.5",
+				Variant:         "standard",
+				Model:           "generic",
+				Arch:            "amd64",
+				Version:         "v2.4.2-rc1",
+				SoftwareVersion: "k3sv1.27.6-k3s1",
+			}
+		})
+
+		It("returns only tags with different Version and/or SoftwareVersion", func() {
+			tags := tagList.OtherAnyVersion(artifact)
+
+			Expect(tags).To(HaveExactElements(
+				"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.26.9-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.28.2-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-rc2-k3sv1.28.2-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-rc2-k3sv1.26.9-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-rc2-k3sv1.27.6-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.27.6-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.26.9-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.28.2-k3s1"))
+		})
+	})
+
+	Describe("NewerAnyVersion", func() {
+		var artifact versioneer.Artifact
+		When("artifact has SoftwareVersion", func() {
+
+			BeforeEach(func() {
+				artifact = versioneer.Artifact{
+					Flavor:          "opensuse",
+					FlavorRelease:   "leap-15.5",
+					Variant:         "standard",
+					Model:           "generic",
+					Arch:            "amd64",
+					Version:         "v2.4.2-rc1",
+					SoftwareVersion: "k3sv1.27.6-k3s1",
+				}
+			})
+
+			It("returns only tags with newer Versions and/or SoftwareVersion", func() {
+				tags := tagList.NewerAnyVersion(artifact, "k3s")
+
+				Expect(tags).To(HaveExactElements(
+					"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.28.2-k3s1",
+					"leap-15.5-standard-amd64-generic-v2.4.2-rc2-k3sv1.28.2-k3s1",
+					"leap-15.5-standard-amd64-generic-v2.4.2-rc2-k3sv1.27.6-k3s1",
+					"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.27.6-k3s1",
+					"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.28.2-k3s1"))
+			})
+		})
+
+		When("artifact has no SoftwareVersion", func() {
+			BeforeEach(func() {
+				artifact = versioneer.Artifact{
+					Flavor:          "opensuse",
+					FlavorRelease:   "leap-15.5",
+					Variant:         "core",
+					Model:           "generic",
+					Arch:            "amd64",
+					Version:         "v2.4.2-rc1",
+					SoftwareVersion: "",
+				}
+			})
+
+			It("returns only tags with newer Versions and/or SoftwareVersion", func() {
+				tags := tagList.NewerAnyVersion(artifact, "k3s")
+
+				Expect(tags).To(HaveExactElements(
+					"leap-15.5-core-amd64-generic-v2.4.2-rc2",
+					"leap-15.5-core-amd64-generic-v2.4.2"))
+			})
 		})
 	})
 })
