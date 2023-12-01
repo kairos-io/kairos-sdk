@@ -55,9 +55,8 @@ var _ = Describe("TagList", func() {
 	})
 
 	Describe("OtherVersions", func() {
-		var artifact versioneer.Artifact
 		BeforeEach(func() {
-			artifact = versioneer.Artifact{
+			tagList.Artifact = &versioneer.Artifact{
 				Flavor:          "opensuse",
 				FlavorRelease:   "leap-15.5",
 				Variant:         "standard",
@@ -69,7 +68,7 @@ var _ = Describe("TagList", func() {
 		})
 
 		It("returns only tags with different version", func() {
-			tags := tagList.OtherVersions(artifact).Tags
+			tags := tagList.OtherVersions().Tags
 
 			Expect(tags).To(HaveExactElements(
 				"leap-15.5-standard-amd64-generic-v2.4.2-rc2-k3sv1.27.6-k3s1",
@@ -78,9 +77,8 @@ var _ = Describe("TagList", func() {
 	})
 
 	Describe("NewerVersions", func() {
-		var artifact versioneer.Artifact
 		BeforeEach(func() {
-			artifact = versioneer.Artifact{
+			tagList.Artifact = &versioneer.Artifact{
 				Flavor:          "opensuse",
 				FlavorRelease:   "leap-15.5",
 				Variant:         "standard",
@@ -92,7 +90,7 @@ var _ = Describe("TagList", func() {
 		})
 
 		It("returns only tags with newer Version field (the rest similar)", func() {
-			tags := tagList.NewerVersions(artifact).Tags
+			tags := tagList.NewerVersions().Tags
 
 			Expect(tags).To(HaveExactElements(
 				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.27.6-k3s1"))
@@ -100,9 +98,8 @@ var _ = Describe("TagList", func() {
 	})
 
 	Describe("OtherSoftwareVersions", func() {
-		var artifact versioneer.Artifact
 		BeforeEach(func() {
-			artifact = versioneer.Artifact{
+			tagList.Artifact = &versioneer.Artifact{
 				Flavor:          "opensuse",
 				FlavorRelease:   "leap-15.5",
 				Variant:         "standard",
@@ -114,7 +111,7 @@ var _ = Describe("TagList", func() {
 		})
 
 		It("returns only tags with different SoftwareVersion", func() {
-			tags := tagList.OtherSoftwareVersions(artifact).Tags
+			tags := tagList.OtherSoftwareVersions().Tags
 
 			Expect(tags).To(HaveExactElements(
 				"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.26.9-k3s1",
@@ -123,9 +120,8 @@ var _ = Describe("TagList", func() {
 	})
 
 	Describe("NewerSofwareVersions", func() {
-		var artifact versioneer.Artifact
 		BeforeEach(func() {
-			artifact = versioneer.Artifact{
+			tagList.Artifact = &versioneer.Artifact{
 				Flavor:          "opensuse",
 				FlavorRelease:   "leap-15.5",
 				Variant:         "standard",
@@ -137,7 +133,7 @@ var _ = Describe("TagList", func() {
 		})
 
 		It("returns only tags with newer SoftwareVersion", func() {
-			tags := tagList.NewerSofwareVersions(artifact, "k3s").Tags
+			tags := tagList.NewerSofwareVersions("k3s").Tags
 
 			Expect(tags).To(HaveExactElements(
 				"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.28.2-k3s1"))
@@ -145,9 +141,8 @@ var _ = Describe("TagList", func() {
 	})
 
 	Describe("OtherAnyVersion", func() {
-		var artifact versioneer.Artifact
 		BeforeEach(func() {
-			artifact = versioneer.Artifact{
+			tagList.Artifact = &versioneer.Artifact{
 				Flavor:          "opensuse",
 				FlavorRelease:   "leap-15.5",
 				Variant:         "standard",
@@ -159,7 +154,7 @@ var _ = Describe("TagList", func() {
 		})
 
 		It("returns only tags with different Version and/or SoftwareVersion", func() {
-			tags := tagList.OtherAnyVersion(artifact).Tags
+			tags := tagList.OtherAnyVersion().Tags
 
 			Expect(tags).To(HaveExactElements(
 				"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.26.9-k3s1",
@@ -174,11 +169,9 @@ var _ = Describe("TagList", func() {
 	})
 
 	Describe("NewerAnyVersion", func() {
-		var artifact versioneer.Artifact
 		When("artifact has SoftwareVersion", func() {
-
 			BeforeEach(func() {
-				artifact = versioneer.Artifact{
+				tagList.Artifact = &versioneer.Artifact{
 					Flavor:          "opensuse",
 					FlavorRelease:   "leap-15.5",
 					Variant:         "standard",
@@ -190,7 +183,7 @@ var _ = Describe("TagList", func() {
 			})
 
 			It("returns only tags with newer Versions and/or SoftwareVersion", func() {
-				tags := tagList.NewerAnyVersion(artifact, "k3s").Tags
+				tags := tagList.NewerAnyVersion("k3s").Tags
 
 				Expect(tags).To(HaveExactElements(
 					"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.28.2-k3s1",
@@ -203,7 +196,7 @@ var _ = Describe("TagList", func() {
 
 		When("artifact has no SoftwareVersion", func() {
 			BeforeEach(func() {
-				artifact = versioneer.Artifact{
+				tagList.Artifact = &versioneer.Artifact{
 					Flavor:          "opensuse",
 					FlavorRelease:   "leap-15.5",
 					Variant:         "core",
@@ -215,7 +208,7 @@ var _ = Describe("TagList", func() {
 			})
 
 			It("returns only tags with newer Versions and/or SoftwareVersion", func() {
-				tags := tagList.NewerAnyVersion(artifact, "k3s").Tags
+				tags := tagList.NewerAnyVersion("k3s").Tags
 
 				Expect(tags).To(HaveExactElements(
 					"leap-15.5-core-amd64-generic-v2.4.2-rc2",
