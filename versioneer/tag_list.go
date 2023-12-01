@@ -82,3 +82,13 @@ func (tl TagList) Sorted() TagList {
 
 	return newTl
 }
+
+// RSorted returns the TagList in the reverse order of Sorted
+// This means higher versions come first.
+func (tl TagList) RSorted() TagList {
+	newTl := make(TagList, len(tl))
+	copy(newTl, tl)
+	sort.Sort(sort.Reverse(newTl))
+
+	return newTl
+}

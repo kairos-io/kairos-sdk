@@ -38,6 +38,20 @@ var _ = Describe("TagList", func() {
 		})
 	})
 
+	Describe("RSorted", func() {
+		It("returns tags in reverse alphabetical order", func() {
+			images := tagList.Images()
+			rSortedImages := images.RSorted()
+
+			// Sanity checks
+			Expect(len(images)).To(BeNumerically(">", 4))
+			Expect(len(rSortedImages)).To(Equal(len(images)))
+
+			Expect(isRSorted(images)).To(BeFalse())
+			Expect(isRSorted(rSortedImages)).To(BeTrue())
+		})
+	})
+
 	Describe("OtherVersions", func() {
 		var artifact versioneer.Artifact
 		BeforeEach(func() {
@@ -47,7 +61,7 @@ var _ = Describe("TagList", func() {
 				Variant:         "standard",
 				Model:           "generic",
 				Arch:            "amd64",
-				Version:         "v2.4.2",
+				Version:         "v2.4.2-rc1",
 				SoftwareVersion: "k3sv1.27.6-k3s1",
 			}
 		})
@@ -56,8 +70,8 @@ var _ = Describe("TagList", func() {
 			otherVersions := tagList.OtherVersions(artifact)
 
 			Expect(otherVersions).To(HaveExactElements(
-				"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.27.6-k3s1",
-				"leap-15.5-standard-amd64-generic-v2.4.2-rc2-k3sv1.27.6-k3s1"))
+				"leap-15.5-standard-amd64-generic-v2.4.2-rc2-k3sv1.27.6-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.27.6-k3s1"))
 		})
 	})
 })
@@ -76,6 +90,19 @@ func isSorted(tl versioneer.TagList) bool {
 		if i > 0 {
 			previousTag := tl[i-1]
 			if previousTag > tag {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func isRSorted(tl versioneer.TagList) bool {
+	for i, tag := range tl {
+		if i > 0 {
+			previousTag := tl[i-1]
+			if previousTag < tag {
 				return false
 			}
 		}
