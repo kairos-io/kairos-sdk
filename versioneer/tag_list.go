@@ -38,54 +38,38 @@ func (tl TagList) Images() TagList {
 	return result
 }
 
-// OtherVersions returns tags that all fields of the given Artifact, except the
-// Version. Should be used to return other possible versions for the same
+// OtherVersions returns tags that match all fields of the given Artifact,
+// except the Version. Should be used to return other possible versions for the same
 // Kairos image (e.g. that one could upgrade to).
-// NOTE: Returns all versions, not only newer ones.
+// This method returns all versions, not only newer ones. Use NewerVersions to
+// fetch only versions, newer than the one of the Artifact.
 func (tl TagList) OtherVersions(artifact Artifact) TagList {
-	artifactTag, err := artifact.Tag()
-	if err != nil {
-		panic(fmt.Errorf("invalid artifact passed: %w", err))
-	}
-
-	pattern := regexp.QuoteMeta(artifactTag)
-	pattern = strings.Replace(pattern, regexp.QuoteMeta(artifact.Version), ".*", 1)
-	regexpObject := regexp.MustCompile(pattern)
-
-	result := TagList{}
-	for _, t := range tl.Images() {
-		if regexpObject.MatchString(t) && t != artifactTag {
-			result = append(result, t)
-		}
-	}
-
-	return result
+	return tl.fieldOtherOptions(artifact, artifact.Version)
 }
 
 // NewerVersions returns OtherVersions filtered to only include tags with
 // Version higher than the given artifact's.
 func (tl TagList) NewerVersions(artifact Artifact) TagList {
-	otherVersions := tl.OtherVersions(artifact)
+	tags := tl.OtherVersions(artifact)
 
-	artifactTag, err := artifact.Tag()
-	if err != nil {
-		panic(fmt.Errorf("invalid artifact passed: %w", err))
-	}
+	return tags.newerSemver(artifact, artifact.Version, "")
+}
 
-	pattern := regexp.QuoteMeta(artifactTag)
-	pattern = strings.Replace(pattern, regexp.QuoteMeta(artifact.Version), "(.*)", 1)
-	regexpObject := regexp.MustCompile(pattern)
+// OtherSoftwareVersions returns tags that match all fields of the given Artifact,
+// except the SoftwareVersion. Should be used to return other possible software versions
+// for the same Kairos image (e.g. that one could upgrade to).
+// This method returns all versions, not only newer ones. Use NewerSofwareVersions to
+// fetch only versions, newer than the one of the Artifact.
+func (tl TagList) OtherSoftwareVersions(artifact Artifact) TagList {
+	return tl.fieldOtherOptions(artifact, artifact.SoftwareVersion)
+}
 
-	result := TagList{}
-	for _, t := range otherVersions {
-		version := regexpObject.FindStringSubmatch(t)[1]
+// NewerSofwareVersions returns OtherSoftwareVersions filtered to only include tags with
+// SoftwareVersion higher than the given artifact's.
+func (tl TagList) NewerSofwareVersions(artifact Artifact, trimPrefix string) TagList {
+	tags := tl.OtherSoftwareVersions(artifact)
 
-		if semver.Compare(version, artifact.Version) == +1 {
-			result = append(result, t)
-		}
-	}
-
-	return result
+	return tags.newerSemver(artifact, artifact.SoftwareVersion, trimPrefix)
 }
 
 func (tl TagList) Print() {
@@ -112,4 +96,50 @@ func (tl TagList) RSorted() TagList {
 	sort.Sort(sort.Reverse(newTl))
 
 	return newTl
+}
+
+func (tl TagList) fieldOtherOptions(artifact Artifact, field string) TagList {
+	artifactTag, err := artifact.Tag()
+	if err != nil {
+		panic(fmt.Errorf("invalid artifact passed: %w", err))
+	}
+
+	pattern := regexp.QuoteMeta(artifactTag)
+	pattern = strings.Replace(pattern, regexp.QuoteMeta(field), ".*", 1)
+	regexpObject := regexp.MustCompile(pattern)
+
+	result := TagList{}
+	for _, t := range tl.Images() {
+		if regexpObject.MatchString(t) && t != artifactTag {
+			result = append(result, t)
+		}
+	}
+
+	return result
+}
+
+// stripPrefix is a hack because the k3s version in Kairos artifacts appears as
+// "k3sv1.26.9-k3s1" in which the prefix "k3s" makes it an invalid semver.
+func (tl TagList) newerSemver(artifact Artifact, field, stripPrefix string) TagList {
+	artifactTag, err := artifact.Tag()
+	if err != nil {
+		panic(fmt.Errorf("invalid artifact passed: %w", err))
+	}
+
+	pattern := regexp.QuoteMeta(artifactTag)
+	pattern = strings.Replace(pattern, regexp.QuoteMeta(field), "(.*)", 1)
+	regexpObject := regexp.MustCompile(pattern)
+
+	trimmedField := strings.TrimPrefix(field, stripPrefix)
+
+	result := TagList{}
+	for _, t := range tl {
+		version := strings.TrimPrefix(regexpObject.FindStringSubmatch(t)[1], stripPrefix)
+
+		if semver.Compare(version, trimmedField) == +1 {
+			result = append(result, t)
+		}
+	}
+
+	return result
 }
