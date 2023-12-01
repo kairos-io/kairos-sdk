@@ -3,10 +3,18 @@ package versioneer
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 )
 
 type TagList []string
+
+// implements sort.Interface for TagList
+func (tl TagList) Len() int      { return len(tl) }
+func (tl TagList) Swap(i, j int) { tl[i], tl[j] = tl[j], tl[i] }
+func (tl TagList) Less(i, j int) bool {
+	return tl[i] < tl[j]
+}
 
 // Images returns only tags that represent images, skipping tags representing:
 // - sbom
@@ -19,8 +27,7 @@ func (tl TagList) Images() TagList {
 
 	result := TagList{}
 	for _, t := range tl {
-		// We have to filter "-img" tags outside the regexp because golang regexp
-		// doesn't support negative lookaheads.
+		// We have to filter "-img" tags outside the regexp because golang regexp doesn't support negative lookaheads.
 		if regexpObject.MatchString(t) && !strings.HasSuffix(t, "-img") {
 			result = append(result, t)
 		}
@@ -60,13 +67,18 @@ func (tl TagList) NewerVersions(artifact Artifact) TagList {
 	return tl
 }
 
-// SemverSorted returns the TagList sorted:
-// - alphabetically for all non-version fields
-// - Sorted by highest Version first and then by highest SoftwareVersion first
-func (tl TagList) SemverSorted(artifact Artifact) TagList {
-	// TODO:
-	// - Implement this method
-	// - Use it in all methods above to return sorted results
-	// - Adapt test to check that the results are always sorted
-	return tl
+func (tl TagList) Print() {
+	for _, t := range tl {
+		fmt.Println(t)
+	}
+}
+
+// Sorted returns the TagList sorted alphabetically
+// This means lower versions come first.
+func (tl TagList) Sorted() TagList {
+	newTl := make(TagList, len(tl))
+	copy(newTl, tl)
+	sort.Sort(newTl)
+
+	return newTl
 }

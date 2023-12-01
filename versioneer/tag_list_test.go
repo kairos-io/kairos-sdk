@@ -24,6 +24,20 @@ var _ = Describe("TagList", func() {
 		})
 	})
 
+	Describe("Sorted", func() {
+		It("returns tags sorted alphabetically", func() {
+			images := tagList.Images()
+			sortedImages := images.Sorted()
+
+			// Sanity checks
+			Expect(len(images)).To(BeNumerically(">", 4))
+			Expect(len(sortedImages)).To(Equal(len(images)))
+
+			Expect(isSorted(images)).To(BeFalse())
+			Expect(isSorted(sortedImages)).To(BeTrue())
+		})
+	})
+
 	Describe("OtherVersions", func() {
 		var artifact versioneer.Artifact
 		BeforeEach(func() {
@@ -55,4 +69,17 @@ func expectOnlyImages(images versioneer.TagList) {
 	Expect(images).ToNot(ContainElement(ContainSubstring("-img")))
 
 	Expect(images).To(HaveEach(MatchRegexp((".*-(core|standard)-(amd64|arm64)-.*-v.*"))))
+}
+
+func isSorted(tl versioneer.TagList) bool {
+	for i, tag := range tl {
+		if i > 0 {
+			previousTag := tl[i-1]
+			if previousTag > tag {
+				return false
+			}
+		}
+	}
+
+	return true
 }
