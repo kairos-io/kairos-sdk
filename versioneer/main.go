@@ -89,6 +89,33 @@ func main() {
 					return nil
 				},
 			},
+			{
+				Name:  "bootable-artifact-name",
+				Usage: "generates a name for bootable artifacts (e.g. iso files)",
+				Flags: []cli.Flag{
+					flavorFlag, flavorReleaseFlag, variantFlag, modelFlag, archFlag,
+					versionFlag, softwareVersionFlag,
+				},
+				Action: func(cCtx *cli.Context) error {
+					a := versioneer.Artifact{
+						Flavor:          cCtx.String(flavorFlag.Name),
+						FlavorRelease:   cCtx.String(flavorReleaseFlag.Name),
+						Variant:         cCtx.String(variantFlag.Name),
+						Model:           cCtx.String(modelFlag.Name),
+						Arch:            cCtx.String(archFlag.Name),
+						Version:         cCtx.String(versionFlag.Name),
+						SoftwareVersion: cCtx.String(softwareVersionFlag.Name),
+					}
+
+					result, err := a.BootableName()
+					if err != nil {
+						return err
+					}
+					fmt.Println(result)
+
+					return nil
+				},
+			},
 		},
 	}
 
