@@ -81,7 +81,7 @@ func (a *Artifact) Validate() error {
 }
 
 func (a *Artifact) BootableName() (string, error) {
-	commonName, err := a.commonName()
+	commonName, err := a.commonVersionedName()
 	if err != nil {
 		return "", err
 	}
@@ -106,8 +106,29 @@ func (a *Artifact) ContainerName(registryAndOrg string) (string, error) {
 	return fmt.Sprintf("%s/%s:%s", registryAndOrg, a.Flavor, tag), nil
 }
 
+func (a *Artifact) BaseContainerName(registryAndOrg, id string) (string, error) {
+	if a.Flavor == "" {
+		return "", errors.New("Flavor is empty")
+	}
+
+	if id == "" {
+		return "", errors.New("no id passed")
+	}
+
+	tag, err := a.BaseTag()
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s/%s:%s-%s", registryAndOrg, a.Flavor, tag, id), nil
+}
+
+func (a *Artifact) BaseTag() (string, error) {
+	return a.commonName()
+}
+
 func (a *Artifact) Tag() (string, error) {
-	commonName, err := a.commonName()
+	commonName, err := a.commonVersionedName()
 	if err != nil {
 		return commonName, err
 	}
@@ -128,8 +149,19 @@ func (a *Artifact) commonName() (string, error) {
 		return "", err
 	}
 
-	result := fmt.Sprintf("%s-%s-%s-%s-%s",
-		a.FlavorRelease, a.Variant, a.Arch, a.Model, a.Version)
+	result := fmt.Sprintf("%s-%s-%s-%s",
+		a.FlavorRelease, a.Variant, a.Arch, a.Model)
+
+	return result, nil
+}
+
+func (a *Artifact) commonVersionedName() (string, error) {
+	result, err := a.commonName()
+	if err != nil {
+		return result, err
+	}
+
+	result = fmt.Sprintf("%s-%s", result, a.Version)
 
 	if a.SoftwareVersion != "" {
 		result = fmt.Sprintf("%s-%s", result, a.SoftwareVersion)
