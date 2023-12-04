@@ -74,9 +74,6 @@ func (a *Artifact) Validate() error {
 	if a.Arch == "" {
 		return errors.New("Arch is empty")
 	}
-	if a.Version == "" {
-		return errors.New("Version is empty")
-	}
 	return nil
 }
 
@@ -156,6 +153,10 @@ func (a *Artifact) commonName() (string, error) {
 }
 
 func (a *Artifact) commonVersionedName() (string, error) {
+	if a.Version == "" {
+		return "", errors.New("Version is empty")
+	}
+
 	result, err := a.commonName()
 	if err != nil {
 		return result, err

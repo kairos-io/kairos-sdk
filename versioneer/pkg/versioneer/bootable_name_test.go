@@ -49,11 +49,11 @@ var _ = Describe("BootableName", func() {
 
 	When("artifact is invalid", func() {
 		BeforeEach(func() {
-			artifact.Flavor = ""
+			artifact.Version = ""
 		})
 		It("returns an error", func() {
 			_, err := artifact.BootableName()
-			Expect(err).To(MatchError("Flavor is empty"))
+			Expect(err).To(MatchError("Version is empty"))
 		})
 	})
 })

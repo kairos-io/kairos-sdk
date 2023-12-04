@@ -57,6 +57,12 @@ var (
 		Value: "",
 		Usage: "the container registry and org (e.g. \"quay.io/kairos\")",
 	}
+
+	idFlag *cli.StringFlag = &cli.StringFlag{
+		Name:  "id",
+		Value: "",
+		Usage: "a identifier for the artifact (e.g. \"master\")",
+	}
 )
 
 func main() {
@@ -108,6 +114,32 @@ func main() {
 					}
 
 					result, err := a.BootableName()
+					if err != nil {
+						return err
+					}
+					fmt.Println(result)
+
+					return nil
+				},
+			},
+			{
+				Name:  "base-container-artifact-name",
+				Usage: "generates a name for base (not yet Kairos) images",
+				Flags: []cli.Flag{
+					flavorFlag, flavorReleaseFlag, variantFlag, modelFlag, archFlag,
+					registryAndOrgFlag, idFlag,
+				},
+				Action: func(cCtx *cli.Context) error {
+					a := versioneer.Artifact{
+						Flavor:        cCtx.String(flavorFlag.Name),
+						FlavorRelease: cCtx.String(flavorReleaseFlag.Name),
+						Variant:       cCtx.String(variantFlag.Name),
+						Model:         cCtx.String(modelFlag.Name),
+						Arch:          cCtx.String(archFlag.Name),
+					}
+
+					result, err := a.BaseContainerName(
+						cCtx.String(registryAndOrgFlag.Name), cCtx.String(idFlag.Name))
 					if err != nil {
 						return err
 					}

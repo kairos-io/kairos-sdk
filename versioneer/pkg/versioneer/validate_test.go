@@ -44,9 +44,4 @@ var _ = Describe("Validate", func() {
 		artifact.Arch = ""
 		Expect(artifact.Validate()).To(MatchError("Arch is empty"))
 	})
-
-	It("returns an error when Version is empty", func() {
-		artifact.Version = ""
-		Expect(artifact.Validate()).To(MatchError("Version is empty"))
-	})
 })
