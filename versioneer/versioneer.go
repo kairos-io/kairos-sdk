@@ -193,12 +193,13 @@ func (a *Artifact) OSReleaseVariables(registryAndOrg, githubRepo, bugURL, homeUR
 		"KAIROS_IMAGE_LABEL": tag,
 		"KAIROS_ARTIFACT":    bootableName,
 		// Actively used variables
-		"KAIROS_FLAVOR":         a.Flavor,
-		"KAIROS_FLAVOR_RELEASE": a.FlavorRelease,
-		"KAIROS_VARIANT":        a.Variant,
-		"KAIROS_MODEL":          a.Model,
-		"KAIROS_ARCH":           a.Arch,
-		"KAIROS_RELEASE":        a.Version,
+		"KAIROS_FLAVOR":           a.Flavor,
+		"KAIROS_FLAVOR_RELEASE":   a.FlavorRelease,
+		"KAIROS_VARIANT":          a.Variant,
+		"KAIROS_MODEL":            a.Model,
+		"KAIROS_ARCH":             a.Arch,
+		"KAIROS_RELEASE":          a.Version,
+		"KAIROS_REGISTRY_AND_ORG": registryAndOrg,
 	}
 	if bugURL != "" {
 		vars["KAIROS_BUG_REPORT_URL"] = bugURL
