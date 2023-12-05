@@ -9,16 +9,16 @@ import (
 	"github.com/kairos-io/kairos-sdk/utils"
 )
 
-// KAIROS_VERSION was already used in os-release and we avoided breaking it
-// for consumers by using a new variable KAIROS_RELEASE instead. But it's the
-// "Artifact.Version".
 const (
+	// KAIROS_VERSION was already used in os-release and we avoided breaking it
+	// for consumers by using a new variable KAIROS_RELEASE instead. But it's the
+	// "Artifact.Version".
+	EnvVarVersion         = "RELEASE"
 	EnvVarFlavor          = "FLAVOR"
 	EnvVarFlavorRelease   = "FLAVOR_RELEASE"
 	EnvVarVariant         = "VARIANT"
 	EnvVarModel           = "MODEL"
 	EnvVarArch            = "ARCH"
-	EnvVarVersion         = "RELEASE"
 	EnvVarSoftwareVersion = "SOFTWARE_VERSION"
 	EnvVarRegistryAndOrg  = "REGISTRY_AND_ORG"
 	EnvVarID              = "ID"

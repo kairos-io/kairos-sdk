@@ -22,7 +22,7 @@ var _ = Describe("NewArtifactFromOSRelease", func() {
 			"KAIROS_VARIANT=standard\n" +
 			"KAIROS_ARCH=amd64\n" +
 			"KAIROS_MODEL=generic\n" +
-			"KAIROS_VERSION=v2.4.2\n" +
+			"KAIROS_RELEASE=v2.4.2\n" +
 			"KAIROS_SOFTWARE_VERSION=k3sv1.26.9+k3s1\n"
 
 		err = os.WriteFile(tmpOSReleaseFile.Name(), []byte(osReleaseContent), 0644)
