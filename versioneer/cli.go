@@ -8,57 +8,66 @@ import (
 
 var (
 	flavorFlag *cli.StringFlag = &cli.StringFlag{
-		Name:  "flavor",
-		Value: "",
-		Usage: "the OS flavor (e.g. opensuse)",
+		Name:    "flavor",
+		Value:   "",
+		Usage:   "the OS flavor (e.g. opensuse)",
+		EnvVars: []string{EnvVarFlavor},
 	}
 
 	flavorReleaseFlag *cli.StringFlag = &cli.StringFlag{
-		Name:  "flavor-release",
-		Value: "",
-		Usage: "the OS flavor release (e.g. leap-15.5)",
+		Name:    "flavor-release",
+		Value:   "",
+		Usage:   "the OS flavor release (e.g. leap-15.5)",
+		EnvVars: []string{EnvVarFlavorRelease},
 	}
 
 	variantFlag *cli.StringFlag = &cli.StringFlag{
-		Name:  "variant",
-		Value: "",
-		Usage: "the Kairos variant (core, standard)",
+		Name:    "variant",
+		Value:   "",
+		Usage:   "the Kairos variant (core, standard)",
+		EnvVars: []string{EnvVarVariant},
 	}
 
 	modelFlag *cli.StringFlag = &cli.StringFlag{
-		Name:  "model",
-		Value: "",
-		Usage: "the model for which the OS was built (e.g. rpi4)",
+		Name:    "model",
+		Value:   "",
+		Usage:   "the model for which the OS was built (e.g. rpi4)",
+		EnvVars: []string{EnvVarModel},
 	}
 
 	archFlag *cli.StringFlag = &cli.StringFlag{
-		Name:  "arch",
-		Value: "",
-		Usage: "the architecture of the OS",
+		Name:    "arch",
+		Value:   "",
+		Usage:   "the architecture of the OS",
+		EnvVars: []string{EnvVarArch},
 	}
 
 	versionFlag *cli.StringFlag = &cli.StringFlag{
-		Name:  "version",
-		Value: "",
-		Usage: "the Kairos version (e.g. v2.4.2)",
+		Name:    "version",
+		Value:   "",
+		Usage:   "the Kairos version (e.g. v2.4.2)",
+		EnvVars: []string{EnvVarVersion},
 	}
 
 	softwareVersionFlag *cli.StringFlag = &cli.StringFlag{
-		Name:  "software-version",
-		Value: "",
-		Usage: "the software version (e.g. k3sv1.28.2+k3s1)",
+		Name:    "software-version",
+		Value:   "",
+		Usage:   "the software version (e.g. k3sv1.28.2+k3s1)",
+		EnvVars: []string{EnvVarSoftwareVersion},
 	}
 
 	registryAndOrgFlag *cli.StringFlag = &cli.StringFlag{
-		Name:  "registry-and-org",
-		Value: "",
-		Usage: "the container registry and org (e.g. \"quay.io/kairos\")",
+		Name:    "registry-and-org",
+		Value:   "",
+		Usage:   "the container registry and org (e.g. \"quay.io/kairos\")",
+		EnvVars: []string{EnvVarRegistryAndOrg},
 	}
 
 	idFlag *cli.StringFlag = &cli.StringFlag{
-		Name:  "id",
-		Value: "",
-		Usage: "a identifier for the artifact (e.g. \"master\")",
+		Name:    "id",
+		Value:   "",
+		Usage:   "a identifier for the artifact (e.g. \"master\")",
+		EnvVars: []string{EnvVarID},
 	}
 )
 

@@ -9,6 +9,18 @@ import (
 	"github.com/kairos-io/kairos-sdk/utils"
 )
 
+const (
+	EnvVarFlavor          = "FLAVOR"
+	EnvVarFlavorRelease   = "FLAVOR_RELEASE"
+	EnvVarVariant         = "VARIANT"
+	EnvVarModel           = "MODEL"
+	EnvVarArch            = "ARCH"
+	EnvVarVersion         = "VERSION"
+	EnvVarSoftwareVersion = "SOFTWARE_VERSION"
+	EnvVarRegistryAndOrg  = "REGISTRY_AND_ORG"
+	EnvVarID              = "ID"
+)
+
 type Artifact struct {
 	Flavor            string
 	FlavorRelease     string
@@ -36,25 +48,25 @@ func NewArtifactFromOSRelease(file ...string) (*Artifact, error) {
 	var err error
 	result := Artifact{}
 
-	if result.Flavor, err = utils.OSRelease("FLAVOR", file...); err != nil {
+	if result.Flavor, err = utils.OSRelease(EnvVarFlavor, file...); err != nil {
 		return nil, err
 	}
-	if result.FlavorRelease, err = utils.OSRelease("FLAVOR_RELEASE", file...); err != nil {
+	if result.FlavorRelease, err = utils.OSRelease(EnvVarFlavorRelease, file...); err != nil {
 		return nil, err
 	}
-	if result.Variant, err = utils.OSRelease("VARIANT", file...); err != nil {
+	if result.Variant, err = utils.OSRelease(EnvVarVariant, file...); err != nil {
 		return nil, err
 	}
-	if result.Model, err = utils.OSRelease("MODEL", file...); err != nil {
+	if result.Model, err = utils.OSRelease(EnvVarModel, file...); err != nil {
 		return nil, err
 	}
-	if result.Arch, err = utils.OSRelease("ARCH", file...); err != nil {
+	if result.Arch, err = utils.OSRelease(EnvVarArch, file...); err != nil {
 		return nil, err
 	}
-	if result.Version, err = utils.OSRelease("VERSION", file...); err != nil {
+	if result.Version, err = utils.OSRelease(EnvVarVersion, file...); err != nil {
 		return nil, err
 	}
-	if result.SoftwareVersion, err = utils.OSRelease("SOFTWARE_VERSION", file...); err != nil {
+	if result.SoftwareVersion, err = utils.OSRelease(EnvVarSoftwareVersion, file...); err != nil {
 		return nil, err
 	}
 
