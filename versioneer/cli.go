@@ -102,15 +102,7 @@ func CliCommands() []*cli.Command {
 				versionFlag, softwareVersionFlag, registryAndOrgFlag,
 			},
 			Action: func(cCtx *cli.Context) error {
-				a := Artifact{
-					Flavor:          flavorFlag.Get(cCtx),
-					FlavorRelease:   flavorReleaseFlag.Get(cCtx),
-					Variant:         variantFlag.Get(cCtx),
-					Model:           modelFlag.Get(cCtx),
-					Arch:            archFlag.Get(cCtx),
-					Version:         versionFlag.Get(cCtx),
-					SoftwareVersion: softwareVersionFlag.Get(cCtx),
-				}
+				a := artifactFromFlags(cCtx)
 
 				result, err := a.ContainerName(cCtx.String(registryAndOrgFlag.Name))
 				if err != nil {
@@ -129,15 +121,7 @@ func CliCommands() []*cli.Command {
 				versionFlag, softwareVersionFlag,
 			},
 			Action: func(cCtx *cli.Context) error {
-				a := Artifact{
-					Flavor:          flavorFlag.Get(cCtx),
-					FlavorRelease:   flavorReleaseFlag.Get(cCtx),
-					Variant:         variantFlag.Get(cCtx),
-					Model:           modelFlag.Get(cCtx),
-					Arch:            archFlag.Get(cCtx),
-					Version:         versionFlag.Get(cCtx),
-					SoftwareVersion: softwareVersionFlag.Get(cCtx),
-				}
+				a := artifactFromFlags(cCtx)
 
 				result, err := a.BootableName()
 				if err != nil {
@@ -156,13 +140,7 @@ func CliCommands() []*cli.Command {
 				registryAndOrgFlag, idFlag,
 			},
 			Action: func(cCtx *cli.Context) error {
-				a := Artifact{
-					Flavor:        flavorFlag.Get(cCtx),
-					FlavorRelease: flavorReleaseFlag.Get(cCtx),
-					Variant:       variantFlag.Get(cCtx),
-					Model:         modelFlag.Get(cCtx),
-					Arch:          archFlag.Get(cCtx),
-				}
+				a := artifactFromFlags(cCtx)
 
 				result, err := a.BaseContainerName(
 					cCtx.String(registryAndOrgFlag.Name), cCtx.String(idFlag.Name))
@@ -183,15 +161,7 @@ func CliCommands() []*cli.Command {
 				githubRepoFlag,
 			},
 			Action: func(cCtx *cli.Context) error {
-				a := Artifact{
-					Flavor:          flavorFlag.Get(cCtx),
-					FlavorRelease:   flavorReleaseFlag.Get(cCtx),
-					Variant:         variantFlag.Get(cCtx),
-					Model:           modelFlag.Get(cCtx),
-					Arch:            archFlag.Get(cCtx),
-					Version:         versionFlag.Get(cCtx),
-					SoftwareVersion: softwareVersionFlag.Get(cCtx),
-				}
+				a := artifactFromFlags(cCtx)
 
 				result, err := a.OSReleaseVariables(
 					registryAndOrgFlag.Get(cCtx),
@@ -207,5 +177,17 @@ func CliCommands() []*cli.Command {
 				return nil
 			},
 		},
+	}
+}
+
+func artifactFromFlags(cCtx *cli.Context) Artifact {
+	return Artifact{
+		Flavor:          flavorFlag.Get(cCtx),
+		FlavorRelease:   flavorReleaseFlag.Get(cCtx),
+		Variant:         variantFlag.Get(cCtx),
+		Model:           modelFlag.Get(cCtx),
+		Arch:            archFlag.Get(cCtx),
+		Version:         versionFlag.Get(cCtx),
+		SoftwareVersion: softwareVersionFlag.Get(cCtx),
 	}
 }
