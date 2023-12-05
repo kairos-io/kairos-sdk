@@ -69,6 +69,27 @@ var (
 		Usage:   "a identifier for the artifact (e.g. \"master\")",
 		EnvVars: []string{EnvVarID},
 	}
+
+	githubRepoFlag *cli.StringFlag = &cli.StringFlag{
+		Name:    "github-repo",
+		Value:   "",
+		Usage:   "the Github repository where the code is hosted",
+		EnvVars: []string{EnvVarGithubRepo},
+	}
+
+	bugReportURLFlag *cli.StringFlag = &cli.StringFlag{
+		Name:    "bug-report-url",
+		Value:   "",
+		Usage:   "the url where bugs can be reported",
+		EnvVars: []string{EnvVarBugReportURL},
+	}
+
+	projectHomeURLFlag *cli.StringFlag = &cli.StringFlag{
+		Name:    "project-home-url",
+		Value:   "",
+		Usage:   "the url where more information about the project can be found",
+		EnvVars: []string{EnvVarHomeURL},
+	}
 )
 
 func CliCommands() []*cli.Command {
@@ -82,13 +103,13 @@ func CliCommands() []*cli.Command {
 			},
 			Action: func(cCtx *cli.Context) error {
 				a := Artifact{
-					Flavor:          cCtx.String(flavorFlag.Name),
-					FlavorRelease:   cCtx.String(flavorReleaseFlag.Name),
-					Variant:         cCtx.String(variantFlag.Name),
-					Model:           cCtx.String(modelFlag.Name),
-					Arch:            cCtx.String(archFlag.Name),
-					Version:         cCtx.String(versionFlag.Name),
-					SoftwareVersion: cCtx.String(softwareVersionFlag.Name),
+					Flavor:          flavorFlag.Get(cCtx),
+					FlavorRelease:   flavorReleaseFlag.Get(cCtx),
+					Variant:         variantFlag.Get(cCtx),
+					Model:           modelFlag.Get(cCtx),
+					Arch:            archFlag.Get(cCtx),
+					Version:         versionFlag.Get(cCtx),
+					SoftwareVersion: softwareVersionFlag.Get(cCtx),
 				}
 
 				result, err := a.ContainerName(cCtx.String(registryAndOrgFlag.Name))
@@ -109,13 +130,13 @@ func CliCommands() []*cli.Command {
 			},
 			Action: func(cCtx *cli.Context) error {
 				a := Artifact{
-					Flavor:          cCtx.String(flavorFlag.Name),
-					FlavorRelease:   cCtx.String(flavorReleaseFlag.Name),
-					Variant:         cCtx.String(variantFlag.Name),
-					Model:           cCtx.String(modelFlag.Name),
-					Arch:            cCtx.String(archFlag.Name),
-					Version:         cCtx.String(versionFlag.Name),
-					SoftwareVersion: cCtx.String(softwareVersionFlag.Name),
+					Flavor:          flavorFlag.Get(cCtx),
+					FlavorRelease:   flavorReleaseFlag.Get(cCtx),
+					Variant:         variantFlag.Get(cCtx),
+					Model:           modelFlag.Get(cCtx),
+					Arch:            archFlag.Get(cCtx),
+					Version:         versionFlag.Get(cCtx),
+					SoftwareVersion: softwareVersionFlag.Get(cCtx),
 				}
 
 				result, err := a.BootableName()
@@ -136,15 +157,48 @@ func CliCommands() []*cli.Command {
 			},
 			Action: func(cCtx *cli.Context) error {
 				a := Artifact{
-					Flavor:        cCtx.String(flavorFlag.Name),
-					FlavorRelease: cCtx.String(flavorReleaseFlag.Name),
-					Variant:       cCtx.String(variantFlag.Name),
-					Model:         cCtx.String(modelFlag.Name),
-					Arch:          cCtx.String(archFlag.Name),
+					Flavor:        flavorFlag.Get(cCtx),
+					FlavorRelease: flavorReleaseFlag.Get(cCtx),
+					Variant:       variantFlag.Get(cCtx),
+					Model:         modelFlag.Get(cCtx),
+					Arch:          archFlag.Get(cCtx),
 				}
 
 				result, err := a.BaseContainerName(
 					cCtx.String(registryAndOrgFlag.Name), cCtx.String(idFlag.Name))
+				if err != nil {
+					return err
+				}
+				fmt.Println(result)
+
+				return nil
+			},
+		},
+		{
+			Name:  "os-release-variables",
+			Usage: "generates a set of variables to be appended in the /etc/os-release file",
+			Flags: []cli.Flag{
+				flavorFlag, flavorReleaseFlag, variantFlag, modelFlag, archFlag, versionFlag,
+				softwareVersionFlag, registryAndOrgFlag, bugReportURLFlag, projectHomeURLFlag,
+				githubRepoFlag,
+			},
+			Action: func(cCtx *cli.Context) error {
+				a := Artifact{
+					Flavor:          flavorFlag.Get(cCtx),
+					FlavorRelease:   flavorReleaseFlag.Get(cCtx),
+					Variant:         variantFlag.Get(cCtx),
+					Model:           modelFlag.Get(cCtx),
+					Arch:            archFlag.Get(cCtx),
+					Version:         versionFlag.Get(cCtx),
+					SoftwareVersion: softwareVersionFlag.Get(cCtx),
+				}
+
+				result, err := a.OSReleaseVariables(
+					registryAndOrgFlag.Get(cCtx),
+					githubRepoFlag.Get(cCtx),
+					bugReportURLFlag.Get(cCtx),
+					projectHomeURLFlag.Get(cCtx),
+				)
 				if err != nil {
 					return err
 				}

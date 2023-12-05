@@ -9,16 +9,22 @@ import (
 	"github.com/kairos-io/kairos-sdk/utils"
 )
 
+// KAIROS_VERSION was already used in os-release and we avoided breaking it
+// for consumers by using a new variable KAIROS_RELEASE instead. But it's the
+// "Artifact.Version".
 const (
 	EnvVarFlavor          = "FLAVOR"
 	EnvVarFlavorRelease   = "FLAVOR_RELEASE"
 	EnvVarVariant         = "VARIANT"
 	EnvVarModel           = "MODEL"
 	EnvVarArch            = "ARCH"
-	EnvVarVersion         = "VERSION"
+	EnvVarVersion         = "RELEASE"
 	EnvVarSoftwareVersion = "SOFTWARE_VERSION"
 	EnvVarRegistryAndOrg  = "REGISTRY_AND_ORG"
 	EnvVarID              = "ID"
+	EnvVarGithubRepo      = "GITHUB_REPO"
+	EnvVarBugReportURL    = "BUG_REPORT_URL"
+	EnvVarHomeURL         = "HOME_URL"
 )
 
 type Artifact struct {
@@ -143,6 +149,76 @@ func (a *Artifact) Tag() (string, error) {
 	}
 
 	return strings.ReplaceAll(commonName, "+", "-"), nil
+}
+
+// OSReleaseVariables returns a set of variables to be appended in /etc/os-release
+func (a *Artifact) OSReleaseVariables(registryAndOrg, githubRepo, bugURL, homeURL string) (string, error) {
+	if registryAndOrg == "" {
+		return "", errors.New("registry-and-org must be set")
+	}
+	commonName, err := a.commonVersionedName()
+	if err != nil {
+		return commonName, err
+	}
+	kairosName := fmt.Sprintf("kairos-%s-%s-%s", a.Variant, a.Flavor, a.FlavorRelease)
+	kairosVersion := a.Version
+	if a.SoftwareVersion != "" {
+		kairosVersion += "-" + strings.ReplaceAll(a.SoftwareVersion, "+", "-")
+	}
+
+	containerName, err := a.ContainerName(registryAndOrg)
+	if err != nil {
+		return "", err
+	}
+
+	tag, err := a.Tag()
+	if err != nil {
+		return "", err
+	}
+
+	bootableName, err := a.BootableName()
+	if err != nil {
+		return "", err
+	}
+
+	vars := map[string]string{
+		// Legacy variables (not used by versioneer)
+		"KAIROS_NAME":        kairosName,
+		"KAIROS_VERSION":     kairosVersion,
+		"KAIROS_ID":          "kairos",
+		"KAIROS_ID_LIKE":     kairosName,
+		"KAIROS_VERSION_ID":  kairosVersion,
+		"KAIROS_PRETTY_NAME": fmt.Sprintf("%s %s", kairosName, kairosVersion),
+		"KAIROS_IMAGE_REPO":  containerName,
+		"KAIROS_IMAGE_LABEL": tag,
+		"KAIROS_ARTIFACT":    bootableName,
+		// Actively used variables
+		"KAIROS_FLAVOR":         a.Flavor,
+		"KAIROS_FLAVOR_RELEASE": a.FlavorRelease,
+		"KAIROS_VARIANT":        a.Variant,
+		"KAIROS_MODEL":          a.Model,
+		"KAIROS_ARCH":           a.Arch,
+		"KAIROS_RELEASE":        a.Version,
+	}
+	if bugURL != "" {
+		vars["KAIROS_BUG_REPORT_URL"] = bugURL
+	}
+	if homeURL != "" {
+		vars["KAIROS_HOME_URL"] = homeURL
+	}
+	if githubRepo != "" {
+		vars["KAIROS_GITHUB_REPO"] = githubRepo
+	}
+	if a.SoftwareVersion != "" {
+		vars["KAIROS_SOFTWARE_VERSION"] = a.SoftwareVersion
+	}
+
+	result := ""
+	for k, v := range vars {
+		result += fmt.Sprintf("%s=%s\n", k, v)
+	}
+
+	return result, nil
 }
 
 func (a *Artifact) TagList(registryAndOrg string) (TagList, error) {
