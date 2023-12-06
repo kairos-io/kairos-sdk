@@ -44,4 +44,11 @@ var _ = Describe("Validate", func() {
 		artifact.Arch = ""
 		Expect(artifact.Validate()).To(MatchError("Arch is empty"))
 	})
+
+	It("returns an error when SoftwareVersion is not empty but SoftwareVersionPrefix is empty", func() {
+		artifact.SoftwareVersion = "v1.28.3"
+		artifact.SoftwareVersionPrefix = ""
+
+		Expect(artifact.Validate()).To(MatchError("SoftwareVersionPrefix should be defined when SoftwareVersion is not empty"))
+	})
 })

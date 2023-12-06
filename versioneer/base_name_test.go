@@ -13,13 +13,14 @@ var _ = Describe("BaseContainerName", func() {
 
 	BeforeEach(func() {
 		artifact = versioneer.Artifact{
-			Flavor:          "opensuse",
-			FlavorRelease:   "leap-15.5",
-			Variant:         "standard",
-			Model:           "generic",
-			Arch:            "amd64",
-			Version:         "v2.4.2",
-			SoftwareVersion: "k3sv1.26.9+k3s1",
+			Flavor:                "opensuse",
+			FlavorRelease:         "leap-15.5",
+			Variant:               "standard",
+			Model:                 "generic",
+			Arch:                  "amd64",
+			Version:               "v2.4.2",
+			SoftwareVersion:       "v1.26.9+k3s1",
+			SoftwareVersionPrefix: "k3s",
 		}
 	})
 

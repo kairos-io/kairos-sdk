@@ -23,7 +23,8 @@ var _ = Describe("NewArtifactFromOSRelease", func() {
 			"KAIROS_ARCH=amd64\n" +
 			"KAIROS_MODEL=generic\n" +
 			"KAIROS_RELEASE=v2.4.2\n" +
-			"KAIROS_SOFTWARE_VERSION=k3sv1.26.9+k3s1\n"
+			"KAIROS_SOFTWARE_VERSION=v1.26.9+k3s1\n" +
+			"KAIROS_SOFTWARE_VERSION_PREFIX=k3s\n"
 
 		err = os.WriteFile(tmpOSReleaseFile.Name(), []byte(osReleaseContent), 0644)
 		Expect(err).ToNot(HaveOccurred())
@@ -43,6 +44,8 @@ var _ = Describe("NewArtifactFromOSRelease", func() {
 		Expect(artifact.Model).To(Equal("generic"))
 		Expect(artifact.Arch).To(Equal("amd64"))
 		Expect(artifact.Version).To(Equal("v2.4.2"))
-		Expect(artifact.SoftwareVersion).To(Equal("k3sv1.26.9+k3s1"))
+		Expect(artifact.SoftwareVersion).To(Equal("v1.26.9+k3s1"))
+		Expect(artifact.SoftwareVersionPrefix).To(Equal("k3s"))
+		Expect(artifact.Validate()).ToNot(HaveOccurred())
 	})
 })
