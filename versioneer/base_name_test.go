@@ -28,7 +28,7 @@ var _ = Describe("BaseContainerName", func() {
 		BeforeEach(func() {
 			id = "master"
 			registryAndOrg = "quay.io/kairos"
-			expectedName = "quay.io/kairos/opensuse:leap-15.5-standard-amd64-generic-master"
+			expectedName = "quay.io/kairos/opensuse:leap-15.5-amd64-generic-master"
 		})
 		It("returns the name", func() {
 			name, err := artifact.BaseContainerName(registryAndOrg, id)

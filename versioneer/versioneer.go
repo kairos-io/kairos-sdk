@@ -139,7 +139,14 @@ func (a *Artifact) BaseContainerName(registryAndOrg, id string) (string, error) 
 }
 
 func (a *Artifact) BaseTag() (string, error) {
-	return a.commonName()
+	if err := a.Validate(); err != nil {
+		return "", err
+	}
+
+	result := fmt.Sprintf("%s-%s-%s",
+		a.FlavorRelease, a.Arch, a.Model)
+
+	return result, nil
 }
 
 func (a *Artifact) Tag() (string, error) {
