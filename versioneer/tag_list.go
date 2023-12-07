@@ -10,8 +10,9 @@ import (
 )
 
 type TagList struct {
-	Tags     []string
-	Artifact *Artifact
+	Tags           []string
+	Artifact       *Artifact
+	RegistryAndOrg string
 }
 
 // implements sort.Interface for TagList
@@ -30,15 +31,15 @@ func (tl TagList) Images() TagList {
 	pattern := `.*-(core|standard)-(amd64|arm64)-.*-v.*`
 	regexpObject := regexp.MustCompile(pattern)
 
-	result := TagList{Artifact: tl.Artifact}
+	newTags := []string{}
 	for _, t := range tl.Tags {
 		// We have to filter "-img" tags outside the regexp because golang regexp doesn't support negative lookaheads.
 		if regexpObject.MatchString(t) && !strings.HasSuffix(t, "-img") {
-			result.Tags = append(result.Tags, t)
+			newTags = append(newTags, t)
 		}
 	}
 
-	return result
+	return newTagListWithTags(tl, newTags)
 }
 
 // OtherVersions returns tags that match all fields of the given Artifact,
@@ -47,8 +48,9 @@ func (tl TagList) Images() TagList {
 // This method returns all versions, not only newer ones. Use NewerVersions to
 // fetch only versions, newer than the one of the Artifact.
 func (tl TagList) OtherVersions() TagList {
-	result := TagList{Artifact: tl.Artifact}
 	sVersionForTag := tl.Artifact.SoftwareVersionForTag()
+
+	newTags := []string{}
 	for _, t := range tl.Images().Tags {
 		versions := extractVersions(t, *tl.Artifact)
 		if len(versions) > 0 && versions[0] != tl.Artifact.Version {
@@ -56,10 +58,11 @@ func (tl TagList) OtherVersions() TagList {
 				continue
 			}
 
-			result.Tags = append(result.Tags, t)
+			newTags = append(newTags, t)
 		}
 	}
-	return result
+
+	return newTagListWithTags(tl, newTags)
 }
 
 // NewerVersions returns OtherVersions filtered to only include tags with
@@ -76,17 +79,18 @@ func (tl TagList) NewerVersions() TagList {
 // This method returns all versions, not only newer ones. Use NewerSofwareVersions to
 // fetch only versions, newer than the one of the Artifact.
 func (tl TagList) OtherSoftwareVersions() TagList {
-	result := TagList{Artifact: tl.Artifact}
 	versionForTag := tl.Artifact.VersionForTag()
 	softwareVersionForTag := tl.Artifact.SoftwareVersionForTag()
 
+	newTags := []string{}
 	for _, t := range tl.Images().Tags {
 		versions := extractVersions(t, *tl.Artifact)
 		if len(versions) > 1 && versions[1] != softwareVersionForTag && versions[0] == versionForTag {
-			result.Tags = append(result.Tags, t)
+			newTags = append(newTags, t)
 		}
 	}
-	return result
+
+	return newTagListWithTags(tl, newTags)
 }
 
 // NewerSofwareVersions returns OtherSoftwareVersions filtered to only include tags with
@@ -104,26 +108,27 @@ func (tl TagList) NewerSofwareVersions() TagList {
 // This method returns all versions, not only newer ones. Use NewerAnyVersion to
 // fetch only versions, newer than the one of the Artifact.
 func (tl TagList) OtherAnyVersion() TagList {
-	result := TagList{Artifact: tl.Artifact}
 	versionForTag := tl.Artifact.VersionForTag()
 	sVersionForTag := tl.Artifact.SoftwareVersionForTag()
+
+	newTags := []string{}
 	for _, t := range tl.Images().Tags {
 		versions := extractVersions(t, *tl.Artifact)
 		versionDiffers := len(versions) > 0 && versions[0] != versionForTag
 		sVersionDiffers := len(versions) > 1 && versions[1] != sVersionForTag
 		if versionDiffers || sVersionDiffers {
-			result.Tags = append(result.Tags, t)
+			newTags = append(newTags, t)
 		}
 	}
-	return result
+	return newTagListWithTags(tl, newTags)
 }
 
 // NewerAnyVersion returns OtherAnyVersion filtered to only include tags with
 // Version and SoftwareVersion equal or higher than the given artifact's.
 // At least one of the 2 versions will be higher than the current one.
-// Splitting the 2 versions is done using the softwarePrefix (first encountered,
-// because our tags have a "k3s1" in the end too)
-func (tl TagList) NewerAnyVersion(softwarePrefix string) TagList {
+// Splitting the 2 versions is done using the artifact's SoftwareVersionPrefix
+// (first encountered, because our tags have a "k3s1" in the end too)
+func (tl TagList) NewerAnyVersion() TagList {
 	tags := tl.OtherAnyVersion()
 
 	if tl.Artifact.SoftwareVersion != "" {
@@ -139,6 +144,13 @@ func (tl TagList) Print() {
 	}
 }
 
+func (tl TagList) PrintImages() {
+	repo := tl.Artifact.Repository(tl.RegistryAndOrg)
+	for _, t := range tl.Tags {
+		fmt.Printf("%s:%s\n", repo, t)
+	}
+}
+
 // Sorted returns the TagList sorted alphabetically
 // This means lower versions come first.
 func (tl TagList) Sorted() TagList {
@@ -146,7 +158,7 @@ func (tl TagList) Sorted() TagList {
 	copy(newTags, tl.Tags)
 	sort.Strings(newTags)
 
-	return TagList{Artifact: tl.Artifact, Tags: newTags}
+	return newTagListWithTags(tl, newTags)
 }
 
 // RSorted returns the TagList in the reverse order of Sorted
@@ -156,35 +168,35 @@ func (tl TagList) RSorted() TagList {
 	copy(newTags, tl.Tags)
 	sort.Sort(sort.Reverse(sort.StringSlice(newTags)))
 
-	return TagList{Artifact: tl.Artifact, Tags: newTags}
+	return newTagListWithTags(tl, newTags)
 }
 
 func (tl TagList) newerVersions() TagList {
-	result := TagList{Artifact: tl.Artifact}
+	newTags := []string{}
 	for _, t := range tl.Tags {
 		versions := extractVersions(t, *tl.Artifact)
 		if len(versions) > 0 && semver.Compare(versions[0], tl.Artifact.VersionForTag()) == +1 {
-			result.Tags = append(result.Tags, t)
+			newTags = append(newTags, t)
 		}
 	}
 
-	return result
+	return newTagListWithTags(tl, newTags)
 }
 
 func (tl TagList) newerSoftwareVersions() TagList {
-	result := TagList{Artifact: tl.Artifact}
+	newTags := []string{}
 	for _, t := range tl.Tags {
 		versions := extractVersions(t, *tl.Artifact)
 		if len(versions) > 1 && semver.Compare(versions[1], tl.Artifact.SoftwareVersionForTag()) == +1 {
-			result.Tags = append(result.Tags, t)
+			newTags = append(newTags, t)
 		}
 	}
 
-	return result
+	return newTagListWithTags(tl, newTags)
 }
 
 func (tl TagList) newerAllVersions() TagList {
-	result := TagList{Artifact: tl.Artifact}
+	newTags := []string{}
 	for _, t := range tl.Tags {
 		versions := extractVersions(t, *tl.Artifact)
 
@@ -195,11 +207,11 @@ func (tl TagList) newerAllVersions() TagList {
 		// and softwareVersion is not lower than the current
 		// and at least one of the 2 is higher than the current
 		if versionResult >= 0 && sVersionResult >= 0 && versionResult+sVersionResult > 0 {
-			result.Tags = append(result.Tags, t)
+			newTags = append(newTags, t)
 		}
 	}
 
-	return result
+	return newTagListWithTags(tl, newTags)
 }
 
 // NoPrereleases returns only tags in which Version is not a pre-release (as defined by semver).
@@ -212,7 +224,7 @@ func (tl TagList) newerAllVersions() TagList {
 // convert "+" to "-" because tags don't allow "+" symbols. This makes every
 // k3s version look like a pre-release according to semver.
 func (tl TagList) NoPrereleases() TagList {
-	result := TagList{Artifact: tl.Artifact}
+	newTags := []string{}
 	for _, t := range tl.Tags {
 		versions := extractVersions(t, *tl.Artifact)
 
@@ -227,10 +239,10 @@ func (tl TagList) NoPrereleases() TagList {
 			continue
 		}
 
-		result.Tags = append(result.Tags, t)
+		newTags = append(newTags, t)
 	}
 
-	return result
+	return newTagListWithTags(tl, newTags)
 }
 
 // extractVersions extracts extractVersions from a given tag, based on the given Artifact
@@ -286,4 +298,10 @@ func extractVersions(tagToCheck string, artifact Artifact) []string {
 
 	// No version found
 	return []string{}
+}
+
+// newTagListWithTags returns a copy of the given TagList with same Artifact
+// and RegistryAndOrg fields but with the given tags as Tags.
+func newTagListWithTags(tl TagList, tags []string) TagList {
+	return TagList{Artifact: tl.Artifact, RegistryAndOrg: tl.RegistryAndOrg, Tags: tags}
 }

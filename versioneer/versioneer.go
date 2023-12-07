@@ -117,6 +117,10 @@ func (a *Artifact) BootableName() (string, error) {
 	return fmt.Sprintf("kairos-%s-%s", a.Flavor, commonName), nil
 }
 
+func (a *Artifact) Repository(registryAndOrg string) string {
+	return fmt.Sprintf("%s/%s", registryAndOrg, a.Flavor)
+}
+
 func (a *Artifact) ContainerName(registryAndOrg string) (string, error) {
 	if a.Flavor == "" {
 		return "", errors.New("Flavor is empty")
@@ -127,7 +131,7 @@ func (a *Artifact) ContainerName(registryAndOrg string) (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("%s/%s:%s", registryAndOrg, a.Flavor, tag), nil
+	return fmt.Sprintf("%s:%s", a.Repository(registryAndOrg), tag), nil
 }
 
 func (a *Artifact) BaseContainerName(registryAndOrg, id string) (string, error) {
@@ -144,7 +148,7 @@ func (a *Artifact) BaseContainerName(registryAndOrg, id string) (string, error) 
 		return "", err
 	}
 
-	return fmt.Sprintf("%s/%s:%s-%s", registryAndOrg, a.Flavor, tag, id), nil
+	return fmt.Sprintf("%s:%s-%s", a.Repository(registryAndOrg), tag, id), nil
 }
 
 func (a *Artifact) BaseTag() (string, error) {

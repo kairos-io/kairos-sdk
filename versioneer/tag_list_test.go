@@ -11,7 +11,8 @@ var _ = Describe("TagList", func() {
 
 	BeforeEach(func() {
 		tagList = versioneer.TagList{
-			Tags: getFakeTags(),
+			Tags:           getFakeTags(),
+			RegistryAndOrg: "quay.io/kairos",
 		}
 	})
 
@@ -171,6 +172,12 @@ var _ = Describe("TagList", func() {
 				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.26.9-k3s1",
 				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.28.2-k3s1"))
 		})
+
+		It("returns a TagList that has the same RegistryAndOrg", func() {
+			newTagList := tagList.OtherAnyVersion()
+
+			Expect(newTagList.RegistryAndOrg).To(Equal("quay.io/kairos"))
+		})
 	})
 
 	Describe("NewerAnyVersion", func() {
@@ -189,7 +196,7 @@ var _ = Describe("TagList", func() {
 			})
 
 			It("returns only tags with newer Versions and/or SoftwareVersion", func() {
-				tags := tagList.NewerAnyVersion("k3s").Tags
+				tags := tagList.NewerAnyVersion().Tags
 
 				Expect(tags).To(HaveExactElements(
 					"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.28.2-k3s1",
@@ -198,23 +205,30 @@ var _ = Describe("TagList", func() {
 					"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.27.6-k3s1",
 					"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.28.2-k3s1"))
 			})
+
+			It("returns a TagList that has the same RegistryAndOrg", func() {
+				newTagList := tagList.NewerAnyVersion()
+
+				Expect(newTagList.RegistryAndOrg).To(Equal("quay.io/kairos"))
+			})
 		})
 
 		When("artifact has no SoftwareVersion", func() {
 			BeforeEach(func() {
 				tagList.Artifact = &versioneer.Artifact{
-					Flavor:          "opensuse",
-					FlavorRelease:   "leap-15.5",
-					Variant:         "core",
-					Model:           "generic",
-					Arch:            "amd64",
-					Version:         "v2.4.2-rc1",
-					SoftwareVersion: "",
+					Flavor:                "opensuse",
+					FlavorRelease:         "leap-15.5",
+					Variant:               "core",
+					Model:                 "generic",
+					Arch:                  "amd64",
+					Version:               "v2.4.2-rc1",
+					SoftwareVersion:       "",
+					SoftwareVersionPrefix: "k3s",
 				}
 			})
 
 			It("returns only tags with newer Versions and/or SoftwareVersion", func() {
-				tags := tagList.NewerAnyVersion("k3s").Tags
+				tags := tagList.NewerAnyVersion().Tags
 
 				Expect(tags).To(HaveExactElements(
 					"leap-15.5-core-amd64-generic-v2.4.2-rc2",
@@ -241,6 +255,12 @@ var _ = Describe("TagList", func() {
 				tags := tagList.NoPrereleases().Tags
 
 				Expect(tags).To(HaveExactElements("leap-15.5-core-amd64-generic-v2.4.2"))
+			})
+
+			It("returns a TagList that has the same RegistryAndOrg", func() {
+				newTagList := tagList.NoPrereleases()
+
+				Expect(newTagList.RegistryAndOrg).To(Equal("quay.io/kairos"))
 			})
 		})
 
