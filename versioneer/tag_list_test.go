@@ -27,31 +27,62 @@ var _ = Describe("TagList", func() {
 		})
 	})
 
-	Describe("Sorted", func() {
-		It("returns tags sorted alphabetically", func() {
-			images := tagList.Images()
-			sortedImages := images.Sorted()
+	Describe("sorting", func() {
+		var expectedSortedTags []string
 
-			// Sanity checks
-			Expect(len(images.Tags)).To(BeNumerically(">", 4))
-			Expect(len(sortedImages.Tags)).To(Equal(len(images.Tags)))
+		BeforeEach(func() {
+			artifact := versioneer.Artifact{
+				Flavor:                "opensuse",
+				FlavorRelease:         "leap-15.5",
+				Variant:               "standard",
+				Model:                 "generic",
+				Arch:                  "amd64",
+				Version:               "v2.4.2",
+				SoftwareVersion:       "v1.26.9+k3s1",
+				SoftwareVersionPrefix: "k3s",
+			}
 
-			Expect(isSorted(images.Tags)).To(BeFalse())
-			Expect(isSorted(sortedImages.Tags)).To(BeTrue())
+			tagList.Artifact = &artifact
+			tagList.Tags = []string{
+				"leap-15.5-standard-amd64-generic-v2.4.3-k3sv1.26.8-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.3-k3sv1.26.9-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-rc2-k3sv1.26.9-k3s1",
+				"aa-other-non-matching-tag",
+				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.26.9-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.26.10-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.26.9-k3s1",
+			}
+			expectedSortedTags = []string{
+				"aa-other-non-matching-tag",
+				"leap-15.5-standard-amd64-generic-v2.4.2-rc1-k3sv1.26.9-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-rc2-k3sv1.26.9-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.26.9-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.26.10-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.3-k3sv1.26.8-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.3-k3sv1.26.9-k3s1",
+			}
 		})
-	})
 
-	Describe("RSorted", func() {
-		It("returns tags in reverse alphabetical order", func() {
-			images := tagList.Images()
-			rSortedImages := images.RSorted()
+		Describe("Sorted", func() {
+			It("returns tags sorted by semver", func() {
+				sortedTags := tagList.Sorted()
 
-			// Sanity checks
-			Expect(len(images.Tags)).To(BeNumerically(">", 4))
-			Expect(len(rSortedImages.Tags)).To(Equal(len(images.Tags)))
+				Expect(len(sortedTags.Tags)).To(Equal(7)) // Sanity check
+				Expect(sortedTags.Tags).To(Equal(expectedSortedTags))
+			})
+		})
 
-			Expect(isRSorted(images.Tags)).To(BeFalse())
-			Expect(isRSorted(rSortedImages.Tags)).To(BeTrue())
+		Describe("RSorted", func() {
+			It("returns tags in reverse order by semver", func() {
+				rSortedTags := tagList.RSorted()
+				rSortedTags.Print()
+
+				size := len(rSortedTags.Tags)
+				Expect(size).To(Equal(7)) // Sanity check
+				for i, t := range rSortedTags.Tags {
+					Expect(t).To(Equal(expectedSortedTags[size-(i+1)]))
+				}
+			})
 		})
 	})
 
@@ -298,30 +329,4 @@ func expectOnlyImages(images []string) {
 	Expect(images).ToNot(ContainElement(ContainSubstring("-img")))
 
 	Expect(images).To(HaveEach(MatchRegexp((".*-(core|standard)-(amd64|arm64)-.*-v.*"))))
-}
-
-func isSorted(tl []string) bool {
-	for i, tag := range tl {
-		if i > 0 {
-			previousTag := tl[i-1]
-			if previousTag > tag {
-				return false
-			}
-		}
-	}
-
-	return true
-}
-
-func isRSorted(tl []string) bool {
-	for i, tag := range tl {
-		if i > 0 {
-			previousTag := tl[i-1]
-			if previousTag < tag {
-				return false
-			}
-		}
-	}
-
-	return true
 }

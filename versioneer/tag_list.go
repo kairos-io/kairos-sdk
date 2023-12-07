@@ -19,7 +19,32 @@ type TagList struct {
 func (tl TagList) Len() int      { return len(tl.Tags) }
 func (tl TagList) Swap(i, j int) { tl.Tags[i], tl.Tags[j] = tl.Tags[j], tl.Tags[i] }
 func (tl TagList) Less(i, j int) bool {
-	return tl.Tags[i] < tl.Tags[j]
+	iVersions := extractVersions(tl.Tags[i], *tl.Artifact)
+	jVersions := extractVersions(tl.Tags[j], *tl.Artifact)
+	iLen := len(iVersions)
+	jLen := len(jVersions)
+
+	// Drop to alphabetical order if no versions are found
+	if iLen == 0 || jLen == 0 {
+		return tl.Tags[i] < tl.Tags[j]
+	}
+
+	versionResult := semver.Compare(iVersions[0], jVersions[0])
+
+	// Versions are not equal. No need to check software version.
+	if versionResult != 0 {
+		return versionResult == -1 // sort lower version first
+	}
+
+	// Versions are equal.
+	// If there are software versions compare, otherwise return the one with
+	// no software version as lower.
+	if iLen == 2 && jLen == 2 {
+		return semver.Compare(iVersions[1], jVersions[1]) == -1
+	}
+
+	// The one with no software version is lower
+	return iLen < jLen
 }
 
 // Images returns only tags that represent images, skipping tags representing:
@@ -151,24 +176,22 @@ func (tl TagList) PrintImages() {
 	}
 }
 
-// Sorted returns the TagList sorted alphabetically
+// Sorted returns the TagList sorted by semver.
 // This means lower versions come first.
 func (tl TagList) Sorted() TagList {
-	newTags := make([]string, len(tl.Tags))
-	copy(newTags, tl.Tags)
-	sort.Strings(newTags)
+	newTagList := newTagListWithTags(tl, tl.Tags)
+	sort.Sort(newTagList)
 
-	return newTagListWithTags(tl, newTags)
+	return newTagList
 }
 
 // RSorted returns the TagList in the reverse order of Sorted
 // This means higher versions come first.
 func (tl TagList) RSorted() TagList {
-	newTags := make([]string, len(tl.Tags))
-	copy(newTags, tl.Tags)
-	sort.Sort(sort.Reverse(sort.StringSlice(newTags)))
+	newTagList := newTagListWithTags(tl, tl.Tags)
+	sort.Sort(sort.Reverse(newTagList))
 
-	return newTagListWithTags(tl, newTags)
+	return newTagList
 }
 
 func (tl TagList) newerVersions() TagList {
