@@ -1,6 +1,8 @@
 package versioneer_test
 
 import (
+	"fmt"
+
 	"github.com/kairos-io/kairos-sdk/versioneer"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -8,12 +10,25 @@ import (
 
 var _ = Describe("TagList", func() {
 	var tagList versioneer.TagList
+	var artifact versioneer.Artifact
 
 	BeforeEach(func() {
 		tagList = versioneer.TagList{
 			Tags:           getFakeTags(),
 			RegistryAndOrg: "quay.io/kairos",
 		}
+
+		artifact = versioneer.Artifact{
+			Flavor:                "opensuse",
+			FlavorRelease:         "leap-15.5",
+			Variant:               "standard",
+			Model:                 "generic",
+			Arch:                  "amd64",
+			Version:               "v2.4.2",
+			SoftwareVersion:       "v1.26.9+k3s1",
+			SoftwareVersionPrefix: "k3s",
+		}
+
 	})
 
 	Describe("Images", func() {
@@ -27,21 +42,34 @@ var _ = Describe("TagList", func() {
 		})
 	})
 
+	Describe("FullImages", func() {
+		BeforeEach(func() {
+			tagList = versioneer.TagList{
+				Artifact: &artifact,
+				Tags: []string{
+					"one",
+					"two",
+					"three",
+				},
+				RegistryAndOrg: "quay.io/someorg",
+			}
+		})
+		It("returns full image urls", func() {
+			fullImages, err := tagList.FullImages()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(fullImages).To(Equal([]string{
+				fmt.Sprintf("quay.io/someorg/%s:one", artifact.Flavor),
+				fmt.Sprintf("quay.io/someorg/%s:two", artifact.Flavor),
+				fmt.Sprintf("quay.io/someorg/%s:three", artifact.Flavor),
+			}))
+		})
+	})
+
 	Describe("sorting", func() {
 		var expectedSortedTags []string
 
 		BeforeEach(func() {
-			artifact := versioneer.Artifact{
-				Flavor:                "opensuse",
-				FlavorRelease:         "leap-15.5",
-				Variant:               "standard",
-				Model:                 "generic",
-				Arch:                  "amd64",
-				Version:               "v2.4.2",
-				SoftwareVersion:       "v1.26.9+k3s1",
-				SoftwareVersionPrefix: "k3s",
-			}
-
 			tagList.Artifact = &artifact
 			tagList.Tags = []string{
 				"leap-15.5-standard-amd64-generic-v2.4.3-k3sv1.26.8-k3s1",
@@ -75,7 +103,6 @@ var _ = Describe("TagList", func() {
 		Describe("RSorted", func() {
 			It("returns tags in reverse order by semver", func() {
 				rSortedTags := tagList.RSorted()
-				rSortedTags.Print()
 
 				size := len(rSortedTags.Tags)
 				Expect(size).To(Equal(7)) // Sanity check

@@ -1,6 +1,7 @@
 package versioneer
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"sort"
@@ -169,10 +170,29 @@ func (tl TagList) Print() {
 	}
 }
 
-func (tl TagList) PrintImages() {
+// FullImages returns a slice of strings which has the tags converts to full
+// image URLs (not just tags).
+func (tl TagList) FullImages() ([]string, error) {
+	result := []string{}
+	if tl.Artifact == nil {
+		return result, errors.New("no artifact defined")
+	}
+
 	repo := tl.Artifact.Repository(tl.RegistryAndOrg)
 	for _, t := range tl.Tags {
-		fmt.Printf("%s:%s\n", repo, t)
+		result = append(result, fmt.Sprintf("%s:%s", repo, t))
+	}
+
+	return result, nil
+}
+
+func (tl TagList) PrintImages() {
+	fullImages, err := tl.FullImages()
+	if err != nil {
+		fmt.Printf("warn: %s\n", err.Error())
+	}
+	for _, t := range fullImages {
+		fmt.Println(t)
 	}
 }
 
