@@ -251,6 +251,9 @@ func (a *Artifact) OSReleaseVariables(registryAndOrg, githubRepo, bugURL, homeUR
 	if a.SoftwareVersion != "" {
 		vars["KAIROS_SOFTWARE_VERSION"] = a.SoftwareVersion
 	}
+	if a.SoftwareVersionPrefix != "" {
+		vars["KAIROS_SOFTWARE_VERSION_PREFIX"] = a.SoftwareVersionPrefix
+	}
 
 	result := ""
 	for k, v := range vars {
