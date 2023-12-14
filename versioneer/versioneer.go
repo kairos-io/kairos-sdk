@@ -18,7 +18,7 @@ const (
 	EnvVarFlavorRelease         = "FLAVOR_RELEASE"
 	EnvVarVariant               = "VARIANT"
 	EnvVarModel                 = "MODEL"
-	EnvVarArch                  = "ARCH"
+	EnvVarArch                  = "TARGETARCH"
 	EnvVarSoftwareVersion       = "SOFTWARE_VERSION"
 	EnvVarSoftwareVersionPrefix = "SOFTWARE_VERSION_PREFIX"
 	EnvVarRegistryAndOrg        = "REGISTRY_AND_ORG"
@@ -74,10 +74,16 @@ func NewArtifactFromOSRelease(file ...string) (*Artifact, error) {
 	if result.Version, err = utils.OSRelease(EnvVarVersion, file...); err != nil {
 		return nil, err
 	}
-	if result.SoftwareVersion, err = utils.OSRelease(EnvVarSoftwareVersion, file...); err != nil {
+
+	// Optional, could be missing
+	result.SoftwareVersion, err = utils.OSRelease(EnvVarSoftwareVersion, file...)
+	if err != nil && !errors.As(err, &utils.KeyNotFoundErr{}) {
 		return nil, err
 	}
-	if result.SoftwareVersionPrefix, err = utils.OSRelease(EnvVarSoftwareVersionPrefix, file...); err != nil {
+
+	// Optional, could be missing
+	result.SoftwareVersionPrefix, err = utils.OSRelease(EnvVarSoftwareVersionPrefix, file...)
+	if err != nil && !errors.As(err, &utils.KeyNotFoundErr{}) {
 		return nil, err
 	}
 
@@ -229,7 +235,7 @@ func (a *Artifact) OSReleaseVariables(registryAndOrg, githubRepo, bugURL, homeUR
 		"KAIROS_FLAVOR_RELEASE":   a.FlavorRelease,
 		"KAIROS_VARIANT":          a.Variant,
 		"KAIROS_MODEL":            a.Model,
-		"KAIROS_ARCH":             a.Arch,
+		"KAIROS_TARGETARCH":       a.Arch,
 		"KAIROS_RELEASE":          a.Version,
 		"KAIROS_REGISTRY_AND_ORG": registryAndOrg,
 	}

@@ -28,6 +28,14 @@ const (
 	unknown = "unknown"
 )
 
+type KeyNotFoundErr struct {
+	Err error
+}
+
+func (err KeyNotFoundErr) Error() string {
+	return err.Err.Error()
+}
+
 func SH(c string) (string, error) {
 	cmd := exec.Command("/bin/sh", "-c", c)
 	cmd.Env = os.Environ()
@@ -83,7 +91,7 @@ func OSRelease(key string, file ...string) (string, error) {
 		// We try with the old naming without the prefix in case the key wasn't found
 		v, exists = release[key]
 		if !exists {
-			return "", fmt.Errorf("%s key not found", kairosKey)
+			return "", KeyNotFoundErr{Err: fmt.Errorf("%s key not found", kairosKey)}
 		}
 	}
 	return v, nil
