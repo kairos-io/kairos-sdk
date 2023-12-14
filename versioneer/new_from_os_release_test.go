@@ -20,7 +20,7 @@ var _ = Describe("NewArtifactFromOSRelease", func() {
 		osReleaseContent = "KAIROS_FLAVOR=opensuse\n" +
 			"KAIROS_FLAVOR_RELEASE=leap-15.5\n" +
 			"KAIROS_VARIANT=standard\n" +
-			"KAIROS_ARCH=amd64\n" +
+			"KAIROS_TARGETARCH=amd64\n" +
 			"KAIROS_MODEL=generic\n" +
 			"KAIROS_RELEASE=v2.4.2\n" +
 			"KAIROS_SOFTWARE_VERSION=v1.26.9+k3s1\n" +
