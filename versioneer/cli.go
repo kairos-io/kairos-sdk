@@ -56,6 +56,13 @@ var (
 		EnvVars: []string{EnvVarSoftwareVersion},
 	}
 
+	softwareVersionPrefixFlag *cli.StringFlag = &cli.StringFlag{
+		Name:    "software-version-prefix",
+		Value:   "",
+		Usage:   "the string that separates the Kairos version from the software version (e.g. \"k3s\")",
+		EnvVars: []string{EnvVarSoftwareVersionPrefix},
+	}
+
 	registryAndOrgFlag *cli.StringFlag = &cli.StringFlag{
 		Name:    "registry-and-org",
 		Value:   "",
@@ -99,7 +106,7 @@ func CliCommands() []*cli.Command {
 			Usage: "generates an artifact name for Kairos OCI images",
 			Flags: []cli.Flag{
 				flavorFlag, flavorReleaseFlag, variantFlag, modelFlag, archFlag,
-				versionFlag, softwareVersionFlag, registryAndOrgFlag,
+				versionFlag, softwareVersionFlag, softwareVersionPrefixFlag, registryAndOrgFlag,
 			},
 			Action: func(cCtx *cli.Context) error {
 				a := artifactFromFlags(cCtx)
@@ -118,7 +125,7 @@ func CliCommands() []*cli.Command {
 			Usage: "generates a name for bootable artifacts (e.g. iso files)",
 			Flags: []cli.Flag{
 				flavorFlag, flavorReleaseFlag, variantFlag, modelFlag, archFlag,
-				versionFlag, softwareVersionFlag,
+				versionFlag, softwareVersionFlag, softwareVersionPrefixFlag,
 			},
 			Action: func(cCtx *cli.Context) error {
 				a := artifactFromFlags(cCtx)
@@ -157,7 +164,7 @@ func CliCommands() []*cli.Command {
 			Usage: "generates a set of variables to be appended in the /etc/os-release file",
 			Flags: []cli.Flag{
 				flavorFlag, flavorReleaseFlag, variantFlag, modelFlag, archFlag, versionFlag,
-				softwareVersionFlag, registryAndOrgFlag, bugReportURLFlag, projectHomeURLFlag,
+				softwareVersionFlag, softwareVersionPrefixFlag, registryAndOrgFlag, bugReportURLFlag, projectHomeURLFlag,
 				githubRepoFlag,
 			},
 			Action: func(cCtx *cli.Context) error {
@@ -182,12 +189,13 @@ func CliCommands() []*cli.Command {
 
 func artifactFromFlags(cCtx *cli.Context) Artifact {
 	return Artifact{
-		Flavor:          flavorFlag.Get(cCtx),
-		FlavorRelease:   flavorReleaseFlag.Get(cCtx),
-		Variant:         variantFlag.Get(cCtx),
-		Model:           modelFlag.Get(cCtx),
-		Arch:            archFlag.Get(cCtx),
-		Version:         versionFlag.Get(cCtx),
-		SoftwareVersion: softwareVersionFlag.Get(cCtx),
+		Flavor:                flavorFlag.Get(cCtx),
+		FlavorRelease:         flavorReleaseFlag.Get(cCtx),
+		Variant:               variantFlag.Get(cCtx),
+		Model:                 modelFlag.Get(cCtx),
+		Arch:                  archFlag.Get(cCtx),
+		Version:               versionFlag.Get(cCtx),
+		SoftwareVersion:       softwareVersionFlag.Get(cCtx),
+		SoftwareVersionPrefix: softwareVersionPrefixFlag.Get(cCtx),
 	}
 }
