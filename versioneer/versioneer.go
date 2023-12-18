@@ -257,7 +257,7 @@ func (a *Artifact) OSReleaseVariables(registryAndOrg, githubRepo, bugURL, homeUR
 
 	result := ""
 	for k, v := range vars {
-		result += fmt.Sprintf("%s=%s\n", k, v)
+		result += fmt.Sprintf("%s=\"%s\"\n", k, v)
 	}
 
 	return result, nil
