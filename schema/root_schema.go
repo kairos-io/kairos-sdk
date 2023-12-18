@@ -33,6 +33,7 @@ type RootSchema struct {
 	Platform                  PlatformSchema `json:"platform,omitempty" mapstructure:"platform"`
 	SquashFsCompressionConfig []string       `json:"squash-compression,omitempty" mapstructure:"squash-compression"`
 	SquashFsNoCompression     bool           `json:"squash-no-compression,omitempty" mapstructure:"squash-no-compression"`
+	UkiMaxEntries             int            `json:"uki-max-entries,omitempty" mapstructure:"uki-max-entries"`
 }
 
 type PlatformSchema struct {
