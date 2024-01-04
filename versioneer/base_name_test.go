@@ -24,6 +24,20 @@ var _ = Describe("BaseContainerName", func() {
 		}
 	})
 
+	When("no variant is passed", func() {
+		var id, registryAndOrg string
+		BeforeEach(func() {
+			id = "master"
+			registryAndOrg = "quay.io/kairos"
+			artifact.Variant = ""
+		})
+
+		It("is valid", func() {
+			_, err := artifact.BaseContainerName(registryAndOrg, id)
+			Expect(err).ToNot(HaveOccurred())
+		})
+	})
+
 	When("artifact is valid", func() {
 		var id, registryAndOrg string
 		BeforeEach(func() {

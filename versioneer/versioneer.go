@@ -91,11 +91,16 @@ func NewArtifactFromOSRelease(file ...string) (*Artifact, error) {
 }
 
 func (a *Artifact) Validate() error {
-	if a.FlavorRelease == "" {
-		return errors.New("FlavorRelease is empty")
-	}
 	if a.Variant == "" {
 		return errors.New("Variant is empty")
+	}
+
+	return a.ValidateBase()
+}
+
+func (a *Artifact) ValidateBase() error {
+	if a.FlavorRelease == "" {
+		return errors.New("FlavorRelease is empty")
 	}
 	if a.Model == "" {
 		return errors.New("Model is empty")
@@ -158,7 +163,7 @@ func (a *Artifact) BaseContainerName(registryAndOrg, id string) (string, error) 
 }
 
 func (a *Artifact) BaseTag() (string, error) {
-	if err := a.Validate(); err != nil {
+	if err := a.ValidateBase(); err != nil {
 		return "", err
 	}
 
