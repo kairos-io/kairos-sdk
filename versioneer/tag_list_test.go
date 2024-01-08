@@ -158,6 +158,30 @@ var _ = Describe("TagList", func() {
 		})
 	})
 
+	Describe("NewerVersions despite newer SoftwareVersion", func() {
+		BeforeEach(func() {
+			tagList.Artifact = &versioneer.Artifact{
+				Flavor:                "opensuse",
+				FlavorRelease:         "leap-15.5",
+				Variant:               "standard",
+				Model:                 "generic",
+				Arch:                  "amd64",
+				Version:               "v2.4.2-rc2",
+				SoftwareVersion:       "v1.29.0+k3s1",
+				SoftwareVersionPrefix: "k3s",
+			}
+		})
+
+		It("returns only tags with newer Version field (the rest similar)", func() {
+			tags := tagList.NewerVersions().Tags
+
+			Expect(tags).To(HaveExactElements(
+				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.27.6-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.26.9-k3s1",
+				"leap-15.5-standard-amd64-generic-v2.4.2-k3sv1.28.2-k3s1"))
+		})
+	})
+
 	Describe("OtherSoftwareVersions", func() {
 		BeforeEach(func() {
 			tagList.Artifact = &versioneer.Artifact{

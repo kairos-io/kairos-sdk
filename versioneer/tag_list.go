@@ -74,16 +74,19 @@ func (tl TagList) Images() TagList {
 // This method returns all versions, not only newer ones. Use NewerVersions to
 // fetch only versions, newer than the one of the Artifact.
 func (tl TagList) OtherVersions() TagList {
-	sVersionForTag := tl.Artifact.SoftwareVersionForTag()
+	// sVersionForTag := tl.Artifact.SoftwareVersionForTag()
 
 	newTags := []string{}
 	for _, t := range tl.Images().Tags {
 		versions := extractVersions(t, *tl.Artifact)
-		if len(versions) > 0 && versions[0] != tl.Artifact.Version {
-			if len(versions) > 1 && versions[1] != sVersionForTag {
-				continue
-			}
+		// if len(versions) > 0 && versions[0] != tl.Artifact.Version {
+		// 	if len(versions) > 1 && versions[1] != sVersionForTag {
+		// 		continue
+		// 	}
 
+		// 	newTags = append(newTags, t)
+		// }
+		if len(versions) > 0 {
 			newTags = append(newTags, t)
 		}
 	}
@@ -218,8 +221,20 @@ func (tl TagList) newerVersions() TagList {
 	newTags := []string{}
 	for _, t := range tl.Tags {
 		versions := extractVersions(t, *tl.Artifact)
-		if len(versions) > 0 && semver.Compare(versions[0], tl.Artifact.VersionForTag()) == +1 {
+		if len(versions) == 0 {
+			continue
+		}
+
+		resComp := semver.Compare(versions[0], tl.Artifact.VersionForTag())
+
+		if resComp == +1 {
 			newTags = append(newTags, t)
+		}
+
+		if resComp == 0 {
+			if semver.Compare(versions[1], tl.Artifact.SoftwareVersionForTag()) == +1 {
+				newTags = append(newTags, t)
+			}
 		}
 	}
 
