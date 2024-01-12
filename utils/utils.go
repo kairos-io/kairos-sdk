@@ -308,12 +308,12 @@ func GetEfiGrubFiles(arch string) []string {
 	var modNames []string
 	switch arch {
 	case "arm64":
-		modNames = append(modNames, "/usr/share/efi/aarch64/grub.efi")                     // suse
-		modNames = append(modNames, "/usr/lib/grub/x86_64-efi-signed/grubaa64.efi.signed") // ubuntu + debian
-		modNames = append(modNames, "/boot/efi/EFI/fedora/grubaa64.efi")                   // fedora
-		modNames = append(modNames, "/boot/efi/EFI/rocky/grubaa64.efi")                    // rocky
-		modNames = append(modNames, "/boot/efi/EFI/redhat/grubaa64.efi")                   // redhat
-		modNames = append(modNames, "/boot/efi/EFI/almalinux/grubaa64.efi")                // almalinux
+		modNames = append(modNames, "/usr/share/efi/aarch64/grub.efi")                    // suse
+		modNames = append(modNames, "/usr/lib/grub/arm64-efi-signed/grubaa64.efi.signed") // ubuntu + debian
+		modNames = append(modNames, "/boot/efi/EFI/fedora/grubaa64.efi")                  // fedora
+		modNames = append(modNames, "/boot/efi/EFI/rocky/grubaa64.efi")                   // rocky
+		modNames = append(modNames, "/boot/efi/EFI/redhat/grubaa64.efi")                  // redhat
+		modNames = append(modNames, "/boot/efi/EFI/almalinux/grubaa64.efi")               // almalinux
 
 	default:
 		modNames = append(modNames, "/usr/share/efi/x86_64/grub.efi")                     // suse
@@ -332,19 +332,23 @@ func GetEfiShimFiles(arch string) []string {
 	var modNames []string
 	switch arch {
 	case "arm64":
-		modNames = append(modNames, "/usr/share/efi/aarch64/shim.efi")   // suse
-		modNames = append(modNames, "/usr/lib/shim/shimaa64.efi.signed") // ubuntu + debian
-		modNames = append(modNames, "/boot/efi/EFI/fedora/shim.efi")     // fedora
-		modNames = append(modNames, "/boot/efi/EFI/rocky/shim.efi")      // rocky
-		modNames = append(modNames, "/boot/efi/EFI/redhat/shim.efi")     // redhat
-		modNames = append(modNames, "/boot/efi/EFI/almalinux/shim.efi")  // almalinux
+		modNames = append(modNames, "/usr/share/efi/aarch64/shim.efi")          // suse
+		modNames = append(modNames, "/usr/lib/shim/shimaa64.efi.dualsigned")    // ubuntu
+		modNames = append(modNames, "/usr/lib/shim/shimaa64.efi.signed.latest") // ubuntu
+		modNames = append(modNames, "/usr/lib/shim/shimaa64.efi.signed")        // debian, maybe ubuntu but its a link so it can be broken
+		modNames = append(modNames, "/boot/efi/EFI/fedora/shim.efi")            // fedora
+		modNames = append(modNames, "/boot/efi/EFI/rocky/shim.efi")             // rocky
+		modNames = append(modNames, "/boot/efi/EFI/redhat/shim.efi")            // redhat
+		modNames = append(modNames, "/boot/efi/EFI/almalinux/shim.efi")         // almalinux
 	default:
-		modNames = append(modNames, "/usr/share/efi/x86_64/shim.efi")   // suse
-		modNames = append(modNames, "/usr/lib/shim/shimx64.efi.signed") // ubuntu + debian
-		modNames = append(modNames, "/boot/efi/EFI/fedora/shim.efi")    // fedora
-		modNames = append(modNames, "/boot/efi/EFI/rocky/shim.efi")     // rocky
-		modNames = append(modNames, "/boot/efi/EFI/redhat/shim.efi")    // redhat
-		modNames = append(modNames, "/boot/efi/EFI/almalinux/shim.efi") // almalinux
+		modNames = append(modNames, "/usr/share/efi/x86_64/shim.efi")          // suse
+		modNames = append(modNames, "/usr/lib/shim/shimx64.efi.dualsigned")    // ubuntu
+		modNames = append(modNames, "/usr/lib/shim/shimx64.efi.signed.latest") // ubuntu
+		modNames = append(modNames, "/usr/lib/shim/shimx64.efi.signed")        // debian, maybe ubuntu but its a link so it can be broken
+		modNames = append(modNames, "/boot/efi/EFI/fedora/shim.efi")           // fedora
+		modNames = append(modNames, "/boot/efi/EFI/rocky/shim.efi")            // rocky
+		modNames = append(modNames, "/boot/efi/EFI/redhat/shim.efi")           // redhat
+		modNames = append(modNames, "/boot/efi/EFI/almalinux/shim.efi")        // almalinux
 	}
 
 	return modNames
