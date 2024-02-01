@@ -125,7 +125,7 @@ func detectBoot() Boot {
 		return Active
 	case strings.Contains(cmdlineS, "COS_PASSIVE"):
 		return Passive
-	case strings.Contains(cmdlineS, "COS_RECOVERY"), strings.Contains(cmdlineS, "COS_SYSTEM"):
+	case strings.Contains(cmdlineS, "COS_RECOVERY"), strings.Contains(cmdlineS, "COS_SYSTEM"), strings.Contains(cmdlineS, "recovery-mode"):
 		return Recovery
 	case strings.Contains(cmdlineS, "live:LABEL"), strings.Contains(cmdlineS, "live:CDLABEL"), strings.Contains(cmdlineS, "netboot"):
 		return LiveCD
@@ -146,7 +146,7 @@ func DetectBootWithVFS(fs types.KairosFS) (Boot, error) {
 		return Active, nil
 	case strings.Contains(cmdlineS, "COS_PASSIVE"):
 		return Passive, nil
-	case strings.Contains(cmdlineS, "COS_RECOVERY"), strings.Contains(cmdlineS, "COS_SYSTEM"):
+	case strings.Contains(cmdlineS, "COS_RECOVERY"), strings.Contains(cmdlineS, "COS_SYSTEM"), strings.Contains(cmdlineS, "recovery-mode"):
 		return Recovery, nil
 	case strings.Contains(cmdlineS, "live:LABEL"), strings.Contains(cmdlineS, "live:CDLABEL"), strings.Contains(cmdlineS, "netboot"):
 		return LiveCD, nil
