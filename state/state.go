@@ -7,11 +7,13 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/apex/log"
 	"github.com/itchyny/gojq"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/block"
 	"github.com/kairos-io/kairos-sdk/types"
 	"github.com/kairos-io/kairos-sdk/utils"
+	"github.com/rs/zerolog"
 	"github.com/zcalusic/sysinfo"
 	"gopkg.in/yaml.v3"
 )
@@ -22,6 +24,8 @@ const (
 	Recovery Boot = "recovery_boot"
 	LiveCD   Boot = "livecd_boot"
 	Unknown  Boot = "unknown"
+
+	UEFICurrentEntryFile = "/sys/firmware/efi/efivars/LoaderEntrySelected-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"
 )
 
 type Boot string
@@ -117,21 +121,78 @@ func detectPartitionByFindmnt(b *block.Partition) PartitionState {
 func detectBoot() Boot {
 	cmdline, err := os.ReadFile("/proc/cmdline")
 	if err != nil {
+		log.Debug().Err(err).Msg("Error reading /proc/cmdline file " + err.Error())
 		return Unknown
 	}
+
 	cmdlineS := string(cmdline)
+
+	if detectUKIboot(cmdlineS) {
+		return getUKIBootState()
+	}
+
+	return getNonUKIBootState(cmdlineS)
+}
+
+func getUKIBootState() Boot {
+	fileBytes, err := os.ReadFile(UEFICurrentEntryFile)
+	if err != nil {
+		log.Debug().Err(err).Msg(fmt.Sprintf("Error reading %s file %s", UEFICurrentEntryFile, err.Error()))
+		return Unknown
+	}
 	switch {
-	case strings.Contains(cmdlineS, "COS_ACTIVE"):
+	case !EfiBootFromInstall(log.Logger):
+		return LiveCD
+	case strings.HasSuffix(string(fileBytes), "_active.efi"):
 		return Active
-	case strings.Contains(cmdlineS, "COS_PASSIVE"):
+	case strings.HasSuffix(string(fileBytes), "_passive.efi"):
 		return Passive
-	case strings.Contains(cmdlineS, "COS_RECOVERY"), strings.Contains(cmdlineS, "COS_SYSTEM"), strings.Contains(cmdlineS, "recovery-mode"):
+	case strings.HasSuffix(string(fileBytes), "_recovery.efi"):
 		return Recovery
-	case strings.Contains(cmdlineS, "live:LABEL"), strings.Contains(cmdlineS, "live:CDLABEL"), strings.Contains(cmdlineS, "netboot"):
+	default:
+		return Unknown
+	}
+}
+
+func getNonUKIBootState(cmdline string) Boot {
+	switch {
+	case strings.Contains(cmdline, "COS_ACTIVE"):
+		return Active
+	case strings.Contains(cmdline, "COS_PASSIVE"):
+		return Passive
+	case strings.Contains(cmdline, "COS_RECOVERY"), strings.Contains(cmdline, "COS_SYSTEM"), strings.Contains(cmdline, "recovery-mode"):
+		return Recovery
+	case strings.Contains(cmdline, "live:LABEL"), strings.Contains(cmdline, "live:CDLABEL"), strings.Contains(cmdline, "netboot"):
 		return LiveCD
 	default:
 		return Unknown
 	}
+}
+
+// Detects if we are on uki mode
+func detectUKIboot(cmdline string) bool {
+	return strings.Contains(cmdline, "rd.immucore.uki")
+}
+
+// EfiBootFromInstall will try to check the /sys/firmware/efi/LoaderDevicePartUUID-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f
+// systemd vendor Id is 4a67b082-0a4c-41cf-b6c7-440b29bb8c4f and will never change
+// LoaderDevicePartUUID contains the partition UUID of the EFI System Partition the boot loader was run from. Set by the boot loader.
+// This will return true if we are running from a DISK device, which sets the efivar
+// This wil return false when running from a volatile media, like CD or netboot as it cannot infer where it was booted from
+// Useful to check if we are on install phase or not
+// This efi var is VOLATILE so once we reboot is GONE. No way of keeping it across reboots, its set by the bootloader.
+func EfiBootFromInstall(log zerolog.Logger) bool {
+	file := "/sys/firmware/efi/efivars/LoaderDevicePartUUID-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"
+	readFile, err := os.ReadFile(file)
+	if err != nil {
+		log.Debug().Err(err).Msg("Error reading LoaderDevicePartUUID file")
+		return false
+	}
+	if len(readFile) == 0 || string(readFile) == "" {
+		log.Debug().Str("file", string(readFile)).Msg("Error reading LoaderDevicePartUUID file")
+		return false
+	}
+	return true
 }
 
 // DetectBootWithVFS will detect the boot state using a vfs so it can be used for tests as well
