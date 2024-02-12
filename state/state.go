@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/apex/log"
 	"github.com/itchyny/gojq"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/block"
@@ -27,6 +26,8 @@ const (
 
 	UEFICurrentEntryFile = "/sys/firmware/efi/efivars/LoaderEntrySelected-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"
 )
+
+var Log zerolog.Logger
 
 type Boot string
 
@@ -121,13 +122,13 @@ func detectPartitionByFindmnt(b *block.Partition) PartitionState {
 func detectBoot() Boot {
 	cmdline, err := os.ReadFile("/proc/cmdline")
 	if err != nil {
-		log.Debug().Err(err).Msg("Error reading /proc/cmdline file " + err.Error())
+		Log.Debug().Err(err).Msg("Error reading /proc/cmdline file " + err.Error())
 		return Unknown
 	}
 
 	cmdlineS := string(cmdline)
 
-	if detectUKIboot(cmdlineS) {
+	if DetectUKIboot(cmdlineS) {
 		return getUKIBootState()
 	}
 
@@ -135,19 +136,23 @@ func detectBoot() Boot {
 }
 
 func getUKIBootState() Boot {
-	fileBytes, err := os.ReadFile(UEFICurrentEntryFile)
+	if !EfiBootFromInstall() {
+		return LiveCD
+	}
+
+	currentEntryBytes, err := os.ReadFile(UEFICurrentEntryFile)
 	if err != nil {
-		log.Debug().Err(err).Msg(fmt.Sprintf("Error reading %s file %s", UEFICurrentEntryFile, err.Error()))
+		Log.Debug().Err(err).Msg(fmt.Sprintf("Error reading %s file %s", UEFICurrentEntryFile, err.Error()))
 		return Unknown
 	}
+	currentEntry := string(currentEntryBytes)
+
 	switch {
-	case !EfiBootFromInstall(log.Logger):
-		return LiveCD
-	case strings.HasSuffix(string(fileBytes), "_active.efi"):
+	case strings.HasSuffix(currentEntry, "active.conf"):
 		return Active
-	case strings.HasSuffix(string(fileBytes), "_passive.efi"):
+	case strings.HasSuffix(currentEntry, "passive.conf"):
 		return Passive
-	case strings.HasSuffix(string(fileBytes), "_recovery.efi"):
+	case strings.HasSuffix(currentEntry, "recovery.conf"):
 		return Recovery
 	default:
 		return Unknown
@@ -170,7 +175,7 @@ func getNonUKIBootState(cmdline string) Boot {
 }
 
 // Detects if we are on uki mode
-func detectUKIboot(cmdline string) bool {
+func DetectUKIboot(cmdline string) bool {
 	return strings.Contains(cmdline, "rd.immucore.uki")
 }
 
@@ -181,15 +186,15 @@ func detectUKIboot(cmdline string) bool {
 // This wil return false when running from a volatile media, like CD or netboot as it cannot infer where it was booted from
 // Useful to check if we are on install phase or not
 // This efi var is VOLATILE so once we reboot is GONE. No way of keeping it across reboots, its set by the bootloader.
-func EfiBootFromInstall(log zerolog.Logger) bool {
+func EfiBootFromInstall() bool {
 	file := "/sys/firmware/efi/efivars/LoaderDevicePartUUID-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"
 	readFile, err := os.ReadFile(file)
 	if err != nil {
-		log.Debug().Err(err).Msg("Error reading LoaderDevicePartUUID file")
+		Log.Debug().Err(err).Msg("Error reading LoaderDevicePartUUID file")
 		return false
 	}
 	if len(readFile) == 0 || string(readFile) == "" {
-		log.Debug().Str("file", string(readFile)).Msg("Error reading LoaderDevicePartUUID file")
+		Log.Debug().Str("file", string(readFile)).Msg("Error reading LoaderDevicePartUUID file")
 		return false
 	}
 	return true

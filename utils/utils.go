@@ -353,3 +353,31 @@ func GetEfiShimFiles(arch string) []string {
 
 	return modNames
 }
+
+// SystemdBootConfReader reads a systemd-boot conf file and returns a map with the key/value pairs
+func SystemdBootConfReader(filePath string) (map[string]string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	result := make(map[string]string)
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.SplitN(line, " ", 2)
+		if len(parts) == 2 {
+			result[parts[0]] = parts[1]
+		}
+		if len(parts) == 1 {
+			result[parts[0]] = ""
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
