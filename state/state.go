@@ -119,33 +119,40 @@ func detectPartitionByFindmnt(b *block.Partition) PartitionState {
 	}
 }
 
-func detectBoot() Boot {
+func detectBoot(logger zerolog.Logger) Boot {
+	logger.Info().Msg("detecting boot state")
 	cmdline, err := os.ReadFile("/proc/cmdline")
 	if err != nil {
-		Log.Debug().Err(err).Msg("Error reading /proc/cmdline file " + err.Error())
+		logger.Debug().Err(err).Msg("Error reading /proc/cmdline file " + err.Error())
 		return Unknown
 	}
 
 	cmdlineS := string(cmdline)
 
 	if DetectUKIboot(cmdlineS) {
-		return getUKIBootState()
+		logger.Debug().Msg("Detected uki boot")
+		return getUKIBootState(logger)
 	}
 
 	return getNonUKIBootState(cmdlineS)
 }
 
-func getUKIBootState() Boot {
-	if !EfiBootFromInstall() {
+func getUKIBootState(logger zerolog.Logger) Boot {
+	if !EfiBootFromInstall(logger) {
 		return LiveCD
 	}
 
 	currentEntryBytes, err := os.ReadFile(UEFICurrentEntryFile)
 	if err != nil {
-		Log.Debug().Err(err).Msg(fmt.Sprintf("Error reading %s file %s", UEFICurrentEntryFile, err.Error()))
+		logger.Debug().Err(err).Msg(fmt.Sprintf("Error reading %s file %s", UEFICurrentEntryFile, err.Error()))
 		return Unknown
 	}
-	currentEntry := string(currentEntryBytes)
+
+	// Create a regular expression to remove non-printable characters
+	regex := regexp.MustCompile("[[:cntrl:]]")
+	currentEntry := regex.ReplaceAllString(string(currentEntryBytes), "")
+
+	logger.Debug().Msg("Current entry: " + currentEntry)
 
 	switch {
 	case strings.HasSuffix(currentEntry, "active.conf"):
@@ -176,6 +183,7 @@ func getNonUKIBootState(cmdline string) Boot {
 
 // Detects if we are on uki mode
 func DetectUKIboot(cmdline string) bool {
+	Log.Info().Msg("checking cmdline for uki:" + cmdline)
 	return strings.Contains(cmdline, "rd.immucore.uki")
 }
 
@@ -186,15 +194,15 @@ func DetectUKIboot(cmdline string) bool {
 // This wil return false when running from a volatile media, like CD or netboot as it cannot infer where it was booted from
 // Useful to check if we are on install phase or not
 // This efi var is VOLATILE so once we reboot is GONE. No way of keeping it across reboots, its set by the bootloader.
-func EfiBootFromInstall() bool {
+func EfiBootFromInstall(logger zerolog.Logger) bool {
 	file := "/sys/firmware/efi/efivars/LoaderDevicePartUUID-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"
 	readFile, err := os.ReadFile(file)
 	if err != nil {
-		Log.Debug().Err(err).Msg("Error reading LoaderDevicePartUUID file")
+		logger.Debug().Err(err).Msg("Error reading LoaderDevicePartUUID file")
 		return false
 	}
 	if len(readFile) == 0 || string(readFile) == "" {
-		Log.Debug().Str("file", string(readFile)).Msg("Error reading LoaderDevicePartUUID file")
+		logger.Debug().Str("file", string(readFile)).Msg("Error reading LoaderDevicePartUUID file")
 		return false
 	}
 	return true
@@ -295,9 +303,10 @@ func detectKairos(r *Runtime) {
 	r.Kairos = *k
 }
 
-func NewRuntime() (Runtime, error) {
+func NewRuntimeWithLogger(logger zerolog.Logger) (Runtime, error) {
+	logger.Info().Msg("creating a runtime")
 	runtime := &Runtime{
-		BootState: detectBoot(),
+		BootState: detectBoot(logger),
 		UUID:      utils.UUID(),
 	}
 
@@ -306,6 +315,10 @@ func NewRuntime() (Runtime, error) {
 	err := detectRuntimeState(runtime)
 
 	return *runtime, err
+}
+
+func NewRuntime() (Runtime, error) {
+	return NewRuntimeWithLogger(Log)
 }
 
 func (r Runtime) String() string {
