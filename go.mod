@@ -21,7 +21,7 @@ require (
 	github.com/rs/zerolog v1.32.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/swaggest/jsonschema-go v0.3.62
-	github.com/twpayne/go-vfs/v4 v4.2.0
+	github.com/twpayne/go-vfs/v4 v4.3.0
 	github.com/urfave/cli/v2 v2.26.0
 	github.com/zcalusic/sysinfo v1.0.1
 	golang.org/x/mod v0.10.0
