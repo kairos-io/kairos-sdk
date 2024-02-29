@@ -154,12 +154,16 @@ func getUKIBootState(logger zerolog.Logger) Boot {
 
 	logger.Debug().Msg("Current entry: " + currentEntry)
 
+	if !strings.HasSuffix(currentEntry, ".conf") {
+		return Unknown
+	}
+
 	switch {
-	case strings.HasSuffix(currentEntry, "active.conf"):
+	case strings.HasPrefix(currentEntry, "active"):
 		return Active
-	case strings.HasSuffix(currentEntry, "passive.conf"):
+	case strings.HasPrefix(currentEntry, "passive"):
 		return Passive
-	case strings.HasSuffix(currentEntry, "recovery.conf"):
+	case strings.HasPrefix(currentEntry, "recovery"):
 		return Recovery
 	default:
 		return Unknown
