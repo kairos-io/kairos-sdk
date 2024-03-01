@@ -124,6 +124,10 @@ func (m KairosLogger) Warning(args ...interface{}) {
 	m.Logger.Warn().Msg(fmt.Sprint(args...))
 }
 
+func (m KairosLogger) Warningf(tpl string, args ...interface{}) {
+	m.Logger.Warn().Msg(fmt.Sprintf(tpl, args...))
+}
+
 func (m KairosLogger) Debugf(tpl string, args ...interface{}) {
 	m.Logger.Debug().Msg(fmt.Sprintf(tpl, args...))
 }
