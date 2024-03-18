@@ -3,10 +3,10 @@ package unstructured
 import (
 	"errors"
 	"fmt"
-
 	"github.com/hashicorp/go-multierror"
 	"github.com/itchyny/gojq"
 	"gopkg.in/yaml.v3"
+	"strings"
 )
 
 func YAMLHasKey(query string, content []byte) (bool, error) {
@@ -109,12 +109,22 @@ func ToYAML(v map[string]interface{}) ([]byte, error) {
 	var errs error
 
 	for k, value := range v {
-		tmpl := ".%s=\"%s\""
+		prefix := "."
+		equal := "="
+		tmplKey := "%s"
+		tmplValue := "\"%s\""
+		
+		// If key has a dash we need to add quotes to it to avoid failure parsing ut
+		if strings.Contains(k, "-") {
+			tmplKey = "\"%s\""
+		}
+
 		// support boolean types
 		if value == "true" || value == "false" {
-			tmpl = ".%s=%s"
+			tmplValue = "%s"
 		}
-		newData, err := jq(fmt.Sprintf(tmpl, k, value), data)
+		finalTemplate := prefix + tmplKey + equal + tmplValue
+		newData, err := jq(fmt.Sprintf(finalTemplate, k, value), data)
 		if err != nil {
 			errs = multierror.Append(errs, err)
 			continue
