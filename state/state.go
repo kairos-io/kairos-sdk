@@ -18,11 +18,12 @@ import (
 )
 
 const (
-	Active   Boot = "active_boot"
-	Passive  Boot = "passive_boot"
-	Recovery Boot = "recovery_boot"
-	LiveCD   Boot = "livecd_boot"
-	Unknown  Boot = "unknown"
+	Active    Boot = "active_boot"
+	Passive   Boot = "passive_boot"
+	Recovery  Boot = "recovery_boot"
+	LiveCD    Boot = "livecd_boot"
+	AutoReset Boot = "autoreset_boot"
+	Unknown   Boot = "unknown"
 
 	UEFICurrentEntryFile = "/sys/firmware/efi/efivars/LoaderEntrySelected-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"
 )
@@ -165,6 +166,8 @@ func getUKIBootState(logger zerolog.Logger) Boot {
 		return Passive
 	case strings.HasPrefix(currentEntry, "recovery"):
 		return Recovery
+	case strings.HasPrefix(currentEntry, "autoreset"):
+		return AutoReset
 	default:
 		return Unknown
 	}
