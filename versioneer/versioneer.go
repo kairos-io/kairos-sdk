@@ -26,10 +26,12 @@ const (
 	EnvVarGithubRepo            = "GITHUB_REPO"
 	EnvVarBugReportURL          = "BUG_REPORT_URL"
 	EnvVarHomeURL               = "HOME_URL"
+	EnvVarFamily                = "FAMILY"
 )
 
 type Artifact struct {
 	Flavor                string
+	Family                string
 	FlavorRelease         string
 	Variant               string
 	Model                 string
@@ -57,6 +59,9 @@ func NewArtifactFromOSRelease(file ...string) (*Artifact, error) {
 	result := Artifact{}
 
 	if result.Flavor, err = utils.OSRelease(EnvVarFlavor, file...); err != nil {
+		return nil, err
+	}
+	if result.Family, err = utils.OSRelease(EnvVarFamily, file...); err != nil {
 		return nil, err
 	}
 	if result.FlavorRelease, err = utils.OSRelease(EnvVarFlavorRelease, file...); err != nil {
@@ -238,6 +243,7 @@ func (a *Artifact) OSReleaseVariables(registryAndOrg, githubRepo, bugURL, homeUR
 		// Actively used variables
 		"KAIROS_FLAVOR":           a.Flavor,
 		"KAIROS_FLAVOR_RELEASE":   a.FlavorRelease,
+		"KAIROS_FAMILY":           a.Family,
 		"KAIROS_VARIANT":          a.Variant,
 		"KAIROS_MODEL":            a.Model,
 		"KAIROS_TARGETARCH":       a.Arch,

@@ -97,6 +97,13 @@ var (
 		Usage:   "the url where more information about the project can be found",
 		EnvVars: []string{EnvVarHomeURL},
 	}
+
+	familyFlag *cli.StringFlag = &cli.StringFlag{
+		Name:    "family",
+		Value:   "",
+		Usage:   "the url where more information about the project can be found",
+		EnvVars: []string{EnvVarFamily},
+	}
 )
 
 func CliCommands() []*cli.Command {
@@ -165,7 +172,7 @@ func CliCommands() []*cli.Command {
 			Flags: []cli.Flag{
 				flavorFlag, flavorReleaseFlag, variantFlag, modelFlag, archFlag, versionFlag,
 				softwareVersionFlag, softwareVersionPrefixFlag, registryAndOrgFlag, bugReportURLFlag, projectHomeURLFlag,
-				githubRepoFlag,
+				githubRepoFlag, familyFlag,
 			},
 			Action: func(cCtx *cli.Context) error {
 				a := artifactFromFlags(cCtx)
@@ -190,6 +197,7 @@ func CliCommands() []*cli.Command {
 func artifactFromFlags(cCtx *cli.Context) Artifact {
 	return Artifact{
 		Flavor:                flavorFlag.Get(cCtx),
+		Family:                familyFlag.Get(cCtx),
 		FlavorRelease:         flavorReleaseFlag.Get(cCtx),
 		Variant:               variantFlag.Get(cCtx),
 		Model:                 modelFlag.Get(cCtx),

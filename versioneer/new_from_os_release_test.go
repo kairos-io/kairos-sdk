@@ -20,6 +20,7 @@ var _ = Describe("NewArtifactFromOSRelease", func() {
 		osReleaseContent = "KAIROS_FLAVOR=opensuse\n" +
 			"KAIROS_FLAVOR_RELEASE=leap-15.5\n" +
 			"KAIROS_VARIANT=standard\n" +
+			"KAIROS_FAMILY=opensuse\n" +
 			"KAIROS_TARGETARCH=amd64\n" +
 			"KAIROS_MODEL=generic\n" +
 			"KAIROS_RELEASE=v2.4.2\n" +
@@ -39,6 +40,7 @@ var _ = Describe("NewArtifactFromOSRelease", func() {
 
 		Expect(err).ToNot(HaveOccurred())
 		Expect(artifact.Flavor).To(Equal("opensuse"))
+		Expect(artifact.Family).To(Equal("opensuse"))
 		Expect(artifact.FlavorRelease).To(Equal("leap-15.5"))
 		Expect(artifact.Variant).To(Equal("standard"))
 		Expect(artifact.Model).To(Equal("generic"))

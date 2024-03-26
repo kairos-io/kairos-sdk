@@ -11,6 +11,7 @@ var _ = Describe("NewArtifactFromJSON", func() {
 		jsonStr := `{
 		  "flavor":"opensuse-leap",
 			"flavorRelease":"15.5",
+			"family":"opensuse",
 			"variant":"standard",
 			"model":"generic",
 			"arch":"amd64",
@@ -22,6 +23,7 @@ var _ = Describe("NewArtifactFromJSON", func() {
 
 		Expect(err).ToNot(HaveOccurred())
 		Expect(artifact.Flavor).To(Equal("opensuse-leap"))
+		Expect(artifact.Family).To(Equal("opensuse"))
 		Expect(artifact.FlavorRelease).To(Equal("15.5"))
 		Expect(artifact.Variant).To(Equal("standard"))
 		Expect(artifact.Model).To(Equal("generic"))
