@@ -101,7 +101,7 @@ var (
 	familyFlag *cli.StringFlag = &cli.StringFlag{
 		Name:    "family",
 		Value:   "",
-		Usage:   "the url where more information about the project can be found",
+		Usage:   "family of the underlying distro (rhel, ubuntu, opensuse, etc...)",
 		EnvVars: []string{EnvVarFamily},
 	}
 )
