@@ -166,7 +166,7 @@ func getUKIBootState(logger zerolog.Logger) Boot {
 		return Passive
 	case strings.HasPrefix(currentEntry, "recovery"):
 		return Recovery
-	case strings.HasPrefix(currentEntry, "autoreset"):
+	case strings.HasPrefix(currentEntry, "statereset"):
 		return AutoReset
 	default:
 		return Unknown
