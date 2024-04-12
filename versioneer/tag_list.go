@@ -150,7 +150,7 @@ func (tl TagList) OtherAnyVersion() TagList {
 }
 
 // NewerAnyVersion returns tags with:
-//   - a kairos version than the given artifact's
+//   - a kairos version newer than the given artifact's
 //   - a kairos version same as the given artifacts but a software version higher
 //     than the current artifact's
 //
@@ -158,9 +158,9 @@ func (tl TagList) OtherAnyVersion() TagList {
 // (first encountered, because our tags have a "k3s1" in the end too)
 func (tl TagList) NewerAnyVersion() TagList {
 	if tl.Artifact.SoftwareVersion != "" {
-		return tl.newerSomeVersions()
+		return tl.Images().newerSomeVersions()
 	} else {
-		return tl.newerVersions()
+		return tl.Images().newerVersions()
 	}
 }
 

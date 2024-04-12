@@ -51,6 +51,7 @@
   "sha256-a057b02932f3959aac4083ffcddbe9f3df343b7d0cf26961a9132c9116480a60.sig",
   "sha256-94870aae76d698da12affe26bd79dfb37484cdf78a60c8c05be004b9dae49549.att",
   "leap-15.5-core-arm64-generic-v2.4.2-rc1",
+  "leap-15.5-standard-amd64-generic-master",
   "sha256-c3114f3d722a8bde5a4e3ff678d8a36eeb03fb05c1d5dbb0387126cec17db591.sbom",
   "sha256-e53bed40882b69aceab2990e95e882448a4eaf97b2d7d254fcfa5127c9885da7.sig",
   "sha256-c3114f3d722a8bde5a4e3ff678d8a36eeb03fb05c1d5dbb0387126cec17db591.att",
