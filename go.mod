@@ -22,7 +22,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/swaggest/jsonschema-go v0.3.62
 	github.com/twpayne/go-vfs/v4 v4.3.0
-	github.com/urfave/cli/v2 v2.26.0
+	github.com/urfave/cli/v2 v2.27.1
 	github.com/zcalusic/sysinfo v1.0.1
 	golang.org/x/mod v0.14.0
 	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
