@@ -1,11 +1,16 @@
 module github.com/kairos-io/kairos-sdk
 
-go 1.20
+go 1.19
 
+// This versions require go1.20
+replace (
+	github.com/onsi/ginkgo/v2 v2.17.1 => github.com/onsi/ginkgo/v2 v2.12.1
+	github.com/onsi/gomega v1.32.0 => github.com/onsi/gomega v1.28.0
+)
 
 require (
 	github.com/avast/retry-go v2.7.0+incompatible
-	github.com/containerd/containerd v1.7.11
+	github.com/containerd/containerd v1.7.6
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/foxboron/go-uefi v0.0.0-20240128152106-48be911532c2
 	github.com/google/go-containerregistry v0.19.1
@@ -38,7 +43,7 @@ require (
 	atomicgo.dev/schedule v0.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
-	github.com/Microsoft/hcsshim v0.11.4 // indirect
+	github.com/Microsoft/hcsshim v0.11.0 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/aybabtme/rgbterm v0.0.0-20170906152045-cc83f3b3ce59 // indirect
 	github.com/chuckpreslar/emission v0.0.0-20170206194824-a7ddd980baf9 // indirect
