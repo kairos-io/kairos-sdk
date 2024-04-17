@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/foxboron/go-uefi/efi"
 	"github.com/itchyny/gojq"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/block"
@@ -50,6 +51,7 @@ type Kairos struct {
 	Flavor   string         `yaml:"flavor" json:"flavor"`
 	Version  string         `yaml:"version" json:"version"`
 	Init     string         `yaml:"init" json:"init"`
+  SecureBoot bool   `yaml:"secureboot" json:"secureboot"`
 	EfiCerts types.EfiCerts `yaml:"eficerts,omitempty" json:"eficerts,omitempty"`
 }
 
@@ -310,7 +312,9 @@ func detectKairos(r *Runtime) {
 	}
 	k.Init = utils.GetInit()
 	k.EfiCerts = getEfiCertsCommonNames()
+	k.SecureBoot = efi.GetSecureBoot()
 	r.Kairos = *k
+
 }
 
 // getEfiCertsCommonNames returns a simple list of the Common names of the certs
