@@ -97,19 +97,3 @@ func GetAllCerts() (types.CertList, error) {
 func isValidSignature(sign util.EFIGUID) bool {
 	return sign == signature.CERT_X509_GUID
 }
-
-// GetEfiCertsCommonNames returns a simple list of the Common names of the certs
-func GetEfiCertsCommonNames() types.EfiCerts {
-	var data types.EfiCerts
-	certs, _ := GetAllCerts() // Ignore errors here, we dont care about them
-	for _, c := range certs.PK {
-		data.PK = append(data.PK, c.Issuer.CommonName)
-	}
-	for _, c := range certs.KEK {
-		data.KEK = append(data.KEK, c.Issuer.CommonName)
-	}
-	for _, c := range certs.DB {
-		data.DB = append(data.DB, c.Issuer.CommonName)
-	}
-	return data
-}

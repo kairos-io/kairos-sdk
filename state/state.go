@@ -309,8 +309,24 @@ func detectKairos(r *Runtime) {
 		k.Version = v
 	}
 	k.Init = utils.GetInit()
-	k.EfiCerts = signatures.GetEfiCertsCommonNames()
+	k.EfiCerts = getEfiCertsCommonNames()
 	r.Kairos = *k
+}
+
+// getEfiCertsCommonNames returns a simple list of the Common names of the certs
+func getEfiCertsCommonNames() types.EfiCerts {
+	var data types.EfiCerts
+	certs, _ := signatures.GetAllCerts() // Ignore errors here, we dont care about them, we only want the presentation of the names
+	for _, c := range certs.PK {
+		data.PK = append(data.PK, c.Issuer.CommonName)
+	}
+	for _, c := range certs.KEK {
+		data.KEK = append(data.KEK, c.Issuer.CommonName)
+	}
+	for _, c := range certs.DB {
+		data.DB = append(data.DB, c.Issuer.CommonName)
+	}
+	return data
 }
 
 func NewRuntimeWithLogger(logger zerolog.Logger) (Runtime, error) {
