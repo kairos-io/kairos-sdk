@@ -10,6 +10,7 @@ import (
 	"github.com/itchyny/gojq"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/block"
+	"github.com/kairos-io/kairos-sdk/signatures"
 	"github.com/kairos-io/kairos-sdk/types"
 	"github.com/kairos-io/kairos-sdk/utils"
 	"github.com/rs/zerolog"
@@ -46,9 +47,10 @@ type PartitionState struct {
 }
 
 type Kairos struct {
-	Flavor  string `yaml:"flavor" json:"flavor"`
-	Version string `yaml:"version" json:"version"`
-	Init    string `yaml:"init" json:"init"`
+	Flavor   string         `yaml:"flavor" json:"flavor"`
+	Version  string         `yaml:"version" json:"version"`
+	Init     string         `yaml:"init" json:"init"`
+	EfiCerts types.EfiCerts `yaml:"efi-certs,omitempty" json:"efi-certs,omitempty"`
 }
 
 type Runtime struct {
@@ -307,6 +309,7 @@ func detectKairos(r *Runtime) {
 		k.Version = v
 	}
 	k.Init = utils.GetInit()
+	k.EfiCerts = signatures.GetEfiCertsCommonNames()
 	r.Kairos = *k
 }
 
