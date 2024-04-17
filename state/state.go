@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/foxboron/go-uefi/efi"
 	"github.com/itchyny/gojq"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/block"
@@ -46,9 +47,10 @@ type PartitionState struct {
 }
 
 type Kairos struct {
-	Flavor  string `yaml:"flavor" json:"flavor"`
-	Version string `yaml:"version" json:"version"`
-	Init    string `yaml:"init" json:"init"`
+	Flavor     string `yaml:"flavor" json:"flavor"`
+	Version    string `yaml:"version" json:"version"`
+	Init       string `yaml:"init" json:"init"`
+	SecureBoot bool   `yaml:"secureboot" json:"secureboot"`
 }
 
 type Runtime struct {
@@ -307,7 +309,9 @@ func detectKairos(r *Runtime) {
 		k.Version = v
 	}
 	k.Init = utils.GetInit()
+	k.SecureBoot = efi.GetSecureBoot()
 	r.Kairos = *k
+
 }
 
 func NewRuntimeWithLogger(logger zerolog.Logger) (Runtime, error) {
