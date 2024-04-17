@@ -1,7 +1,7 @@
 VERSION 0.7
 
 # renovate: datasource=docker depName=golang
-ARG --global GO_VERSION=1.20-bookworm
+ARG --global GO_VERSION=1.20
 # renovate: datasource=docker depName=golangci-lint
 ARG --global GOLINT_VERSION=v1.51
 # renovate: datasource=docker depName=quay.io/luet/base
@@ -13,7 +13,7 @@ luet:
 
 go-deps:
     ARG GO_VERSION
-    FROM golang:$GO_VERSION
+    FROM golang:$GO_VERSION-alpine
     WORKDIR /build
     COPY go.mod go.sum ./
     RUN go mod download
@@ -22,6 +22,7 @@ go-deps:
 
 test:
     FROM +go-deps
+    ENV CGO_ENABLED=0
     WORKDIR /build
     COPY +luet/luet /usr/bin/luet
     COPY . .
