@@ -50,7 +50,7 @@ func GetAllCerts() (types.CertList, error) {
 				// Note the S at the end of the function, we are parsing multiple certs, not just one
 				certificates, err := x509.ParseCertificates(k1.Data)
 				if err != nil {
-					// return error?
+					continue
 				}
 				for _, cert := range certificates {
 					certList.PK = append(certList.PK, types.CertDetail{Owner: cert.Subject, Issuer: cert.Issuer})
@@ -65,7 +65,7 @@ func GetAllCerts() (types.CertList, error) {
 				// Note the S at the end of the function, we are parsing multiple certs, not just one
 				certificates, err := x509.ParseCertificates(k1.Data)
 				if err != nil {
-					// return error?
+					continue
 				}
 				for _, cert := range certificates {
 					certList.KEK = append(certList.KEK, types.CertDetail{Owner: cert.Subject, Issuer: cert.Issuer})
@@ -80,7 +80,7 @@ func GetAllCerts() (types.CertList, error) {
 				// Note the S at the end of the function, we are parsing multiple certs, not just one
 				certificates, err := x509.ParseCertificates(k1.Data)
 				if err != nil {
-					// return error?
+					continue
 				}
 				for _, cert := range certificates {
 					certList.DB = append(certList.DB, types.CertDetail{Owner: cert.Subject, Issuer: cert.Issuer})
