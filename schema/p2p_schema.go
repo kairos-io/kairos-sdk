@@ -62,7 +62,7 @@ func (P2PNetworkExtended) JSONSchemaOneOf() []interface{} {
 
 // VPN represents the vpn block in the Kairos configuration.
 type VPN struct {
-	Create bool          `json:"vpn,omitempty" default:"true"`
-	Use    bool          `json:"use,omitempty" default:"true"`
-	Envs   []interface{} `json:"env,omitempty"`
+	Create bool        `json:"vpn,omitempty" default:"true"`
+	Use    bool        `json:"use,omitempty" default:"true"`
+	Envs   interface{} `json:"env,omitempty"`
 }

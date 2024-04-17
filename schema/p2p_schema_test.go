@@ -178,4 +178,22 @@ auto:
 			Expect(config.IsValid()).To(BeTrue())
 		})
 	})
+
+	Context("vpn", func() {
+		BeforeEach(func() {
+			yaml = `#cloud-config
+network_token: "b3RwOgogIGRoYWdlX3NpemU6IDIwOTcxNTIwCg=="
+auto:
+  enable: true
+  ha:
+    enable: true
+vpn:
+  env:
+    DCHP: "true"`
+		})
+
+		It("succeedes", func() {
+			Expect(config.IsValid()).To(BeTrue())
+		})
+	})
 })
