@@ -50,7 +50,7 @@ type Kairos struct {
 	Flavor   string         `yaml:"flavor" json:"flavor"`
 	Version  string         `yaml:"version" json:"version"`
 	Init     string         `yaml:"init" json:"init"`
-	EfiCerts types.EfiCerts `yaml:"efi-certs,omitempty" json:"efi-certs,omitempty"`
+	EfiCerts types.EfiCerts `yaml:"eficerts,omitempty" json:"eficerts,omitempty"`
 }
 
 type Runtime struct {

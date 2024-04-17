@@ -1,6 +1,8 @@
 module github.com/kairos-io/kairos-sdk
 
-go 1.19
+go 1.21
+
+toolchain go1.22.2
 
 // This versions require go1.20
 replace (
@@ -72,8 +74,8 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/itchyny/timefmt-go v0.1.5 // indirect
 	github.com/jaypipes/pcidb v1.0.0 // indirect
-	github.com/kr/pretty v0.2.1 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
+	github.com/kr/pretty v0.2.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lithammer/fuzzysearch v1.1.8 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
