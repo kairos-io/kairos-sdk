@@ -48,11 +48,11 @@ type PartitionState struct {
 }
 
 type Kairos struct {
-	Flavor   string         `yaml:"flavor" json:"flavor"`
-	Version  string         `yaml:"version" json:"version"`
-	Init     string         `yaml:"init" json:"init"`
-  SecureBoot bool   `yaml:"secureboot" json:"secureboot"`
-	EfiCerts types.EfiCerts `yaml:"eficerts,omitempty" json:"eficerts,omitempty"`
+	Flavor     string         `yaml:"flavor" json:"flavor"`
+	Version    string         `yaml:"version" json:"version"`
+	Init       string         `yaml:"init" json:"init"`
+	SecureBoot bool           `yaml:"secureboot" json:"secureboot"`
+	EfiCerts   types.EfiCerts `yaml:"eficerts,omitempty" json:"eficerts,omitempty"`
 }
 
 type Runtime struct {
