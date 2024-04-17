@@ -10,6 +10,21 @@ concurrency:
 env:
   FORCE_COLOR: 1
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install earthly
+        uses: Luet-lab/luet-install-action@v1
+        with:
+          repository: quay.io/kairos/packages
+          packages: utils/earthly
+      - name: Run lint
+        run: |
+          earthly +lint
   unit-tests:
     strategy:
       matrix:
@@ -26,9 +41,6 @@ jobs:
         with:
           repository: quay.io/kairos/packages
           packages: utils/earthly
-      - name: Run lint
-        run: |
-          earthly +lint
       - name: Run tests
         run: |
           earthly -P +test --GO_VERSION=${{ matrix.go-version }}
