@@ -52,9 +52,7 @@ func GetAllFullCerts() (types.CertListFull, error) {
 				if err != nil {
 					continue
 				}
-				for _, cert := range certificates {
-					certList.PK = append(certList.PK, cert)
-				}
+				certList.PK = append(certList.PK, certificates...)
 			}
 		}
 	}
@@ -67,9 +65,7 @@ func GetAllFullCerts() (types.CertListFull, error) {
 				if err != nil {
 					continue
 				}
-				for _, cert := range certificates {
-					certList.KEK = append(certList.KEK, cert)
-				}
+				certList.KEK = append(certList.KEK, certificates...)
 			}
 		}
 	}
@@ -82,9 +78,7 @@ func GetAllFullCerts() (types.CertListFull, error) {
 				if err != nil {
 					continue
 				}
-				for _, cert := range certificates {
-					certList.DB = append(certList.DB, cert)
-				}
+				certList.DB = append(certList.DB, certificates...)
 			}
 		}
 	}
