@@ -44,46 +44,29 @@ func GetAllFullCerts() (types.CertListFull, error) {
 		return certList, err
 	}
 
-	for _, k := range *pk {
-		if isValidSignature(k.SignatureType) {
-			for _, k1 := range k.Signatures {
-				// Note the S at the end of the function, we are parsing multiple certs, not just one
-				certificates, err := x509.ParseCertificates(k1.Data)
-				if err != nil {
-					continue
-				}
-				certList.PK = append(certList.PK, certificates...)
-			}
-		}
-	}
-
-	for _, k := range *kek {
-		if isValidSignature(k.SignatureType) {
-			for _, k1 := range k.Signatures {
-				// Note the S at the end of the function, we are parsing multiple certs, not just one
-				certificates, err := x509.ParseCertificates(k1.Data)
-				if err != nil {
-					continue
-				}
-				certList.KEK = append(certList.KEK, certificates...)
-			}
-		}
-	}
-
-	for _, k := range *db {
-		if isValidSignature(k.SignatureType) {
-			for _, k1 := range k.Signatures {
-				// Note the S at the end of the function, we are parsing multiple certs, not just one
-				certificates, err := x509.ParseCertificates(k1.Data)
-				if err != nil {
-					continue
-				}
-				certList.DB = append(certList.DB, certificates...)
-			}
-		}
-	}
+	certList.PK = ExtractCertsFromSignatureDatabase(pk)
+	certList.KEK = ExtractCertsFromSignatureDatabase(kek)
+	certList.DB = ExtractCertsFromSignatureDatabase(db)
 
 	return certList, nil
+}
+
+// ExtractCertsFromSignatureDatabase returns a []*x509.Certificate from a *signature.SignatureDatabase
+func ExtractCertsFromSignatureDatabase(database *signature.SignatureDatabase) []*x509.Certificate {
+	var result []*x509.Certificate
+	for _, k := range *database {
+		if isValidSignature(k.SignatureType) {
+			for _, k1 := range k.Signatures {
+				// Note the S at the end of the function, we are parsing multiple certs, not just one
+				certificates, err := x509.ParseCertificates(k1.Data)
+				if err != nil {
+					continue
+				}
+				result = append(result, certificates...)
+			}
+		}
+	}
+	return result
 }
 
 // GetAllCerts returns a list of certs in the system
