@@ -109,6 +109,10 @@ func (c *Config) MergeConfig(newConfig *Config) error {
 }
 
 func mergeSlices(sliceA, sliceB []interface{}) ([]interface{}, error) {
+	// return sliceB if sliceA is empty
+	if len(sliceA) == 0 {
+		return sliceB, nil
+	}
 	// We use the first item in the slice to determine if there are maps present.
 	firstItem := sliceA[0]
 	// If the first item is a map, we concatenate both slices

@@ -302,6 +302,17 @@ info:
 			})
 		})
 
+		Context("empty slice", func() {
+			a := []interface{}{}
+			b := []interface{}{"two", 4}
+
+			It("merges", func() {
+				c, err := DeepMerge(a, b)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(c).To(Equal([]interface{}{"two", 4}))
+			})
+		})
+
 		Context("slices containing maps", func() {
 			a := []interface{}{
 				map[string]interface{}{
