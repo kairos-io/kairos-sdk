@@ -55,15 +55,21 @@ type Kairos struct {
 	EfiCerts   types.EfiCerts `yaml:"eficerts,omitempty" json:"eficerts,omitempty"`
 }
 
+type EncryptedParts struct {
+	ByLabel  map[string]PartitionState `yaml:"by_label,omitempty" json:"by_label,omitempty"`
+	ByDevice map[string]PartitionState `yaml:"by_device,omitempty" json:"by_device,omitempty"`
+}
+
 type Runtime struct {
-	UUID       string          `yaml:"uuid" json:"uuid"`
-	Persistent PartitionState  `yaml:"persistent" json:"persistent"`
-	Recovery   PartitionState  `yaml:"recovery" json:"recovery"`
-	OEM        PartitionState  `yaml:"oem" json:"oem"`
-	State      PartitionState  `yaml:"state" json:"state"`
-	BootState  Boot            `yaml:"boot" json:"boot"`
-	System     sysinfo.SysInfo `yaml:"system" json:"system"`
-	Kairos     Kairos          `yaml:"kairos" json:"kairos"`
+	UUID                string          `yaml:"uuid" json:"uuid"`
+	Persistent          PartitionState  `yaml:"persistent" json:"persistent"`
+	Recovery            PartitionState  `yaml:"recovery" json:"recovery"`
+	OEM                 PartitionState  `yaml:"oem" json:"oem"`
+	State               PartitionState  `yaml:"state" json:"state"`
+	EncryptedPartitions EncryptedParts  `yaml:"encrypted_partitions,omitempty" json:"encrypted_partitions,omitempty"`
+	BootState           Boot            `yaml:"boot" json:"boot"`
+	System              sysinfo.SysInfo `yaml:"system" json:"system"`
+	Kairos              Kairos          `yaml:"kairos" json:"kairos"`
 }
 
 type FndMnt struct {
@@ -261,19 +267,28 @@ func detectRuntimeState(r *Runtime) error {
 			}
 		}
 	}
+	if !r.Persistent.Found {
+		r.Persistent = detectPartitionByLabelLsblk("COS_PERSISTENT")
+	}
 	if !r.OEM.Found {
-		r.OEM = detectPartitionByLsblk("COS_OEM")
+		r.OEM = detectPartitionByLabelLsblk("COS_OEM")
 	}
 	if !r.Recovery.Found {
-		r.Recovery = detectPartitionByLsblk("COS_RECOVERY")
+		r.Recovery = detectPartitionByLabelLsblk("COS_RECOVERY")
 	}
 	return nil
 }
 
-// detectPartitionByLsblk will try to detect info about a partition by using lsblk
+// detectPartitionByLsblk will try to detect info about a partition by using lsblk and the given LABEL
 // Useful for LVM partitions which ghw is unable to find
-func detectPartitionByLsblk(label string) PartitionState {
-	out, err := utils.SH(fmt.Sprintf("lsblk /dev/disk/by-label/%s -o PATH,FSTYPE,MOUNTPOINT,SIZE,RO,LABEL -J", label))
+func detectPartitionByLabelLsblk(label string) PartitionState {
+	return detectPartitionByLsblk(fmt.Sprintf("/dev/disk/by-label/%s", label))
+}
+
+// detectPartitionByLsblk generic function to get info about a partition via any given path
+// Could be /dev/disk/by-{label,path,uuid} for example or even a device directly like /dev/sda1
+func detectPartitionByLsblk(path string) PartitionState {
+	out, err := utils.SH(fmt.Sprintf("lsblk %s -o PATH,FSTYPE,MOUNTPOINT,SIZE,RO,LABEL -J", path))
 	mnt := &Lsblk{}
 	part := PartitionState{}
 	if err == nil {
@@ -317,6 +332,32 @@ func detectKairos(r *Runtime) {
 
 }
 
+func detectEncryptedPartitions(runtime *Runtime) {
+	results := EncryptedParts{
+		ByDevice: make(map[string]PartitionState),
+		ByLabel:  make(map[string]PartitionState),
+	}
+	blockDevices, err := block.New(ghw.WithDisableTools(), ghw.WithDisableWarnings())
+	// ghw currently only detects if partitions are mounted via the device
+	// If we mount them via label, then its set as not mounted.
+	if err != nil {
+		return
+	}
+	for _, d := range blockDevices.Disks {
+		for _, part := range d.Partitions {
+			if part.Type == "crypto_LUKS" {
+				// detect partition by the mapper + part.name (i.e. vda2)
+				p := detectPartitionByLsblk(fmt.Sprintf("/dev/mapper/%s", part.Name))
+				if p.Found {
+					results.ByLabel[part.Label] = p
+					results.ByDevice[fmt.Sprintf("/dev/%s", part.Name)] = p
+				}
+			}
+		}
+	}
+	runtime.EncryptedPartitions = results
+}
+
 // getEfiCertsCommonNames returns a simple list of the Common names of the certs
 func getEfiCertsCommonNames() types.EfiCerts {
 	var data types.EfiCerts
@@ -342,6 +383,7 @@ func NewRuntimeWithLogger(logger zerolog.Logger) (Runtime, error) {
 
 	detectSystem(runtime)
 	detectKairos(runtime)
+	detectEncryptedPartitions(runtime)
 	err := detectRuntimeState(runtime)
 
 	return *runtime, err
