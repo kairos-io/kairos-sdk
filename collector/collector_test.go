@@ -650,6 +650,83 @@ stages:
 			})
 		})
 
+		Context("With Overwrittes", func() {
+			var tmpDir1 string
+			var err error
+
+			BeforeEach(func() {
+				tmpDir1, err = os.MkdirTemp("", "config1")
+				Expect(err).ToNot(HaveOccurred())
+				err := os.WriteFile(path.Join(tmpDir1, "local_config_1.yaml"), []byte(`#cloud-config
+install:
+  auto: false
+foo: bar
+stages:
+  initramfs:
+    - users:
+        kairos:
+          groups:
+            - sudo
+          passwd: kairos
+`), os.ModePerm)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			AfterEach(func() {
+				err = os.RemoveAll(tmpDir1)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("replaces completely the keys given by the overwrite", func() {
+				o := &Options{}
+				overwriteYaml := `#cloud-config
+install:
+  auto: true
+options:
+  device: /dev/sda
+stages:
+  initramfs:
+    - users:
+        kairos:
+          groups:
+            - sudo
+          passwd: kairos
+        foobar:
+          groups:
+            - sudo
+          passwd: barbaz
+`
+				err = o.Apply(
+					Directories(tmpDir1),
+					Overwrites(overwriteYaml),
+				)
+				Expect(err).ToNot(HaveOccurred())
+
+				c, err := Scan(o, FilterKeysTestMerge)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(c.String()).To(Equal(`#cloud-config
+
+foo: bar
+install:
+    auto: true
+options:
+    device: /dev/sda
+stages:
+    initramfs:
+        - users:
+            foobar:
+                groups:
+                    - sudo
+                passwd: barbaz
+            kairos:
+                groups:
+                    - sudo
+                passwd: kairos
+`))
+			})
+		})
+
 		Context("Deep merge maps within arrays", func() {
 			var cmdLinePath, tmpDir1 string
 			var err error

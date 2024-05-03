@@ -12,6 +12,7 @@ type Options struct {
 	NoLogs           bool
 	StrictValidation bool
 	Readers          []io.Reader
+	Overwrites       string
 }
 
 type Option func(o *Options) error
@@ -69,6 +70,13 @@ func Directories(d ...string) Option {
 func Readers(r ...io.Reader) Option {
 	return func(o *Options) error {
 		o.Readers = r
+		return nil
+	}
+}
+
+func Overwrites(m string) Option {
+	return func(o *Options) error {
+		o.Overwrites = m
 		return nil
 	}
 }

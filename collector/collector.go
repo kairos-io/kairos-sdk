@@ -231,7 +231,16 @@ func Scan(o *Options, filter func(d []byte) ([]byte, error)) (*Config, error) {
 		}
 	}
 
-	return configs.Merge()
+	mergedConfig, err := configs.Merge()
+	if err != nil {
+		return mergedConfig, err
+	}
+
+	if o.Overwrites != "" {
+		yaml.Unmarshal([]byte(o.Overwrites), &mergedConfig) //nolint:errcheck
+	}
+
+	return mergedConfig, nil
 }
 
 func allFiles(dir []string) []string {
