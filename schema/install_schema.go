@@ -33,19 +33,12 @@ type InstallSchema struct {
 }
 
 type Partition struct {
-	Name            string
-	FilesystemLabel string   `json:"label,omitempty" mapstructure:"label"`
-	Size            uint     `json:"size,omitempty" mapstructure:"size"`
-	FS              string   `json:"fs,omitempty" mapstrcuture:"fs"`
-	Flags           []string `json:"flags,omitempty" mapstrcuture:"flags"`
-	MountPoint      string
-	Path            string
-	Disk            string
+	Name string `json:"name,omitempty"`
+	Size uint   `json:"size,omitempty" mapstructure:"size"`
+	FS   string `json:"fs,omitempty" mapstrcuture:"fs"`
 }
 
 type ElementalPartitions struct {
-	BIOS       *Partition
-	EFI        *Partition
 	OEM        *Partition `json:"oem,omitempty" mapstructure:"oem"`
 	Recovery   *Partition `json:"recovery,omitempty" mapstructure:"recovery"`
 	State      *Partition `json:"state,omitempty" mapstructure:"state"`
