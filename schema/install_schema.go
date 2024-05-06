@@ -31,18 +31,12 @@ type InstallSchema struct {
 	Passive                Image               `json:"passive,omitempty" mapstructure:"recovery-system"`
 }
 
-// ImageSource represents the source from where an image is created for easy identification
-type ImageSource struct {
-	source  string `json:"source"`
-	srcType string
-}
-
 type Image struct {
 	File       string
-	Label      string       `json:"label,omitempty" mapstructure:"label"`
-	Size       uint         `json:"size,omitempty" mapstructure:"size"`
-	FS         string       `json:"fs,omitempty" mapstructure:"fs"`
-	Source     *ImageSource `json:"uri,omitempty" mapstructure:"uri"`
+	Label      string `json:"label,omitempty" mapstructure:"label"`
+	Size       uint   `json:"size,omitempty" mapstructure:"size"`
+	FS         string `json:"fs,omitempty" mapstructure:"fs"`
+	Source     string `json:"uri,omitempty" mapstructure:"uri"`
 	MountPoint string
 	LoopDevice string
 }
