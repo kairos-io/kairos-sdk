@@ -20,8 +20,6 @@ type InstallSchema struct {
 	PowerManagement
 	SkipEncryptCopyPlugins bool                `json:"skip_copy_kcrypt_plugin,omitempty"`
 	Partitions             ElementalPartitions `json:"partitions,omitempty" mapstructure:"partitions"`
-	Firmware               string              `json:"firmware,omitempty" mapstructure:"firmware"`
-	PartTable              string              `json:"part-table,omitempty" mapstructure:"part-table"`
 	GrubDefEntry           string              `json:"grub-entry-name,omitempty" mapstructure:"grub-entry-name"`
 	ExtraPartitions        []*Partition        `json:"extra-partitions,omitempty" mapstructure:"extra-partitions"`
 	Force                  bool                `json:"force,omitempty" mapstructure:"force"`
