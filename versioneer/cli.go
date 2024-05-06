@@ -186,7 +186,9 @@ func CliCommands() []*cli.Command {
 				if err != nil {
 					return err
 				}
-				fmt.Println(result)
+				// Do a normal print as we are already adding a \n at the end in the OSReleaseVariables function
+				// to avoid getting 1 empty line
+				fmt.Print(result)
 
 				return nil
 			},
