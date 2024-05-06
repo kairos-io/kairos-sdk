@@ -1,7 +1,6 @@
 package schema
 
 import (
-	v1 "github.com/kairos-io/kairos-agent/v2/pkg/types/v1"
 	jsonschemago "github.com/swaggest/jsonschema-go"
 )
 
@@ -27,9 +26,25 @@ type InstallSchema struct {
 	ExtraPartitions        []*Partition        `json:"extra-partitions,omitempty" mapstructure:"extra-partitions"`
 	Force                  bool                `json:"force,omitempty" mapstructure:"force"`
 	ExtraDirsRootfs        []string            `json:"extra-dirs-rootfs,omitempty" mapstructure:"extra-dirs-rootfs"`
-	Active                 v1.Image            `json:"system,omitempty" mapstructure:"system"`
-	Recovery               v1.Image            `json:"recovery-system,omitempty" mapstructure:"recovery-system"`
-	Passive                v1.Image            `json:"passive,omitempty" mapstructure:"recovery-system"`
+	Active                 Image               `json:"system,omitempty" mapstructure:"system"`
+	Recovery               Image               `json:"recovery-system,omitempty" mapstructure:"recovery-system"`
+	Passive                Image               `json:"passive,omitempty" mapstructure:"recovery-system"`
+}
+
+// ImageSource represents the source from where an image is created for easy identification
+type ImageSource struct {
+	source  string `json:"source"`
+	srcType string
+}
+
+type Image struct {
+	File       string
+	Label      string       `json:"label,omitempty" mapstructure:"label"`
+	Size       uint         `json:"size,omitempty" mapstructure:"size"`
+	FS         string       `json:"fs,omitempty" mapstructure:"fs"`
+	Source     *ImageSource `json:"uri,omitempty" mapstructure:"uri"`
+	MountPoint string
+	LoopDevice string
 }
 
 type Partition struct {
