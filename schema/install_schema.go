@@ -30,13 +30,8 @@ type InstallSchema struct {
 }
 
 type Image struct {
-	File       string
-	Label      string `json:"label,omitempty" mapstructure:"label"`
 	Size       uint   `json:"size,omitempty" mapstructure:"size"`
-	FS         string `json:"fs,omitempty" mapstructure:"fs"`
 	Source     string `json:"uri,omitempty" mapstructure:"uri"`
-	MountPoint string
-	LoopDevice string
 }
 
 type Partition struct {
