@@ -11,7 +11,6 @@ import (
 	"github.com/itchyny/gojq"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/block"
-	"github.com/kairos-io/kairos-sdk/signatures"
 	"github.com/kairos-io/kairos-sdk/types"
 	"github.com/kairos-io/kairos-sdk/utils"
 	"github.com/rs/zerolog"
@@ -326,7 +325,9 @@ func detectKairos(r *Runtime) {
 		k.Version = v
 	}
 	k.Init = utils.GetInit()
-	k.EfiCerts = getEfiCertsCommonNames()
+	// go-uefi calls os.exit directly if it fails which breaks state. we cannot tolerate that as for us state is
+	// mainly optional data, not a failure if we cant find it
+	//k.EfiCerts = getEfiCertsCommonNames()
 	k.SecureBoot = efi.GetSecureBoot()
 	r.Kairos = *k
 
@@ -359,8 +360,10 @@ func detectEncryptedPartitions(runtime *Runtime) {
 }
 
 // getEfiCertsCommonNames returns a simple list of the Common names of the certs
+/*
 func getEfiCertsCommonNames() types.EfiCerts {
 	var data types.EfiCerts
+
 	certs, _ := signatures.GetAllCerts() // Ignore errors here, we dont care about them, we only want the presentation of the names
 	for _, c := range certs.PK {
 		data.PK = append(data.PK, c.Issuer.CommonName)
@@ -373,6 +376,7 @@ func getEfiCertsCommonNames() types.EfiCerts {
 	}
 	return data
 }
+*/
 
 func NewRuntimeWithLogger(logger zerolog.Logger) (Runtime, error) {
 	logger.Info().Msg("creating a runtime")
