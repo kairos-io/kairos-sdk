@@ -1095,6 +1095,7 @@ name: Mario
 
 			err = os.WriteFile(path.Join(tmpDir, "local_config.yaml"), []byte(`#cloud-config
 local_key_1: local_value_1
+local_key_2: false
 some:
   other:
     key: 3
@@ -1126,6 +1127,9 @@ some:
 			Expect(err).ToNot(HaveOccurred())
 			Expect(v).To(Equal("3\n"))
 			Expect(c.Query("options")).To(Equal("foo: bar\n"))
+			v, err = c.Query("local_key_2")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(v).To(Equal("false\n"))
 		})
 	})
 })

@@ -489,9 +489,9 @@ func (c Config) Query(s string) (res string, err error) {
 	if err := json.Unmarshal(b, &dat); err != nil {
 		panic(err)
 	}
-	// Adding "// empty" to the query so the output does not include a "null" if the value is empty
+	// Adding some jq options to the query so the output does not include "null" if the value is empty
 	// This is not a json parse feature but a string one, so we should return normal values not json specific ones
-	query, err := gojq.Parse(s + "// empty")
+	query, err := gojq.Parse(s + " | if ( . | type) == \"null\" then empty else . end")
 	if err != nil {
 		return res, err
 	}
