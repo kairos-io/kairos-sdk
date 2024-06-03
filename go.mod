@@ -12,6 +12,7 @@ require (
 	github.com/avast/retry-go v2.7.0+incompatible
 	github.com/containerd/containerd v1.7.6
 	github.com/denisbrodbeck/machineid v1.0.1
+	github.com/edsrzf/mmap-go v1.1.0
 	github.com/foxboron/go-uefi v0.0.0-20240522180132-205d5597883a
 	github.com/google/go-containerregistry v0.19.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
@@ -26,6 +27,7 @@ require (
 	github.com/pterm/pterm v0.12.63
 	github.com/qeesung/image2ascii v1.0.1
 	github.com/rs/zerolog v1.32.0
+	github.com/saferwall/pe v1.5.3
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/swaggest/jsonschema-go v0.3.62
 	github.com/twpayne/go-vfs/v4 v4.3.0
@@ -50,7 +52,6 @@ require (
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/continuity v0.4.2 // indirect
-	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/docker/cli v24.0.0+incompatible // indirect
@@ -87,6 +88,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/secDre4mer/pkcs7 v0.0.0-20240322103146-665324a4461d // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/swaggest/refl v1.3.0 // indirect

@@ -1,7 +1,15 @@
 package types
 
+import (
+	"io/fs"
+	"os"
+)
+
 // KairosFS is our interface for methods that need an FS
-// We should try to keep it to a minimum so we can change between backends easily if needed
 type KairosFS interface {
 	ReadFile(filename string) ([]byte, error)
+	Stat(name string) (fs.FileInfo, error)
+	Open(name string) (fs.File, error)
+	RawPath(name string) (string, error)
+	WriteFile(filename string, data []byte, perm os.FileMode) error
 }

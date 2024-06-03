@@ -15,17 +15,18 @@ go-deps:
     ARG GO_VERSION
     FROM golang:$GO_VERSION-alpine
     WORKDIR /build
-    COPY go.mod go.sum ./
+    COPY . .
+    RUN go mod tidy
     RUN go mod download
-    SAVE ARTIFACT go.mod AS LOCAL go.mod
-    SAVE ARTIFACT go.sum AS LOCAL go.sum
+    RUN go mod verify
+
 
 test:
     FROM +go-deps
     ENV CGO_ENABLED=0
     WORKDIR /build
     COPY +luet/luet /usr/bin/luet
-    COPY . .
+
     RUN go run github.com/onsi/ginkgo/v2/ginkgo run --fail-fast --slow-spec-threshold 30s --covermode=atomic --coverprofile=coverage.out -p -r ./...
     SAVE ARTIFACT coverage.out AS LOCAL coverage.out
 
