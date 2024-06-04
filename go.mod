@@ -31,7 +31,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/swaggest/jsonschema-go v0.3.62
 	github.com/twpayne/go-vfs/v4 v4.3.0
-	github.com/urfave/cli/v2 v2.27.1
+	github.com/urfave/cli/v2 v2.27.2
 	github.com/zcalusic/sysinfo v1.0.1
 	golang.org/x/mod v0.17.0
 	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
@@ -53,7 +53,7 @@ require (
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/containerd/continuity v0.4.2 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/docker/cli v24.0.0+incompatible // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker v24.0.9+incompatible // indirect
@@ -95,7 +95,7 @@ require (
 	github.com/vbatts/tar-split v0.11.3 // indirect
 	github.com/wayneashleyberry/terminal-dimensions v1.1.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
+	github.com/xrash/smetrics v0.0.0-20240312152122-5f08fbb34913 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/net v0.23.0 // indirect
