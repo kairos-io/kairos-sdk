@@ -10,7 +10,7 @@ replace (
 
 require (
 	github.com/avast/retry-go v2.7.0+incompatible
-	github.com/containerd/containerd v1.7.6
+	github.com/containerd/containerd v1.7.11
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/edsrzf/mmap-go v1.1.0
 	github.com/foxboron/go-uefi v0.0.0-20240522180132-205d5597883a
