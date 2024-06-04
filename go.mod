@@ -24,7 +24,7 @@ require (
 	github.com/mudler/yip v1.7.0
 	github.com/onsi/ginkgo/v2 v2.17.1
 	github.com/onsi/gomega v1.33.0
-	github.com/pterm/pterm v0.12.63
+	github.com/pterm/pterm v0.12.79
 	github.com/qeesung/image2ascii v1.0.1
 	github.com/rs/zerolog v1.33.0
 	github.com/saferwall/pe v1.5.3
