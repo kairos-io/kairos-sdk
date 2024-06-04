@@ -26,7 +26,7 @@ require (
 	github.com/onsi/gomega v1.32.0
 	github.com/pterm/pterm v0.12.63
 	github.com/qeesung/image2ascii v1.0.1
-	github.com/rs/zerolog v1.32.0
+	github.com/rs/zerolog v1.33.0
 	github.com/saferwall/pe v1.5.3
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/swaggest/jsonschema-go v0.3.62
