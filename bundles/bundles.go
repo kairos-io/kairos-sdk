@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	registrytypes "github.com/docker/docker/api/types/registry"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	"github.com/hashicorp/go-multierror"
@@ -23,6 +24,7 @@ type BundleConfig struct {
 	DBPath     string
 	RootPath   string
 	LocalFile  bool
+	Auth       *registrytypes.AuthConfig
 }
 
 // BundleOption defines a configuration option for a bundle.
@@ -75,6 +77,13 @@ func WithLocalFile(p bool) BundleOption {
 	}
 }
 
+func WithAuth(c *registrytypes.AuthConfig) BundleOption {
+	return func(bc *BundleConfig) error {
+		bc.Auth = c
+		return nil
+	}
+}
+
 func (bc *BundleConfig) extractRepo() (string, string, error) {
 	s := strings.Split(bc.Repository, "://")
 	if len(s) != 2 {
@@ -104,6 +113,7 @@ func defaultConfig() *BundleConfig {
 		DBPath:     "/usr/local/.kairos/db",
 		RootPath:   "/",
 		Repository: "docker://quay.io/kairos/packages",
+		Auth:       nil,
 	}
 }
 
@@ -187,7 +197,7 @@ func (e OCIImageExtractor) Install(config *BundleConfig) error {
 	if e.Local {
 		img, err = tarball.ImageFromPath(target, nil)
 	} else {
-		img, err = utils.GetImage(target, utils.GetCurrentPlatform())
+		img, err = utils.GetImage(target, utils.GetCurrentPlatform(), config.Auth)
 	}
 	if err != nil {
 		return err
@@ -216,7 +226,7 @@ func (e OCIImageRunner) Install(config *BundleConfig) error {
 	if e.Local {
 		img, err = tarball.ImageFromPath(target, nil)
 	} else {
-		img, err = utils.GetImage(target, utils.GetCurrentPlatform())
+		img, err = utils.GetImage(target, utils.GetCurrentPlatform(), config.Auth)
 	}
 	if err != nil {
 		return err

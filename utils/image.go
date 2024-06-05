@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/archive"
+	registrytypes "github.com/docker/docker/api/types/registry"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/logs"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -21,6 +22,24 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 )
+
+// referrence: https://github.com/mudler/luet/blob/master/pkg/helpers/docker/docker.go#L117
+type staticAuth struct {
+	auth *registrytypes.AuthConfig
+}
+
+func (s staticAuth) Authorization() (*authn.AuthConfig, error) {
+	if s.auth == nil {
+		return nil, nil
+	}
+	return &authn.AuthConfig{
+		Username:      s.auth.Username,
+		Password:      s.auth.Password,
+		Auth:          s.auth.Auth,
+		IdentityToken: s.auth.IdentityToken,
+		RegistryToken: s.auth.RegistryToken,
+	}, nil
+}
 
 var defaultRetryBackoff = remote.Backoff{
 	Duration: 1.0 * time.Second,
@@ -52,7 +71,8 @@ func ExtractOCIImage(img v1.Image, targetDestination string) error {
 
 // GetImage if returns the proper image to pull with transport and auth
 // tries local daemon first and then fallbacks into remote
-func GetImage(targetImage, targetPlatform string) (v1.Image, error) {
+// if auth is nil, it will try to use the default keychain https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package
+func GetImage(targetImage, targetPlatform string, auth *registrytypes.AuthConfig) (v1.Image, error) {
 	var platform *v1.Platform
 	var image v1.Image
 	var err error
@@ -82,22 +102,28 @@ func GetImage(targetImage, targetPlatform string) (v1.Image, error) {
 	image, err = daemon.Image(ref)
 
 	if err != nil {
-		image, err = remote.Image(ref,
+		opts := []remote.Option{
 			remote.WithTransport(tr),
 			remote.WithPlatform(*platform),
-			remote.WithAuthFromKeychain(authn.DefaultKeychain),
-		)
+		}
+		if auth != nil {
+			opts = append(opts, remote.WithAuth(staticAuth{auth}))
+		} else {
+			opts = append(opts, remote.WithAuthFromKeychain(authn.DefaultKeychain))
+		}
+
+		image, err = remote.Image(ref, opts...)
 	}
 
 	return image, err
 }
 
-func GetOCIImageSize(targetImage, targetPlatform string) (int64, error) {
+func GetOCIImageSize(targetImage, targetPlatform string, auth *registrytypes.AuthConfig) (int64, error) {
 	var size int64
 	var img v1.Image
 	var err error
 
-	img, err = GetImage(targetImage, targetPlatform)
+	img, err = GetImage(targetImage, targetPlatform, auth)
 	if err != nil {
 		return size, err
 	}
