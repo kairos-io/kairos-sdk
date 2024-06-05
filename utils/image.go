@@ -72,7 +72,7 @@ func ExtractOCIImage(img v1.Image, targetDestination string) error {
 // GetImage if returns the proper image to pull with transport and auth
 // tries local daemon first and then fallbacks into remote
 // if auth is nil, it will try to use the default keychain https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package
-func GetImage(targetImage, targetPlatform string, auth *registrytypes.AuthConfig) (v1.Image, error) {
+func GetImage(targetImage, targetPlatform string, auth *registrytypes.AuthConfig, t http.RoundTripper) (v1.Image, error) {
 	var platform *v1.Platform
 	var image v1.Image
 	var err error
@@ -94,7 +94,7 @@ func GetImage(targetImage, targetPlatform string, auth *registrytypes.AuthConfig
 		return image, err
 	}
 
-	tr := transport.NewRetry(http.DefaultTransport,
+	tr := transport.NewRetry(t,
 		transport.WithRetryBackoff(defaultRetryBackoff),
 		transport.WithRetryPredicate(defaultRetryPredicate),
 	)
@@ -118,12 +118,12 @@ func GetImage(targetImage, targetPlatform string, auth *registrytypes.AuthConfig
 	return image, err
 }
 
-func GetOCIImageSize(targetImage, targetPlatform string, auth *registrytypes.AuthConfig) (int64, error) {
+func GetOCIImageSize(targetImage, targetPlatform string, auth *registrytypes.AuthConfig, t http.RoundTripper) (int64, error) {
 	var size int64
 	var img v1.Image
 	var err error
 
-	img, err = GetImage(targetImage, targetPlatform, auth)
+	img, err = GetImage(targetImage, targetPlatform, auth, t)
 	if err != nil {
 		return size, err
 	}
