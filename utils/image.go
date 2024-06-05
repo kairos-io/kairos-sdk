@@ -94,6 +94,10 @@ func GetImage(targetImage, targetPlatform string, auth *registrytypes.AuthConfig
 		return image, err
 	}
 
+	if t == nil {
+		t = http.DefaultTransport
+	}
+
 	tr := transport.NewRetry(t,
 		transport.WithRetryBackoff(defaultRetryBackoff),
 		transport.WithRetryPredicate(defaultRetryPredicate),
