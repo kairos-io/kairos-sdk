@@ -1,8 +1,6 @@
 module github.com/kairos-io/kairos-sdk
 
-go 1.21
-
-toolchain go1.22.3
+go 1.19
 
 // Higher versions require go1.20
 replace (
