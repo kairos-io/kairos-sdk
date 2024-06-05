@@ -10,7 +10,7 @@ replace (
 
 require (
 	github.com/avast/retry-go v2.7.0+incompatible
-	github.com/containerd/containerd v1.7.11
+	github.com/containerd/containerd v1.7.6
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/edsrzf/mmap-go v1.1.0
 	github.com/foxboron/go-uefi v0.0.0-20240522180132-205d5597883a
@@ -29,6 +29,7 @@ require (
 	github.com/rs/zerolog v1.33.0
 	github.com/saferwall/pe v1.5.3
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.0
 	github.com/swaggest/jsonschema-go v0.3.62
 	github.com/twpayne/go-vfs/v4 v4.3.0
 	github.com/urfave/cli/v2 v2.27.2
