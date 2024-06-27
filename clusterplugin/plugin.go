@@ -8,7 +8,7 @@ import (
 	"github.com/kairos-io/kairos-sdk/bus"
 	"github.com/mudler/go-pluggable"
 	yip "github.com/mudler/yip/pkg/schema"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 const clusterProviderCloudConfigFile = "/usr/local/cloud-config/cluster.kairos.yaml"
@@ -47,8 +47,14 @@ func (p ClusterPlugin) onBoot(event *pluggable.Event) pluggable.EventResponse {
 	// request the cloud configuration of the provider
 	cc := p.Provider(*config.Cluster)
 
+	configFilePath := clusterProviderCloudConfigFile
+
+	if len(config.Cluster.ClusterConfigPath) != 0 {
+		configFilePath = config.Cluster.ClusterConfigPath
+	}
+
 	// open our cloud configuration file for writing
-	f, err := filesystem.OpenFile(clusterProviderCloudConfigFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	f, err := filesystem.OpenFile(configFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
 		response.Error = fmt.Sprintf("failed to parse boot event: %s", err.Error())
 		return response
