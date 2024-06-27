@@ -31,7 +31,7 @@ require (
 	github.com/saferwall/pe v1.5.3
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
-	github.com/swaggest/jsonschema-go v0.3.62
+	github.com/swaggest/jsonschema-go v0.3.72
 	github.com/twpayne/go-vfs/v4 v4.3.0
 	github.com/urfave/cli/v2 v2.27.2
 	github.com/zcalusic/sysinfo v1.0.1
