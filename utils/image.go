@@ -73,6 +73,10 @@ func ExtractOCIImage(img v1.Image, targetDestination string) error {
 // tries local daemon first and then fallbacks into remote
 // if auth is nil, it will try to use the default keychain https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package
 func GetImage(targetImage, targetPlatform string, auth *registrytypes.AuthConfig, t http.RoundTripper) (v1.Image, error) {
+	return GetImageWithProgress(targetImage, targetPlatform, auth, t, nil)
+}
+
+func GetImageWithProgress(targetImage, targetPlatform string, auth *registrytypes.AuthConfig, t http.RoundTripper, p chan v1.Update) (v1.Image, error) {
 	var platform *v1.Platform
 	var image v1.Image
 	var err error
@@ -104,12 +108,16 @@ func GetImage(targetImage, targetPlatform string, auth *registrytypes.AuthConfig
 	)
 
 	image, err = daemon.Image(ref)
-
 	if err != nil {
 		opts := []remote.Option{
 			remote.WithTransport(tr),
 			remote.WithPlatform(*platform),
 		}
+
+		if p != nil {
+			opts = append(opts, remote.WithProgress(p))
+		}
+
 		if auth != nil {
 			opts = append(opts, remote.WithAuth(staticAuth{auth}))
 		} else {
