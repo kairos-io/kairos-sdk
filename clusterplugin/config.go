@@ -66,6 +66,12 @@ type Cluster struct {
 
 	// LocalImagesPath path to local archive images to load into containerd from the filesystem  start
 	LocalImagesPath string `yaml:"local_images_path,omitempty" json:"local_images_path,omitempty"`
+
+	// ClusterRootPath path to a custom root directory
+	ClusterRootPath string `yaml:"clusterRootPath,omitempty" json:"clusterRootPath,omitempty"`
+
+	// ClusterConfigPath path to the file where the final init config will be generated
+	ClusterConfigPath string `yaml:"clusterConfigPath,omitempty" json:"clusterConfigPath,omitempty"`
 }
 
 type Config struct {
