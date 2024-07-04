@@ -35,7 +35,7 @@ require (
 	github.com/twpayne/go-vfs/v4 v4.3.0
 	github.com/urfave/cli/v2 v2.27.2
 	github.com/zcalusic/sysinfo v1.0.1
-	golang.org/x/mod v0.18.0
+	golang.org/x/mod v0.19.0
 	gopkg.in/yaml.v3 v3.0.1
 	gopkg.in/yaml.v3 v3.0.1
 	gopkg.in/yaml.v3 v3.0.1
