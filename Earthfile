@@ -3,7 +3,7 @@ VERSION 0.7
 # renovate: datasource=docker depName=golang
 ARG --global GO_VERSION=1.22
 # renovate: datasource=docker depName=golangci-lint
-ARG --global GOLINT_VERSION=1.51.0
+ARG --global GOLINT_VERSION=1.59.1
 # renovate: datasource=docker depName=quay.io/luet/base
 ARG --global LUET_VERSION=0.34.0
 
