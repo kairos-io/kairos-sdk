@@ -178,6 +178,16 @@ func DeepMerge(a, b interface{}) (interface{}, error) {
 	typeA := reflect.TypeOf(a)
 	typeB := reflect.TypeOf(b)
 
+	// if b is null value, return null-value of whatever a currently is
+	if b == nil {
+		if typeA.Kind() == reflect.Slice {
+			return reflect.MakeSlice(typeA, 0, 0).Interface(), nil
+		} else if typeA.Kind() == reflect.Map {
+			return reflect.MakeMap(typeA).Interface(), nil
+		}
+		return reflect.Zero(typeA).Interface(), nil
+	}
+
 	// We don't support merging different data structures
 	if typeA.Kind() != typeB.Kind() {
 		return map[string]interface{}{}, fmt.Errorf("cannot merge %s with %s", typeA.String(), typeB.String())

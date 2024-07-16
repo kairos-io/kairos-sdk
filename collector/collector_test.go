@@ -103,6 +103,25 @@ info:
 				})
 			})
 		})
+		Context("reset keys", func() {
+			Context("remove keys", func() {
+				BeforeEach(func() {
+					err := yaml.Unmarshal([]byte("#cloud-config\nlist:\n - 1\n - 2\nname: Mario"), originalConfig)
+					Expect(err).ToNot(HaveOccurred())
+					err = yaml.Unmarshal([]byte("#cloud-config\nlist: null\nname: null"), newConfig)
+					Expect(err).ToNot(HaveOccurred())
+				})
+
+				It("overwrites", func() {
+					Expect(originalConfig.MergeConfig(newConfig)).ToNot(HaveOccurred())
+					Expect((*originalConfig)["list"]).To(BeEmpty())
+					name, isString := (*originalConfig)["name"].(string)
+					Expect(isString).To(BeTrue())
+					Expect(name).To(Equal(""))
+					Expect(*originalConfig).To(HaveLen(2))
+				})
+			})
+		})
 	})
 
 	Describe("MergeConfigURL", func() {
@@ -401,6 +420,32 @@ info:
 					"en": "one",
 					"es": "uno",
 					"nl": "één",
+				}))
+			})
+		})
+
+		Context("reset key", func() {
+			a := map[string]interface{}{
+				"string": "val",
+				"slice":  []interface{}{"valA", "valB"},
+				"map": map[string]interface{}{
+					"valA": "",
+					"valB": "",
+				},
+			}
+			b := map[string]interface{}{
+				"string": nil,
+				"slice":  nil,
+				"map":    nil,
+			}
+
+			It("merges", func() {
+				c, err := DeepMerge(a, b)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(c).To(Equal(map[string]interface{}{
+					"string": "",
+					"slice":  []interface{}{},
+					"map":    map[string]interface{}{},
 				}))
 			})
 		})
