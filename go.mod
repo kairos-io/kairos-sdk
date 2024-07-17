@@ -9,7 +9,7 @@ require (
 	github.com/docker/docker v27.0.3+incompatible
 	github.com/edsrzf/mmap-go v1.1.0
 	github.com/foxboron/go-uefi v0.0.0-20240522180132-205d5597883a
-	github.com/google/go-containerregistry v0.20.0
+	github.com/google/go-containerregistry v0.20.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/itchyny/gojq v0.12.16
