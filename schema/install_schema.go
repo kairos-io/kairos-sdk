@@ -7,65 +7,65 @@ import (
 // InstallSchema represents the install block in the Kairos configuration. It is used to drive automatic installations without user interaction.
 type InstallSchema struct {
 	_                   struct{}       `title:"Kairos Schema: Install block" description:"The install block is to drive automatic installations without user interaction."`
-	Auto                bool           `json:"auto,omitempty" description:"Set to true when installing without Pairing"`
-	BindMounts          []string       `json:"bind_mounts,omitempty"`
-	Bundles             []BundleSchema `json:"bundles,omitempty" description:"Add bundles in runtime"`
-	NoFormat            bool           `json:"no_format,omitempty"`
-	Device              string         `json:"device,omitempty" pattern:"^(auto|/|(/[a-zA-Z0-9_-]+)+)$" description:"Device for automated installs" examples:"[\"auto\",\"/dev/sda\"]"`
-	EphemeralMounts     []string       `json:"ephemeral_mounts,omitempty"`
-	EncryptedPartitions []string       `json:"encrypted_partitions,omitempty"`
-	Env                 []interface{}  `json:"env,omitempty"`
-	GrubOptionsSchema   `json:"grub_options,omitempty"`
-	Image               string `json:"image,omitempty" description:"Use a different container image for the installation"`
+	Auto                bool           `json:"auto,omitempty" description:"Set to true when installing without Pairing" yaml:"auto,omitempty"`
+	BindMounts          []string       `json:"bind_mounts,omitempty" yaml:"bind_mounts,omitempty"`
+	Bundles             []BundleSchema `json:"bundles,omitempty" description:"Add bundles in runtime" yaml:"bundles,omitempty"`
+	NoFormat            bool           `json:"no_format,omitempty" yaml:"no_format,omitempty"`
+	Device              string         `json:"device,omitempty" pattern:"^(auto|/|(/[a-zA-Z0-9_-]+)+)$" description:"Device for automated installs" examples:"[\"auto\",\"/dev/sda\"]" yaml:"device,omitempty"`
+	EphemeralMounts     []string       `json:"ephemeral_mounts,omitempty" yaml:"ephemeral_mounts,omitempty"`
+	EncryptedPartitions []string       `json:"encrypted_partitions,omitempty" yaml:"encrypted_partitions,omitempty"`
+	Env                 []interface{}  `json:"env,omitempty" yaml:"env,omitempty"`
+	GrubOptionsSchema   `json:"grub_options,omitempty" yaml:"grub_options,omitempty"`
+	Image               string `json:"image,omitempty" description:"Use a different container image for the installation" yaml:"image,omitempty"`
 	PowerManagement
-	SkipEncryptCopyPlugins bool                `json:"skip_copy_kcrypt_plugin,omitempty"`
-	Partitions             ElementalPartitions `json:"partitions,omitempty" mapstructure:"partitions"`
-	GrubDefEntry           string              `json:"grub-entry-name,omitempty" mapstructure:"grub-entry-name"`
-	ExtraPartitions        []*Partition        `json:"extra-partitions,omitempty" mapstructure:"extra-partitions"`
-	Force                  bool                `json:"force,omitempty" mapstructure:"force"`
-	ExtraDirsRootfs        []string            `json:"extra-dirs-rootfs,omitempty" mapstructure:"extra-dirs-rootfs"`
-	Active                 Image               `json:"system,omitempty" mapstructure:"system"`
-	Recovery               Image               `json:"recovery-system,omitempty" mapstructure:"recovery-system"`
-	Passive                Image               `json:"passive,omitempty" mapstructure:"recovery-system"`
+	SkipEncryptCopyPlugins bool                `json:"skip_copy_kcrypt_plugin,omitempty" yaml:"skip_copy_kcrypt_plugin,omitempty"`
+	Partitions             ElementalPartitions `json:"partitions,omitempty" mapstructure:"partitions" yaml:"partitions,omitempty"`
+	GrubDefEntry           string              `json:"grub-entry-name,omitempty" mapstructure:"grub-entry-name" yaml:"grub-entry-name,omitempty"`
+	ExtraPartitions        []*Partition        `json:"extra-partitions,omitempty" mapstructure:"extra-partitions" yaml:"extra-partitions,omitempty"`
+	Force                  bool                `json:"force,omitempty" mapstructure:"force" yaml:"force,omitempty"`
+	ExtraDirsRootfs        []string            `json:"extra-dirs-rootfs,omitempty" yaml:"extra-dirs-rootfs,omitempty" mapstructure:"extra-dirs-rootfs"`
+	Active                 Image               `json:"system,omitempty" mapstructure:"system" yaml:"system,omitempty"`
+	Recovery               Image               `json:"recovery-system,omitempty" mapstructure:"recovery-system" yaml:"recovery-system,omitempty"`
+	Passive                Image               `json:"passive,omitempty" mapstructure:"recovery-system" yaml:"passive,omitempty"`
 }
 
 type Image struct {
-	Size       uint   `json:"size,omitempty" mapstructure:"size"`
-	Source     string `json:"uri,omitempty" mapstructure:"uri"`
+	Size   uint   `json:"size,omitempty" mapstructure:"size"`
+	Source string `json:"uri,omitempty" mapstructure:"uri"`
 }
 
 type Partition struct {
-	Name string `json:"name,omitempty"`
-	Size uint   `json:"size,omitempty" mapstructure:"size"`
-	FS   string `json:"fs,omitempty" mapstrcuture:"fs"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
+	Size uint   `json:"size,omitempty" mapstructure:"size" yaml:"size,omitempty"`
+	FS   string `json:"fs,omitempty" mapstrcuture:"fs" yaml:"fs,omitempty"`
 }
 
 type ElementalPartitions struct {
-	OEM        *Partition `json:"oem,omitempty" mapstructure:"oem"`
-	Recovery   *Partition `json:"recovery,omitempty" mapstructure:"recovery"`
-	State      *Partition `json:"state,omitempty" mapstructure:"state"`
-	Persistent *Partition `json:"persistent,omitempty" mapstructure:"persistent"`
+	OEM        *Partition `json:"oem,omitempty" mapstructure:"oem" yaml:"oem,omitempty"`
+	Recovery   *Partition `json:"recovery,omitempty" mapstructure:"recovery" yaml:"recovery,omitempty"`
+	State      *Partition `json:"state,omitempty" mapstructure:"state" yaml:"state,omitempty"`
+	Persistent *Partition `json:"persistent,omitempty" mapstructure:"persistent" yaml:"persistent,omitempty"`
 }
 
 // BundleSchema represents the bundle block which can be used in different places of the Kairos configuration. It is used to reference a bundle and its confguration.
 type BundleSchema struct {
-	DB         string   `json:"db_path,omitempty"`
-	LocalFile  bool     `json:"local_file,omitempty"`
-	Repository string   `json:"repository,omitempty"`
-	Rootfs     string   `json:"rootfs_path,omitempty"`
-	Targets    []string `json:"targets,omitempty"`
+	DB         string   `json:"db_path,omitempty" yaml:"db_path,omitempty"`
+	LocalFile  bool     `json:"local_file,omitempty" yaml:"local_file,omitempty"`
+	Repository string   `json:"repository,omitempty" yaml:"repository,omitempty"`
+	Rootfs     string   `json:"rootfs_path,omitempty" yaml:"rootfs_path,omitempty"`
+	Targets    []string `json:"targets,omitempty" yaml:"targets,omitempty"`
 }
 
 // GrubOptionsSchema represents the grub options block which can be used in different places of the Kairos configuration. It is used to configure grub.
 type GrubOptionsSchema struct {
-	DefaultFallback      string `json:"default_fallback,omitempty" description:"Sets default fallback logic"`
-	DefaultMenuEntry     string `json:"default_menu_entry,omitempty" description:"Change GRUB menu entry"`
-	ExtraActiveCmdline   string `json:"extra_active_cmdline,omitempty" description:"Additional Kernel option cmdline to apply just for active"`
-	ExtraCmdline         string `json:"extra_cmdline,omitempty" description:"Additional Kernel option cmdline to apply"`
-	ExtraPassiveCmdline  string `json:"extra_passive_cmdline,omitempty" description:"Additional Kernel option cmdline to apply just for passive"`
-	ExtraRecoveryCmdline string `json:"extra_recovery_cmdline,omitempty" description:"Set additional boot commands when booting into recovery"`
-	NextEntry            string `json:"next_entry,omitempty" description:"Set the next reboot entry."`
-	SavedEntry           string `json:"saved_entry,omitempty" description:"Set the default boot entry."`
+	DefaultFallback      string `json:"default_fallback,omitempty" description:"Sets default fallback logic" yaml:"default_fallback,omitempty"`
+	DefaultMenuEntry     string `json:"default_menu_entry,omitempty" description:"Change GRUB menu entry" yaml:"default_menu_entry,omitempty"`
+	ExtraActiveCmdline   string `json:"extra_active_cmdline,omitempty" description:"Additional Kernel option cmdline to apply just for active" yaml:"extra_active_cmdline,omitempty"`
+	ExtraCmdline         string `json:"extra_cmdline,omitempty" description:"Additional Kernel option cmdline to apply" yaml:"extra_cmdline,omitempty"`
+	ExtraPassiveCmdline  string `json:"extra_passive_cmdline,omitempty" description:"Additional Kernel option cmdline to apply just for passive" yaml:"extra_passive_cmdline,omitempty"`
+	ExtraRecoveryCmdline string `json:"extra_recovery_cmdline,omitempty" description:"Set additional boot commands when booting into recovery" yaml:"extra_recovery_cmdline,omitempty"`
+	NextEntry            string `json:"next_entry,omitempty" description:"Set the next reboot entry." yaml:"next_entry,omitempty"`
+	SavedEntry           string `json:"saved_entry,omitempty" description:"Set the default boot entry." yaml:"saved_entry,omitempty"`
 }
 
 // PowerManagement is a meta structure to hold the different rules for managing power, which are not compatible between each other.
