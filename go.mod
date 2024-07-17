@@ -30,7 +30,7 @@ require (
 	github.com/urfave/cli/v2 v2.27.2
 	github.com/zcalusic/sysinfo v1.1.0
 	golang.org/x/mod v0.19.0
-	gopkg.in/yaml.v3 v3.0.1
+	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
