@@ -30,8 +30,8 @@ type InstallSchema struct {
 }
 
 type Image struct {
-	Size   uint   `json:"size,omitempty" mapstructure:"size"`
-	Source string `json:"uri,omitempty" mapstructure:"uri"`
+	Size   uint   `json:"size,omitempty" mapstructure:"size" yaml:"size,omitempty"`
+	Source string `json:"uri,omitempty" mapstructure:"uri" yaml:"uri,omitempty"`
 }
 
 type Partition struct {
@@ -74,20 +74,20 @@ type PowerManagement struct {
 
 // NoPowerManagement is a meta structure used when the user does not define any power management options or when the user does not want to reboot or poweroff the machine.
 type NoPowerManagement struct {
-	Reboot   bool `json:"reboot,omitempty" const:"false" default:"false" description:"Reboot after installation"`
-	Poweroff bool `json:"poweroff,omitempty" const:"false" default:"false" description:"Power off after installation"`
+	Reboot   bool `json:"reboot,omitempty" const:"false" default:"false" description:"Reboot after installation" yaml:"reboot,omitempty"`
+	Poweroff bool `json:"poweroff,omitempty" const:"false" default:"false" description:"Power off after installation" yaml:"poweroff,omitempty"`
 }
 
 // RebootOnly is a meta structure used to enforce that when the reboot option is set, the poweroff option is not set.
 type RebootOnly struct {
-	Reboot   bool `json:"reboot,omitempty" const:"true" default:"false" required:"true" description:"Reboot after installation"`
-	Poweroff bool `json:"poweroff,omitempty" const:"false" default:"false" description:"Power off after installation"`
+	Reboot   bool `json:"reboot,omitempty" const:"true" default:"false" required:"true" description:"Reboot after installation" yaml:"reboot,omitempty"`
+	Poweroff bool `json:"poweroff,omitempty" const:"false" default:"false" description:"Power off after installation" yaml:"poweroff,omitempty"`
 }
 
 // PowerOffOnly is a meta structure used to enforce that when the poweroff option is set, the reboot option is not set.
 type PowerOffOnly struct {
-	Reboot   bool `json:"reboot,omitempty" const:"false" default:"false" description:"Reboot after installation"`
-	Poweroff bool `json:"poweroff,omitempty" const:"true" default:"false" required:"true" description:"Power off after installation"`
+	Reboot   bool `json:"reboot,omitempty" const:"false" default:"false" description:"Reboot after installation" yaml:"reboot,omitempty"`
+	Poweroff bool `json:"poweroff,omitempty" const:"true" default:"false" required:"true" description:"Power off after installation" yaml:"poweroff,omitempty"`
 }
 
 var _ jsonschemago.OneOfExposer = PowerManagement{}
