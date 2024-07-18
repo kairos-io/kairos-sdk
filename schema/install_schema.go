@@ -10,7 +10,7 @@ type InstallSchema struct {
 	Auto                bool           `json:"auto,omitempty" description:"Set to true when installing without Pairing" yaml:"auto,omitempty"`
 	BindMounts          []string       `json:"bind_mounts,omitempty" yaml:"bind_mounts,omitempty"`
 	Bundles             []BundleSchema `json:"bundles,omitempty" description:"Add bundles in runtime" yaml:"bundles,omitempty"`
-	NoFormat            bool           `json:"no_format,omitempty" yaml:"no_format,omitempty"`
+	NoFormat            bool           `json:"no_format,omitempty" yaml:"no-format,omitempty"`
 	Device              string         `json:"device,omitempty" pattern:"^(auto|/|(/[a-zA-Z0-9_-]+)+)$" description:"Device for automated installs" examples:"[\"auto\",\"/dev/sda\"]" yaml:"device,omitempty"`
 	EphemeralMounts     []string       `json:"ephemeral_mounts,omitempty" yaml:"ephemeral_mounts,omitempty"`
 	EncryptedPartitions []string       `json:"encrypted_partitions,omitempty" yaml:"encrypted_partitions,omitempty"`
