@@ -8,7 +8,7 @@ require (
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/docker v27.0.3+incompatible
 	github.com/edsrzf/mmap-go v1.1.0
-	github.com/foxboron/go-uefi v0.0.0-20240522180132-205d5597883a
+	github.com/foxboron/go-uefi v0.0.0-20240722190620-5d4f760099bd
 	github.com/google/go-containerregistry v0.20.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/hashicorp/go-multierror v1.1.1
@@ -23,14 +23,14 @@ require (
 	github.com/qeesung/image2ascii v1.0.1
 	github.com/rs/zerolog v1.33.0
 	github.com/saferwall/pe v1.5.4
-	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
+	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
 	github.com/swaggest/jsonschema-go v0.3.62
 	github.com/twpayne/go-vfs/v4 v4.3.0
 	github.com/urfave/cli/v2 v2.27.2
 	github.com/zcalusic/sysinfo v1.1.0
 	golang.org/x/mod v0.19.0
-	gopkg.in/yaml.v3 v3.0.1
+	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
