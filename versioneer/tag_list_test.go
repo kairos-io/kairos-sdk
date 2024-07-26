@@ -40,6 +40,20 @@ var _ = Describe("TagList", func() {
 
 			expectOnlyImages(images.Tags)
 		})
+
+		// Fixed bug
+		It("filters out -uki suffixed images", func() {
+			// Add a -uki suffixed (otherwise matching) artifact
+			badTag := "tumbleweed-standard-amd64-generic-v2.4.2-k3sv1.27.6-k3s1-uki"
+			tagList.Tags = append(tagList.Tags, badTag)
+			images := tagList.Images()
+
+			Expect(images.Tags).ToNot(ContainElement(badTag))
+			// Sanity check, that we didn't filter everything out
+			Expect(len(images.Tags)).To(BeNumerically(">", 4))
+
+			expectOnlyImages(images.Tags)
+		})
 	})
 
 	Describe("FullImages", func() {
@@ -356,6 +370,7 @@ func expectOnlyImages(images []string) {
 	Expect(images).ToNot(ContainElement(ContainSubstring(".sbom")))
 	Expect(images).ToNot(ContainElement(ContainSubstring(".sig")))
 	Expect(images).ToNot(ContainElement(ContainSubstring("-img")))
+	Expect(images).ToNot(ContainElement(ContainSubstring("-uki")))
 
 	Expect(images).To(HaveEach(MatchRegexp((".*-(core|standard)-(amd64|arm64)-.*-v.*"))))
 }

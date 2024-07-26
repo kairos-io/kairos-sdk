@@ -59,8 +59,11 @@ func (tl TagList) Images() TagList {
 
 	newTags := []string{}
 	for _, t := range tl.Tags {
-		// We have to filter "-img" tags outside the regexp because golang regexp doesn't support negative lookaheads.
-		if regexpObject.MatchString(t) && !strings.HasSuffix(t, "-img") {
+		// Golang regexp doesn't support negative lookaheads so we filter some images
+		// outside regexp. Here we filter out `-img` and `-uki` artifacts.
+		if regexpObject.MatchString(t) &&
+			!strings.HasSuffix(t, "-img") &&
+			!strings.HasSuffix(t, "-uki") {
 			newTags = append(newTags, t)
 		}
 	}
