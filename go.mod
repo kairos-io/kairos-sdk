@@ -23,14 +23,14 @@ require (
 	github.com/qeesung/image2ascii v1.0.1
 	github.com/rs/zerolog v1.33.0
 	github.com/saferwall/pe v1.5.4
-	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
-	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
+	github.com/sanity-io/litter v1.5.5
+	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/swaggest/jsonschema-go v0.3.62
 	github.com/twpayne/go-vfs/v4 v4.3.0
 	github.com/urfave/cli/v2 v2.27.3
 	github.com/zcalusic/sysinfo v1.1.0
 	golang.org/x/mod v0.19.0
-	gopkg.in/yaml.v3 v3.0.1
+	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -63,7 +63,6 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
