@@ -16,7 +16,7 @@ require (
 	github.com/jaypipes/ghw v0.12.0
 	github.com/joho/godotenv v1.5.1
 	github.com/mudler/go-pluggable v0.0.0-20230126220627-7710299a0ae5
-	github.com/mudler/yip v1.9.3
+	github.com/mudler/yip v1.9.4
 	github.com/onsi/ginkgo/v2 v2.19.1
 	github.com/onsi/gomega v1.34.1
 	github.com/pterm/pterm v0.12.63
@@ -29,8 +29,8 @@ require (
 	github.com/twpayne/go-vfs/v4 v4.3.0
 	github.com/urfave/cli/v2 v2.27.3
 	github.com/zcalusic/sysinfo v1.1.0
-	golang.org/x/mod v0.19.0
-	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
+	golang.org/x/mod v0.20.0
+	gopkg.in/yaml.v3 v3.0.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
