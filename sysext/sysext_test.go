@@ -44,20 +44,29 @@ var _ = Describe("sysext", Label("sysext"), func() {
 		dest, err = os.MkdirTemp("", "")
 		Expect(err).ToNot(HaveOccurred())
 		imageTag = createTestDockerImage()
+		By(fmt.Sprintf("Created image %s", imageTag))
 		image, err = utils.GetImage(imageTag, utils.GetCurrentPlatform(), nil, nil)
 		Expect(err).ToNot(HaveOccurred())
 	})
 	AfterEach(func() {
 		if CurrentSpecReport().Failed() {
-			GinkgoWriter.Write(buf.Bytes())
+			_, _ = GinkgoWriter.Write(buf.Bytes())
 		}
 		Expect(os.RemoveAll(dest)).To(Succeed())
-		cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-		Expect(err).ToNot(HaveOccurred())
-		img, _, err := cli.ImageInspectWithRaw(context.Background(), imageTag)
-		Expect(err).ToNot(HaveOccurred())
-		_, err = cli.ImageRemove(context.Background(), img.ID, dockerImage.RemoveOptions{Force: true})
-		Expect(err).ToNot(HaveOccurred())
+		cli, _ := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+		list, _ := cli.ImageList(context.Background(), dockerImage.ListOptions{
+			All: true,
+		})
+		// Try to remove the created images, best effort, do not fail tests due tot his
+		for _, i := range list {
+			for _, tag := range i.RepoTags {
+				if tag == imageTag {
+					_, _ = cli.ImageRemove(context.Background(), i.ID, dockerImage.RemoveOptions{Force: true})
+				}
+			}
+		}
+
+		By(fmt.Sprintf("Removed image %s", imageTag))
 	})
 	It("should extract the files into the dir", func() {
 		err = ExtractFilesFromLastLayer(image, dest, log, DefaultAllowListRegex)
@@ -105,7 +114,6 @@ func createTestDockerImage() string {
 	img, err := mutate.AppendLayers(empty.Image, fistLayer, secondLayer)
 	Expect(err).ToNot(HaveOccurred())
 	tag, err := name.NewTag(fmt.Sprintf("%s:latest", string(b)))
-	fmt.Printf("Image %s\n", tag)
 	Expect(err).ToNot(HaveOccurred())
 	_, err = daemon.Write(tag, img)
 	Expect(err).ToNot(HaveOccurred())

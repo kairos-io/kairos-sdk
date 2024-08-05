@@ -26,8 +26,10 @@ test:
     ENV CGO_ENABLED=0
     WORKDIR /build
     COPY +luet/luet /usr/bin/luet
-
-    RUN go run github.com/onsi/ginkgo/v2/ginkgo run --fail-fast --slow-spec-threshold 30s --covermode=atomic --coverprofile=coverage.out -p -r ./...
+    # Some tests need the docker client available
+    WITH DOCKER
+        RUN go run github.com/onsi/ginkgo/v2/ginkgo run --fail-fast --covermode=atomic --coverprofile=coverage.out -p -r ./...
+    END
     SAVE ARTIFACT coverage.out AS LOCAL coverage.out
 
 

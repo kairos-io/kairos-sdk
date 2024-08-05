@@ -23,15 +23,21 @@ var DefaultAllowListRegex = regexp.MustCompile(`^usr|^/usr|^etc|^/etc`)
 // Accepts an allowList in form of regexp.Regexp that will match the files and allow copying
 func ExtractFilesFromLastLayer(image v1.Image, dst string, log types.KairosLogger, allowList *regexp.Regexp) error {
 	layers, _ := image.Layers()
-	layerNumber := len(layers) - 1
-	return extractFilesFromLayer(image, dst, log, allowList, layerNumber)
+	numLayers := len(layers)
+	if numLayers == 0 {
+		return extractFilesFromLayer(image, dst, log, allowList, numLayers)
+	} else {
+		return extractFilesFromLayer(image, dst, log, allowList, numLayers-1)
+	}
 }
 
 func extractFilesFromLayer(image v1.Image, dst string, log types.KairosLogger, allowList *regexp.Regexp, layerNumber int) error {
 	layers, _ := image.Layers()
 	layerToExtract := layers[layerNumber]
 	layerReader, _ := layerToExtract.Uncompressed()
-	defer layerReader.Close()
+	defer func(layerReader io.ReadCloser) {
+		_ = layerReader.Close()
+	}(layerReader)
 	tr := tar.NewReader(layerReader)
 	// TODO: Support whiteout? https://github.com/opencontainers/image-spec/blob/79b036d80240ae530a8de15e1d21c7ab9292c693/layer.md#whiteouts
 	for {

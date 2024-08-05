@@ -40,6 +40,9 @@ jobs:
         with:
           repository: quay.io/kairos/packages
           packages: utils/earthly
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@master
       - name: Run tests
         run: |
           earthly -P +test --GO_VERSION=${{ matrix.go-version }}
