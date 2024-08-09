@@ -11,7 +11,7 @@ import (
 	. "github.com/kairos-io/kairos-sdk/collector"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"gopkg.in/yaml.v1"
+	"gopkg.in/yaml.v3"
 )
 
 var _ = Describe("Config Collector", func() {
