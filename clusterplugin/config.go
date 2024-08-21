@@ -68,7 +68,7 @@ type Cluster struct {
 	LocalImagesPath string `yaml:"local_images_path,omitempty" json:"local_images_path,omitempty"`
 
 	// ClusterConfigPath path to the file where the final init config will be generated
-	ClusterConfigPath string `yaml:"clusterConfigPath,omitempty" json:"clusterConfigPath,omitempty"`
+	ClusterConfigPath string `yaml:"cluster_config_path,omitempty" json:"clusterConfigPath,omitempty"`
 }
 
 type Config struct {
