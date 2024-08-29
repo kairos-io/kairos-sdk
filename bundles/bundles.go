@@ -27,6 +27,7 @@ type BundleConfig struct {
 	LocalFile  bool
 	Auth       *registrytypes.AuthConfig
 	Transport  http.RoundTripper
+	Platform   string
 }
 
 // BundleOption defines a configuration option for a bundle.
@@ -93,6 +94,13 @@ func WithTransport(t http.RoundTripper) BundleOption {
 	}
 }
 
+func WithPlatform(p string) BundleOption {
+	return func(bc *BundleConfig) error {
+		bc.Platform = p
+		return nil
+	}
+}
+
 func (bc *BundleConfig) extractRepo() (string, string, error) {
 	s := strings.Split(bc.Repository, "://")
 	if len(s) != 2 {
@@ -124,6 +132,7 @@ func defaultConfig() *BundleConfig {
 		Repository: "docker://quay.io/kairos/packages",
 		Auth:       nil,
 		Transport:  http.DefaultTransport,
+		Platform:   utils.GetCurrentPlatform(),
 	}
 }
 
@@ -233,10 +242,16 @@ func (e OCIImageRunner) Install(config *BundleConfig) error {
 	if err != nil {
 		return err
 	}
+
+	platform := config.Platform
+	if len(platform) == 0 {
+		platform = utils.GetCurrentPlatform()
+	}
+
 	if e.Local {
 		img, err = tarball.ImageFromPath(target, nil)
 	} else {
-		img, err = utils.GetImage(target, utils.GetCurrentPlatform(), config.Auth, config.Transport)
+		img, err = utils.GetImage(target, platform, config.Auth, config.Transport)
 	}
 	if err != nil {
 		return err
