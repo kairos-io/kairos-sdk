@@ -213,10 +213,16 @@ func (e OCIImageExtractor) Install(config *BundleConfig) error {
 	if err != nil {
 		return err
 	}
+
+	platform := config.Platform
+	if len(platform) == 0 {
+		platform = utils.GetCurrentPlatform()
+	}
+
 	if e.Local {
 		img, err = tarball.ImageFromPath(target, nil)
 	} else {
-		img, err = utils.GetImage(target, utils.GetCurrentPlatform(), config.Auth, config.Transport)
+		img, err = utils.GetImage(target, platform, config.Auth, config.Transport)
 	}
 	if err != nil {
 		return err
