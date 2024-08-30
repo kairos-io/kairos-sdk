@@ -132,7 +132,6 @@ func defaultConfig() *BundleConfig {
 		Repository: "docker://quay.io/kairos/packages",
 		Auth:       nil,
 		Transport:  http.DefaultTransport,
-		Platform:   utils.GetCurrentPlatform(),
 	}
 }
 
@@ -214,15 +213,10 @@ func (e OCIImageExtractor) Install(config *BundleConfig) error {
 		return err
 	}
 
-	platform := config.Platform
-	if len(platform) == 0 {
-		platform = utils.GetCurrentPlatform()
-	}
-
 	if e.Local {
 		img, err = tarball.ImageFromPath(target, nil)
 	} else {
-		img, err = utils.GetImage(target, platform, config.Auth, config.Transport)
+		img, err = utils.GetImage(target, config.Platform, config.Auth, config.Transport)
 	}
 	if err != nil {
 		return err
@@ -249,15 +243,10 @@ func (e OCIImageRunner) Install(config *BundleConfig) error {
 		return err
 	}
 
-	platform := config.Platform
-	if len(platform) == 0 {
-		platform = utils.GetCurrentPlatform()
-	}
-
 	if e.Local {
 		img, err = tarball.ImageFromPath(target, nil)
 	} else {
-		img, err = utils.GetImage(target, platform, config.Auth, config.Transport)
+		img, err = utils.GetImage(target, config.Platform, config.Auth, config.Transport)
 	}
 	if err != nil {
 		return err

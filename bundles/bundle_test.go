@@ -1,10 +1,13 @@
 package bundles_test
 
 import (
+	"debug/elf"
+	"fmt"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 
 	. "github.com/kairos-io/kairos-sdk/bundles"
 	. "github.com/onsi/ginkgo/v2"
@@ -29,7 +32,29 @@ var _ = Describe("Bundle", func() {
 			defer os.RemoveAll(dir)
 			err = RunBundles([]BundleOption{WithDBPath(dir), WithRootFS(dir), WithTarget("container://quay.io/mocaccino/extra:edgevpn-utils-0.15.0")})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(filepath.Join(dir, "usr", "bin", "edgevpn")).To(BeARegularFile())
+			binPath := filepath.Join(dir, "usr", "bin", "edgevpn")
+			Expect(binPath).To(BeARegularFile())
+			expectBinaryArch(binPath, runtime.GOARCH)
+		})
+
+		When("platform is specified", func() {
+			for _, arch := range []string{"amd64", "arm64", "arm/v7"} {
+				It(fmt.Sprintf("install with %s", arch), func() {
+					dir, err := os.MkdirTemp("", "test")
+					Expect(err).ToNot(HaveOccurred())
+					defer os.RemoveAll(dir)
+					err = RunBundles([]BundleOption{
+						WithDBPath(dir),
+						WithRootFS(dir),
+						WithTarget("container://quay.io/luet/base:0.35.5"),
+						WithPlatform(fmt.Sprintf("linux/%s", arch)),
+					})
+					Expect(err).ToNot(HaveOccurred())
+					binPath := filepath.Join(dir, "usr", "bin", "luet")
+					Expect(binPath).To(BeARegularFile())
+					expectBinaryArch(binPath, arch)
+				})
+			}
 		})
 
 		When("local is true", func() {
@@ -204,4 +229,19 @@ func expectInstalled(installer BundleInstaller, config *BundleConfig) {
 	Expect(err).ToNot(HaveOccurred())
 	_, err = os.Stat("/etc/cos/grub.cfg")
 	Expect(err).ToNot(HaveOccurred())
+}
+
+func expectBinaryArch(path string, arch string) {
+	f, err := elf.Open(path)
+	Expect(err).ToNot(HaveOccurred())
+	switch arch {
+	case "amd64":
+		Expect(f.Machine.String()).To(Equal(elf.EM_X86_64.String()))
+	case "arm64":
+		Expect(f.Machine.String()).To(Equal(elf.EM_AARCH64.String()))
+	case "arm/v7":
+		Expect(f.Machine.String()).To(Equal(elf.EM_ARM.String()))
+	default:
+		Fail(fmt.Sprintf("unsupported arch: %s", arch))
+	}
 }
