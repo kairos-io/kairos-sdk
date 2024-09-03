@@ -27,6 +27,7 @@ type BundleConfig struct {
 	LocalFile  bool
 	Auth       *registrytypes.AuthConfig
 	Transport  http.RoundTripper
+	Platform   string
 }
 
 // BundleOption defines a configuration option for a bundle.
@@ -89,6 +90,13 @@ func WithAuth(c *registrytypes.AuthConfig) BundleOption {
 func WithTransport(t http.RoundTripper) BundleOption {
 	return func(bc *BundleConfig) error {
 		bc.Transport = t
+		return nil
+	}
+}
+
+func WithPlatform(p string) BundleOption {
+	return func(bc *BundleConfig) error {
+		bc.Platform = p
 		return nil
 	}
 }
@@ -204,10 +212,11 @@ func (e OCIImageExtractor) Install(config *BundleConfig) error {
 	if err != nil {
 		return err
 	}
+
 	if e.Local {
 		img, err = tarball.ImageFromPath(target, nil)
 	} else {
-		img, err = utils.GetImage(target, utils.GetCurrentPlatform(), config.Auth, config.Transport)
+		img, err = utils.GetImage(target, config.Platform, config.Auth, config.Transport)
 	}
 	if err != nil {
 		return err
@@ -233,10 +242,11 @@ func (e OCIImageRunner) Install(config *BundleConfig) error {
 	if err != nil {
 		return err
 	}
+
 	if e.Local {
 		img, err = tarball.ImageFromPath(target, nil)
 	} else {
-		img, err = utils.GetImage(target, utils.GetCurrentPlatform(), config.Auth, config.Transport)
+		img, err = utils.GetImage(target, config.Platform, config.Auth, config.Transport)
 	}
 	if err != nil {
 		return err
