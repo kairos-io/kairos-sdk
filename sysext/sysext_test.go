@@ -30,7 +30,7 @@ func TestSuite(t *testing.T) {
 	RunSpecs(t, "sysext Test Suite")
 }
 
-var _ = Describe("sysext", Label("sysext"), func() {
+var _ = Describe("sysext", Label("sysext"), Ordered, func() {
 	var dest string
 	var image v1.Image
 	var imageTag string
@@ -47,26 +47,6 @@ var _ = Describe("sysext", Label("sysext"), func() {
 		By(fmt.Sprintf("Created image %s", imageTag))
 		image, err = utils.GetImage(imageTag, utils.GetCurrentPlatform(), nil, nil)
 		Expect(err).ToNot(HaveOccurred())
-	})
-	AfterEach(func() {
-		if CurrentSpecReport().Failed() {
-			_, _ = GinkgoWriter.Write(buf.Bytes())
-		}
-		Expect(os.RemoveAll(dest)).To(Succeed())
-		cli, _ := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-		list, _ := cli.ImageList(context.Background(), dockerImage.ListOptions{
-			All: true,
-		})
-		// Try to remove the created images, best effort, do not fail tests due tot his
-		for _, i := range list {
-			for _, tag := range i.RepoTags {
-				if tag == imageTag {
-					_, _ = cli.ImageRemove(context.Background(), i.ID, dockerImage.RemoveOptions{Force: true})
-				}
-			}
-		}
-
-		By(fmt.Sprintf("Removed image %s", imageTag))
 	})
 	It("should extract the files into the dir", func() {
 		err = ExtractFilesFromLastLayer(image, dest, log, DefaultAllowListRegex)
@@ -92,6 +72,26 @@ var _ = Describe("sysext", Label("sysext"), func() {
 		Expect(err).To(HaveOccurred())
 		_, err = os.Stat(filepath.Join(dest, "var", "nope"))
 		Expect(err).ToNot(HaveOccurred())
+	})
+	AfterAll(func() {
+		if CurrentSpecReport().Failed() {
+			_, _ = GinkgoWriter.Write(buf.Bytes())
+		}
+		Expect(os.RemoveAll(dest)).To(Succeed())
+		cli, _ := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+		list, _ := cli.ImageList(context.Background(), dockerImage.ListOptions{
+			All: true,
+		})
+		// Try to remove the created images, best effort, do not fail tests due tot his
+		for _, i := range list {
+			for _, tag := range i.RepoTags {
+				if tag == imageTag {
+					_, _ = cli.ImageRemove(context.Background(), i.ID, dockerImage.RemoveOptions{Force: true})
+				}
+			}
+		}
+
+		By(fmt.Sprintf("Removed image %s", imageTag))
 	})
 })
 
