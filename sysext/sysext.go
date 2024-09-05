@@ -24,11 +24,11 @@ var DefaultAllowListRegex = regexp.MustCompile(`^usr|^/usr|^etc|^/etc`)
 func ExtractFilesFromLastLayer(image v1.Image, dst string, log types.KairosLogger, allowList *regexp.Regexp) error {
 	layers, _ := image.Layers()
 	numLayers := len(layers)
-	if numLayers == 0 {
-		return extractFilesFromLayer(image, dst, log, allowList, numLayers)
-	} else {
-		return extractFilesFromLayer(image, dst, log, allowList, numLayers-1)
+	if numLayers != 0 {
+		numLayers = numLayers-1
 	}
+	
+	return extractFilesFromLayer(image, dst, log, allowList, numLayers)
 }
 
 func extractFilesFromLayer(image v1.Image, dst string, log types.KairosLogger, allowList *regexp.Regexp, layerNumber int) error {
