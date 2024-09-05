@@ -14,7 +14,7 @@ import (
 )
 
 // DefaultAllowListRegex provided for easy use of defaults for confext and sysext
-var DefaultAllowListRegex = regexp.MustCompile(`^usr|^/usr|^etc|^/etc`)
+var DefaultAllowListRegex = regexp.MustCompile(`^usr/|^/usr/|^etc/|^/etc/`)
 
 // ExtractFilesFromLastLayer will get an image and a destination and extract the files from the last layer in the image
 // into that destination.
@@ -25,9 +25,9 @@ func ExtractFilesFromLastLayer(image v1.Image, dst string, log types.KairosLogge
 	layers, _ := image.Layers()
 	numLayers := len(layers)
 	if numLayers != 0 {
-		numLayers = numLayers-1
+		numLayers = numLayers - 1
 	}
-	
+
 	return extractFilesFromLayer(image, dst, log, allowList, numLayers)
 }
 
