@@ -14,7 +14,7 @@ import (
 )
 
 // DefaultAllowListRegex provided for easy use of defaults for confext and sysext
-var DefaultAllowListRegex = regexp.MustCompile(`^usr/|^/usr/|^etc/|^/etc/`)
+var DefaultAllowListRegex = regexp.MustCompile(`^usr/*|^/usr/*|^etc/*|^/etc/*`)
 
 // ExtractFilesFromLastLayer will get an image and a destination and extract the files from the last layer in the image
 // into that destination.
