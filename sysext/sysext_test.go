@@ -43,57 +43,93 @@ var _ = Describe("sysext", Label("sysext"), Ordered, func() {
 		log = types.NewBufferLogger(&buf)
 		dest, err = os.MkdirTemp("", "")
 		Expect(err).ToNot(HaveOccurred())
-		imageTag = createTestDockerImage()
-		By(fmt.Sprintf("Created image %s", imageTag))
-		image, err = utils.GetImage(imageTag, utils.GetCurrentPlatform(), nil, nil)
-		Expect(err).ToNot(HaveOccurred())
 	})
-	It("should extract the files into the dir", func() {
-		err = ExtractFilesFromLastLayer(image, dest, log, DefaultAllowListRegex)
-		Expect(err).ToNot(HaveOccurred())
-		_, err := os.Stat(filepath.Join(dest, "usr", "yes"))
-		Expect(err).ToNot(HaveOccurred())
-		_, err = os.Stat(filepath.Join(dest, "etc", "yes"))
-		Expect(err).ToNot(HaveOccurred())
-		_, err = os.Stat(filepath.Join(dest, "opt", "nope"))
-		Expect(err).To(HaveOccurred())
-		_, err = os.Stat(filepath.Join(dest, "var", "nope"))
-		Expect(err).To(HaveOccurred())
-	})
-	It("properly uses the allowList", func() {
-		allowList := regexp.MustCompile(`^var|^/var`)
-		err = ExtractFilesFromLastLayer(image, dest, log, allowList)
-		Expect(err).ToNot(HaveOccurred())
-		_, err := os.Stat(filepath.Join(dest, "usr", "yes"))
-		Expect(err).To(HaveOccurred())
-		_, err = os.Stat(filepath.Join(dest, "etc", "yes"))
-		Expect(err).To(HaveOccurred())
-		_, err = os.Stat(filepath.Join(dest, "opt", "nope"))
-		Expect(err).To(HaveOccurred())
-		_, err = os.Stat(filepath.Join(dest, "var", "nope"))
-		Expect(err).ToNot(HaveOccurred())
-	})
-	AfterAll(func() {
+
+	AfterEach(func() {
 		if CurrentSpecReport().Failed() {
 			_, _ = GinkgoWriter.Write(buf.Bytes())
 		}
 		Expect(os.RemoveAll(dest)).To(Succeed())
-		cli, _ := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-		list, _ := cli.ImageList(context.Background(), dockerImage.ListOptions{
-			All: true,
-		})
-		// Try to remove the created images, best effort, do not fail tests due tot his
-		for _, i := range list {
-			for _, tag := range i.RepoTags {
-				if tag == imageTag {
-					_, _ = cli.ImageRemove(context.Background(), i.ID, dockerImage.RemoveOptions{Force: true})
-				}
-			}
-		}
+	})
 
-		By(fmt.Sprintf("Removed image %s", imageTag))
+	When("Using a normal image", func() {
+		BeforeEach(func() {
+			imageTag = createTestDockerImage()
+			By(fmt.Sprintf("Created image %s", imageTag))
+			image, err = utils.GetImage(imageTag, utils.GetCurrentPlatform(), nil, nil)
+			Expect(err).ToNot(HaveOccurred())
+		})
+		AfterEach(func() {
+			cli, _ := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+			_, _ = cli.ImageRemove(context.Background(), imageTag, dockerImage.RemoveOptions{Force: true})
+			By(fmt.Sprintf("Removed image %s", imageTag))
+		})
+		It("should extract the files into the dir", func() {
+			err = ExtractFilesFromLastLayer(image, dest, log, DefaultAllowListRegex)
+			Expect(err).ToNot(HaveOccurred())
+			_, err := os.Stat(filepath.Join(dest, "usr", "yes"))
+			Expect(err).ToNot(HaveOccurred())
+			_, err = os.Stat(filepath.Join(dest, "etc", "yes"))
+			Expect(err).ToNot(HaveOccurred())
+			_, err = os.Stat(filepath.Join(dest, "opt", "nope"))
+			Expect(err).To(HaveOccurred())
+			_, err = os.Stat(filepath.Join(dest, "var", "nope"))
+			Expect(err).To(HaveOccurred())
+		})
+		It("properly uses the allowList", func() {
+			allowList := regexp.MustCompile(`^var|^/var`)
+			err = ExtractFilesFromLastLayer(image, dest, log, allowList)
+			Expect(err).ToNot(HaveOccurred())
+			_, err := os.Stat(filepath.Join(dest, "usr", "yes"))
+			Expect(err).To(HaveOccurred())
+			_, err = os.Stat(filepath.Join(dest, "etc", "yes"))
+			Expect(err).To(HaveOccurred())
+			_, err = os.Stat(filepath.Join(dest, "opt", "nope"))
+			Expect(err).To(HaveOccurred())
+			_, err = os.Stat(filepath.Join(dest, "var", "nope"))
+			Expect(err).ToNot(HaveOccurred())
+		})
+	})
+
+	When("Using an empty image", func() {
+		BeforeEach(func() {
+			imageTag = createEmptyDockerImage()
+			By(fmt.Sprintf("Created image %s", imageTag))
+			image, err = utils.GetImage(imageTag, utils.GetCurrentPlatform(), nil, nil)
+			Expect(err).ToNot(HaveOccurred())
+		})
+		AfterEach(func() {
+			cli, _ := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+			_, _ = cli.ImageRemove(context.Background(), imageTag, dockerImage.RemoveOptions{Force: true})
+			By(fmt.Sprintf("Removed image %s", imageTag))
+		})
+		It("Fails with no layers image", func() {
+			// Cleanup existing image before creating a new one
+
+			err = ExtractFilesFromLastLayer(image, dest, log, DefaultAllowListRegex)
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(ErrorImageNoLayers))
+		})
 	})
 })
+
+func createEmptyDockerImage() string {
+	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+
+	b := make([]rune, 8)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+
+	img, err := mutate.AppendLayers(empty.Image)
+	Expect(err).ToNot(HaveOccurred())
+	tag, err := name.NewTag(fmt.Sprintf("kairos-empty-%s:latest", string(b)))
+	Expect(err).ToNot(HaveOccurred())
+	_, err = daemon.Write(tag, img)
+	Expect(err).ToNot(HaveOccurred())
+
+	return tag.String()
+}
 
 func createTestDockerImage() string {
 	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
@@ -113,7 +149,7 @@ func createTestDockerImage() string {
 	Expect(err).ToNot(HaveOccurred())
 	img, err := mutate.AppendLayers(empty.Image, fistLayer, secondLayer)
 	Expect(err).ToNot(HaveOccurred())
-	tag, err := name.NewTag(fmt.Sprintf("%s:latest", string(b)))
+	tag, err := name.NewTag(fmt.Sprintf("kairos-test-%s:latest", string(b)))
 	Expect(err).ToNot(HaveOccurred())
 	_, err = daemon.Write(tag, img)
 	Expect(err).ToNot(HaveOccurred())

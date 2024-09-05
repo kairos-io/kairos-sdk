@@ -2,6 +2,7 @@ package sysext
 
 import (
 	"archive/tar"
+	"errors"
 	"fmt"
 	"github.com/kairos-io/kairos-sdk/types"
 	"io"
@@ -12,6 +13,8 @@ import (
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 )
+
+var ErrorImageNoLayers = errors.New("image")
 
 // DefaultAllowListRegex provided for easy use of defaults for confext and sysext
 var DefaultAllowListRegex = regexp.MustCompile(`^usr/*|^/usr/*|^etc/*|^/etc/*`)
@@ -24,11 +27,10 @@ var DefaultAllowListRegex = regexp.MustCompile(`^usr/*|^/usr/*|^etc/*|^/etc/*`)
 func ExtractFilesFromLastLayer(image v1.Image, dst string, log types.KairosLogger, allowList *regexp.Regexp) error {
 	layers, _ := image.Layers()
 	numLayers := len(layers)
-	if numLayers != 0 {
-		numLayers = numLayers - 1
+	if len(layers) <= 0 {
+		return ErrorImageNoLayers
 	}
-
-	return extractFilesFromLayer(image, dst, log, allowList, numLayers)
+	return extractFilesFromLayer(image, dst, log, allowList, numLayers-1)
 }
 
 func extractFilesFromLayer(image v1.Image, dst string, log types.KairosLogger, allowList *regexp.Regexp, layerNumber int) error {
