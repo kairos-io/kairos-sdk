@@ -29,7 +29,7 @@ require (
 	github.com/twpayne/go-vfs/v4 v4.3.0
 	github.com/urfave/cli/v2 v2.27.4
 	github.com/zcalusic/sysinfo v1.1.0
-	golang.org/x/mod v0.20.0
+	golang.org/x/mod v0.21.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
