@@ -1,6 +1,6 @@
 module github.com/kairos-io/kairos-sdk
 
-go 1.22.5
+go 1.23.1
 
 require (
 	github.com/avast/retry-go v2.7.0+incompatible
