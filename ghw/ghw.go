@@ -96,7 +96,7 @@ func diskPartitions(paths *Paths, disk string) types.PartitionList {
 	path := filepath.Join(paths.SysBlock, disk)
 	files, err := os.ReadDir(path)
 	if err != nil {
-		fmt.Println("failed to read disk partitions: %s\n", err)
+		fmt.Printf("failed to read disk partitions: %s\n", err)
 		return out
 	}
 	for _, file := range files {
