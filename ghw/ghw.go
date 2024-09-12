@@ -18,9 +18,10 @@ const (
 )
 
 type Disk struct {
-	Name       string              `json:"name"`
-	SizeBytes  uint64              `json:"size_bytes"`
-	Partitions types.PartitionList `json:"partitions"`
+	Name       string              `json:"name,omitempty" yaml:"name,omitempty"`
+	SizeBytes  uint64              `json:"size_bytes,omitempty" yaml:"size_bytes,omitempty"`
+	UUID       string              `json:"uuid,omitempty" yaml:"uuid,omitempty"`
+	Partitions types.PartitionList `json:"partitions,omitempty" yaml:"partitions,omitempty"`
 }
 
 type Paths struct {
@@ -61,6 +62,7 @@ func GetDisks(paths *Paths) []*Disk {
 		d := &Disk{
 			Name:      dname,
 			SizeBytes: size,
+			UUID:      diskUUID(paths, dname, ""),
 		}
 
 		parts := diskPartitions(paths, dname)
@@ -207,6 +209,18 @@ func parseMountEntry(line string) *mountEntry {
 		FilesystemType: fields[2],
 	}
 	return res
+}
+
+func diskUUID(paths *Paths, disk string, partition string) string {
+	info, err := udevInfoPartition(paths, disk, partition)
+	if err != nil {
+		return UNKNOWN
+	}
+
+	if pType, ok := info["ID_PART_TABLE_UUID"]; ok {
+		return pType
+	}
+	return UNKNOWN
 }
 
 func diskPartUUID(paths *Paths, disk string, partition string) string {
