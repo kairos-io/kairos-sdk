@@ -54,6 +54,11 @@ func NewKairosLogger(name, level string, quiet bool) KairosLogger {
 	if debugFromEnv {
 		l = zerolog.DebugLevel
 	}
+	// Set trace level if set on ENV
+	traceFromEnv := os.Getenv(fmt.Sprintf("%s_TRACE", strings.ToUpper(name))) != ""
+	if traceFromEnv {
+		l = zerolog.TraceLevel
+	}
 	k := KairosLogger{
 		zerolog.New(multi).With().Timestamp().Logger().Level(l),
 		loggers,
