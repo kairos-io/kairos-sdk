@@ -17,13 +17,6 @@ const (
 	UNKNOWN    = "unknown"
 )
 
-type Disk struct {
-	Name       string              `json:"name,omitempty" yaml:"name,omitempty"`
-	SizeBytes  uint64              `json:"size_bytes,omitempty" yaml:"size_bytes,omitempty"`
-	UUID       string              `json:"uuid,omitempty" yaml:"uuid,omitempty"`
-	Partitions types.PartitionList `json:"partitions,omitempty" yaml:"partitions,omitempty"`
-}
-
 type Paths struct {
 	SysBlock    string
 	RunUdevData string
@@ -56,12 +49,12 @@ func NewPaths(withOptionalPrefix string) *Paths {
 	return p
 }
 
-func GetDisks(paths *Paths, logger *types.KairosLogger) []*Disk {
+func GetDisks(paths *Paths, logger *types.KairosLogger) []*types.Disk {
 	if logger == nil {
 		newLogger := types.NewKairosLogger("ghw", "info", false)
 		logger = &newLogger
 	}
-	disks := make([]*Disk, 0)
+	disks := make([]*types.Disk, 0)
 	logger.Logger.Debug().Str("path", paths.SysBlock).Msg("Scanning for disks")
 	files, err := os.ReadDir(paths.SysBlock)
 	if err != nil {
@@ -76,7 +69,7 @@ func GetDisks(paths *Paths, logger *types.KairosLogger) []*Disk {
 			// We don't care about unused loop devices...
 			continue
 		}
-		d := &Disk{
+		d := &types.Disk{
 			Name:      dname,
 			SizeBytes: size,
 			UUID:      diskUUID(paths, dname, "", logger),

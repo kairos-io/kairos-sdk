@@ -13,3 +13,10 @@ type Partition struct {
 }
 
 type PartitionList []*Partition
+
+type Disk struct {
+	Name       string        `json:"name,omitempty" yaml:"name,omitempty"`
+	SizeBytes  uint64        `json:"size_bytes,omitempty" yaml:"size_bytes,omitempty"`
+	UUID       string        `json:"uuid,omitempty" yaml:"uuid,omitempty"`
+	Partitions PartitionList `json:"partitions,omitempty" yaml:"partitions,omitempty"`
+}
