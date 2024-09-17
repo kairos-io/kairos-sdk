@@ -48,6 +48,8 @@ func (g *GhwMock) CreateDevices() {
 	d, _ := os.MkdirTemp("", "ghwmock")
 	g.Chroot = d
 	g.paths = ghw.NewPaths(d)
+	// Set the env override to the chroot
+	_ = os.Setenv("GHW_CHROOT", d)
 	// Create the /sys/block dir
 	_ = os.MkdirAll(g.paths.SysBlock, 0755)
 	// Create the /run/udev/data dir
@@ -157,5 +159,7 @@ func (g *GhwMock) RemovePartitionFromDisk(diskName string, partitionName string)
 
 // Clean will remove the chroot dir and unset the env var
 func (g *GhwMock) Clean() {
+	// Uset the test override
+	_ = os.Unsetenv("GHW_CHROOT")
 	_ = os.RemoveAll(g.Chroot)
 }
