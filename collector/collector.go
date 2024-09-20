@@ -199,7 +199,7 @@ func DeepMerge(a, b interface{}) (interface{}, error) {
 
 	// We don't support merging different data structures
 	if typeA.Kind() != typeB.Kind() {
-		return Config{}, fmt.Errorf("cannot merge %s with %s", typeA.String(), typeB.String())
+		return ConfigValues{}, fmt.Errorf("cannot merge %s with %s", typeA.String(), typeB.String())
 	}
 
 	if typeA.Kind() == reflect.Slice {
