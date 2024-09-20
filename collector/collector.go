@@ -31,11 +31,13 @@ var ValidFileHeaders = []string{
 
 type Configs []*Config
 
+type ConfigValues map[string]interface{}
+
 // We don't allow yamls that are plain arrays because is has no use in Kairos
 // and there is no way to merge an array yaml with a "map" yaml.
 type Config struct {
 	Sources []string
-	Values  map[string]interface{}
+	Values  ConfigValues
 }
 
 // MergeConfigURL looks for the "config_url" key and if it's found
@@ -93,10 +95,15 @@ func (c *Config) MergeConfig(newConfig *Config) error {
 		return err
 	}
 
-	// Remove the "name" key from the individual configs before merging.
-	if _, exists := bMap.Values["name"]; exists {
-		delete(bMap.Values, "name")
-	}
+	// TODO: Consider removing the `name:` key because in the end we end up with the
+	// value from the last config merged. Ideally we should display the name in the "sources"
+	// comment next to the file but doing it here is not possible because the configs
+	// passed, could already be results of various merged thus we don't know which of
+	// the "sources" should take the "name" next to it.
+	//
+	// if _, exists := bMap.Values["name"]; exists {
+	// 	delete(bMap.Values, "name")
+	// }
 
 	// deep merge the two maps
 	mergedValues, err := DeepMerge(aMap.Values, bMap.Values)
@@ -105,7 +112,7 @@ func (c *Config) MergeConfig(newConfig *Config) error {
 	}
 	finalConfig := Config{}
 	finalConfig.Sources = append(c.Sources, newConfig.Sources...)
-	finalConfig.Values = mergedValues.(map[string]interface{})
+	finalConfig.Values = mergedValues.(ConfigValues)
 
 	*c = finalConfig
 
@@ -152,7 +159,7 @@ func mergeSlices(sliceA, sliceB []interface{}) ([]interface{}, error) {
 	return sliceA, nil
 }
 
-func deepMergeMaps(a, b map[string]interface{}) (map[string]interface{}, error) {
+func deepMergeMaps(a, b ConfigValues) (ConfigValues, error) {
 	// go through all items in b and merge them to a
 	for k, v := range b {
 		current, ok := a[k]
@@ -202,7 +209,7 @@ func DeepMerge(a, b interface{}) (interface{}, error) {
 	}
 
 	if typeA.Kind() == reflect.Map {
-		return deepMergeMaps(a.(map[string]interface{}), b.(map[string]interface{}))
+		return deepMergeMaps(a.(ConfigValues), b.(ConfigValues))
 	}
 
 	// for any other type, b should take precedence
@@ -218,6 +225,7 @@ func (c *Config) String() (string, error) {
 		for _, s := range config.Sources {
 			sourcesComment += fmt.Sprintf("# - %s\n", s)
 		}
+		sourcesComment += "\n"
 	}
 
 	data, err := yaml.Marshal(config.Values)
@@ -264,7 +272,7 @@ func Scan(o *Options, filter func(d []byte) ([]byte, error)) (*Config, error) {
 	}
 
 	if o.Overwrites != "" {
-		yaml.Unmarshal([]byte(o.Overwrites), &mergedConfig) //nolint:errcheck
+		yaml.Unmarshal([]byte(o.Overwrites), &mergedConfig.Values) //nolint:errcheck
 	}
 
 	return mergedConfig, nil
@@ -339,9 +347,9 @@ func parseReaders(readers []io.Reader, nologs bool) Configs {
 			}
 			continue
 		}
-		err = yaml.Unmarshal(read, &newConfig)
+		err = yaml.Unmarshal(read, &newConfig.Values)
 		if err != nil {
-			err = json.Unmarshal(read, &newConfig)
+			err = json.Unmarshal(read, &newConfig.Values)
 			if err != nil {
 				if !nologs {
 					fmt.Printf("Error unmarshalling config(error: %s): %s", err.Error(), string(read))
@@ -349,6 +357,7 @@ func parseReaders(readers []io.Reader, nologs bool) Configs {
 				continue
 			}
 		}
+		newConfig.Sources = []string{"reader"}
 		result = append(result, &newConfig)
 	}
 
@@ -395,7 +404,7 @@ func listFiles(dir string) ([]string, error) {
 // ParseCmdLine reads options from the kernel cmdline and returns the equivalent
 // Config.
 func ParseCmdLine(file string, filter func(d []byte) ([]byte, error)) (*Config, error) {
-	result := Config{}
+	result := Config{Sources: []string{"cmdline"}}
 	dotToYAML, err := machine.DotToYAML(file)
 	if err != nil {
 		return &result, err
@@ -406,7 +415,7 @@ func ParseCmdLine(file string, filter func(d []byte) ([]byte, error)) (*Config, 
 		return &result, err
 	}
 
-	err = yaml.Unmarshal(filteredYAML, &result)
+	err = yaml.Unmarshal(filteredYAML, &result.Values)
 	if err != nil {
 		return &result, err
 	}
@@ -461,9 +470,11 @@ func fetchRemoteConfig(url string) (*Config, error) {
 		return result, nil
 	}
 
-	if err := yaml.Unmarshal(body, result); err != nil {
+	if err := yaml.Unmarshal(body, &result.Values); err != nil {
 		return result, fmt.Errorf("could not unmarshal remote config to an object: %w", err)
 	}
+
+	result.Sources = []string{fmt.Sprintf("%s", url)}
 
 	return result, nil
 }
