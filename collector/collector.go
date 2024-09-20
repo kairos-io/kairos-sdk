@@ -474,7 +474,7 @@ func fetchRemoteConfig(url string) (*Config, error) {
 		return result, fmt.Errorf("could not unmarshal remote config to an object: %w", err)
 	}
 
-	result.Sources = []string{fmt.Sprintf("%s", url)}
+	result.Sources = []string{url}
 
 	return result, nil
 }
