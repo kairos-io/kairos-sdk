@@ -68,14 +68,15 @@ func (c *Config) MergeConfigURL() error {
 	return c.MergeConfig(remoteConfig)
 }
 
-func (c *Config) toMap() (Config, error) {
-	var result Config
+func (c *Config) valuesCopy() (ConfigValues, error) {
+	var result ConfigValues
 	data, err := yaml.Marshal(c.Values)
 	if err != nil {
 		return result, err
 	}
 
-	err = yaml.Unmarshal(data, &result.Values)
+	err = yaml.Unmarshal(data, &result)
+
 	return result, err
 }
 
@@ -83,14 +84,11 @@ func (c *Config) toMap() (Config, error) {
 func (c *Config) MergeConfig(newConfig *Config) error {
 	var err error
 
-	// convert the two configs into maps
-	// TODO: What does this do? They are already maps. It just creates and returns a new Config?
-	// TODO: Rename the method then?
-	aMap, err := c.toMap()
+	aMap, err := c.valuesCopy()
 	if err != nil {
 		return err
 	}
-	bMap, err := newConfig.toMap()
+	bMap, err := newConfig.valuesCopy()
 	if err != nil {
 		return err
 	}
@@ -106,7 +104,7 @@ func (c *Config) MergeConfig(newConfig *Config) error {
 	// }
 
 	// deep merge the two maps
-	mergedValues, err := DeepMerge(aMap.Values, bMap.Values)
+	mergedValues, err := DeepMerge(aMap, bMap)
 	if err != nil {
 		return err
 	}
