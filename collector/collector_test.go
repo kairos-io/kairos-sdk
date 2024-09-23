@@ -998,6 +998,23 @@ options:
 				fmt.Print(player)
 				Expect(player["name"]).NotTo(Equal("Toad"))
 				Expect(player["surname"]).To(Equal("Bros"))
+
+				cs, _ := c.String()
+				// Check "Sources" comment
+				Expect(cs).To(MatchRegexp(`.*
+# Sources:
+# - /tmp/.*/local_config_1.yaml
+# - http://127.0.0.1:.*/remote_config_3.yaml
+# - http://127.0.0.1:.*/remote_config_4.yaml
+# - /tmp/.*/local_config_2.yaml
+# - http://127.0.0.1:.*/remote_config_5.yaml
+# - http://127.0.0.1:.*/remote_config_6.yaml
+# - /tmp/.*/local_config_3.yaml
+# - cmdline
+# - http://127.0.0.1:.*/remote_config_1.yaml
+# - http://127.0.0.1:.*/remote_config_2.yaml
+.*
+`))
 			})
 		})
 
