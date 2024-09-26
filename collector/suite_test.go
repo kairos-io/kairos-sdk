@@ -11,6 +11,7 @@ import (
 )
 
 func TestConfig(t *testing.T) {
+	// format.TruncatedDiff = false
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Config Collector Suite")
 }
