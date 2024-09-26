@@ -13,6 +13,8 @@ import (
 
 const clusterProviderCloudConfigFile = "/usr/local/cloud-config/cluster.kairos.yaml"
 
+const EventClusterReset pluggable.EventType = "cluster.reset"
+
 // ClusterProvider returns a yip configuration that configures a Kubernetes engine.  The yip config may use any elemental
 // stages after initramfs.
 type ClusterProvider func(cluster Cluster) yip.YipConfig
