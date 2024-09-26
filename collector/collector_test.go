@@ -46,16 +46,16 @@ var _ = Describe("Config Collector", func() {
 		Context("different keys", func() {
 			BeforeEach(func() {
 				err := yaml.Unmarshal([]byte(`#cloud-config
-name: Mario`), originalConfig)
+name: Mario`), &originalConfig.Values)
 				Expect(err).ToNot(HaveOccurred())
 				err = yaml.Unmarshal([]byte(`#cloud-config
-surname: Bros`), newConfig)
+surname: Bros`), &newConfig.Values)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
 			It("gets merged together", func() {
 				Expect(originalConfig.MergeConfig(newConfig)).ToNot(HaveOccurred())
-				surname, isString := (*originalConfig)["surname"].(string)
+				surname, isString := originalConfig.Values["surname"].(string)
 				Expect(isString).To(BeTrue())
 				Expect(surname).To(Equal("Bros"))
 			})
@@ -67,58 +67,58 @@ surname: Bros`), newConfig)
 					err := yaml.Unmarshal([]byte(`#cloud-config
 info:
   name: Mario
-`), originalConfig)
+`), &originalConfig.Values)
 					Expect(err).ToNot(HaveOccurred())
 					err = yaml.Unmarshal([]byte(`#cloud-config
 info:
   surname: Bros
-`), newConfig)
+`), &newConfig.Values)
 					Expect(err).ToNot(HaveOccurred())
 				})
 				It("merges the keys", func() {
 					Expect(originalConfig.MergeConfig(newConfig)).ToNot(HaveOccurred())
-					info, isMap := (*originalConfig)["info"].(Config)
+					info, isMap := originalConfig.Values["info"].(ConfigValues)
 					Expect(isMap).To(BeTrue())
 					Expect(info["name"]).To(Equal("Mario"))
 					Expect(info["surname"]).To(Equal("Bros"))
-					Expect(*originalConfig).To(HaveLen(1))
+					Expect(originalConfig.Values).To(HaveLen(1))
 					Expect(info).To(HaveLen(2))
 				})
 			})
 
 			Context("when the key is a string", func() {
 				BeforeEach(func() {
-					err := yaml.Unmarshal([]byte("#cloud-config\nname: Mario"), originalConfig)
+					err := yaml.Unmarshal([]byte("#cloud-config\nname: Mario"), &originalConfig.Values)
 					Expect(err).ToNot(HaveOccurred())
-					err = yaml.Unmarshal([]byte("#cloud-config\nname: Luigi"), newConfig)
+					err = yaml.Unmarshal([]byte("#cloud-config\nname: Luigi"), &newConfig.Values)
 					Expect(err).ToNot(HaveOccurred())
 				})
 
 				It("overwrites", func() {
 					Expect(originalConfig.MergeConfig(newConfig)).ToNot(HaveOccurred())
-					name, isString := (*originalConfig)["name"].(string)
+					name, isString := originalConfig.Values["name"].(string)
 					Expect(isString).To(BeTrue())
 					Expect(name).To(Equal("Luigi"))
-					Expect(*originalConfig).To(HaveLen(1))
+					Expect(originalConfig.Values).To(HaveLen(1))
 				})
 			})
 		})
 		Context("reset keys", func() {
 			Context("remove keys", func() {
 				BeforeEach(func() {
-					err := yaml.Unmarshal([]byte("#cloud-config\nlist:\n - 1\n - 2\nname: Mario"), originalConfig)
+					err := yaml.Unmarshal([]byte("#cloud-config\nlist:\n - 1\n - 2\nname: Mario"), &originalConfig.Values)
 					Expect(err).ToNot(HaveOccurred())
-					err = yaml.Unmarshal([]byte("#cloud-config\nlist: null\nname: null"), newConfig)
+					err = yaml.Unmarshal([]byte("#cloud-config\nlist: null\nname: null"), &newConfig.Values)
 					Expect(err).ToNot(HaveOccurred())
 				})
 
 				It("overwrites", func() {
 					Expect(originalConfig.MergeConfig(newConfig)).ToNot(HaveOccurred())
-					Expect((*originalConfig)["list"]).To(BeEmpty())
-					name, isString := (*originalConfig)["name"].(string)
+					Expect(originalConfig.Values["list"]).To(BeEmpty())
+					name, isString := originalConfig.Values["name"].(string)
 					Expect(isString).To(BeTrue())
 					Expect(name).To(Equal(""))
-					Expect(*originalConfig).To(HaveLen(2))
+					Expect(originalConfig.Values).To(HaveLen(2))
 				})
 			})
 		})
@@ -132,13 +132,13 @@ info:
 
 		Context("when there is no config_url defined", func() {
 			BeforeEach(func() {
-				err := yaml.Unmarshal([]byte("#cloud-config\nname: Mario"), originalConfig)
+				err := yaml.Unmarshal([]byte("#cloud-config\nname: Mario"), &originalConfig.Values)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
 			It("does nothing", func() {
 				Expect(originalConfig.MergeConfigURL()).ToNot(HaveOccurred())
-				Expect(*originalConfig).To(HaveLen(1))
+				Expect(originalConfig.Values).To(HaveLen(1))
 			})
 		})
 
@@ -163,7 +163,7 @@ name: Mario
 surname: Bros
 info:
   job: plumber
-`, port)), originalConfig)
+`, port)), &originalConfig.Values)
 				Expect(err).ToNot(HaveOccurred())
 
 				err := os.WriteFile(path.Join(tmpDir, "config1.yaml"), []byte(fmt.Sprintf(`#cloud-config
@@ -191,20 +191,20 @@ info:
 				err := originalConfig.MergeConfigURL()
 				Expect(err).ToNot(HaveOccurred())
 
-				name, ok := (*originalConfig)["name"].(string)
+				name, ok := originalConfig.Values["name"].(string)
 				Expect(ok).To(BeTrue())
 				Expect(name).To(Equal("Mario"))
 
-				surname, ok := (*originalConfig)["surname"].(string)
+				surname, ok := originalConfig.Values["surname"].(string)
 				Expect(ok).To(BeTrue())
 				Expect(surname).To(Equal("Bras"))
 
-				info, ok := (*originalConfig)["info"].(Config)
+				info, ok := originalConfig.Values["info"].(ConfigValues)
 				Expect(ok).To(BeTrue())
 				Expect(info["job"]).To(Equal("plumber"))
 				Expect(info["girlfriend"]).To(Equal("princess"))
 
-				Expect(*originalConfig).To(HaveLen(4))
+				Expect(originalConfig.Values).To(HaveLen(4))
 			})
 		})
 	})
@@ -224,12 +224,12 @@ info:
 				return d, nil
 			})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(*c).To(HaveKey("mario"))
-			Expect(*c).To(HaveKey("luigi"))
-			Expect(*c).To(HaveKey("princess"))
-			Expect((*c)["mario"]).To(Equal("bros"))
-			Expect((*c)["luigi"]).To(Equal("bros"))
-			Expect((*c)["princess"]).To(Equal("peach"))
+			Expect(c.Values).To(HaveKey("mario"))
+			Expect(c.Values).To(HaveKey("luigi"))
+			Expect(c.Values).To(HaveKey("princess"))
+			Expect(c.Values["mario"]).To(Equal("bros"))
+			Expect(c.Values["luigi"]).To(Equal("bros"))
+			Expect(c.Values["princess"]).To(Equal("peach"))
 		})
 		It("Reads from several reader objects and merges them (json)", func() {
 			obj1 := bytes.NewReader([]byte(`{"mario":"bros"}`))
@@ -245,12 +245,12 @@ info:
 				return d, nil
 			})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(*c).To(HaveKey("mario"))
-			Expect(*c).To(HaveKey("luigi"))
-			Expect(*c).To(HaveKey("princess"))
-			Expect((*c)["mario"]).To(Equal("bros"))
-			Expect((*c)["luigi"]).To(Equal("bros"))
-			Expect((*c)["princess"]).To(Equal("peach"))
+			Expect(c.Values).To(HaveKey("mario"))
+			Expect(c.Values).To(HaveKey("luigi"))
+			Expect(c.Values).To(HaveKey("princess"))
+			Expect(c.Values["mario"]).To(Equal("bros"))
+			Expect(c.Values["luigi"]).To(Equal("bros"))
+			Expect(c.Values["princess"]).To(Equal("peach"))
 		})
 		It("Reads from several reader objects and merges them (json+yaml)", func() {
 			obj1 := bytes.NewReader([]byte(`{"mario":"bros"}`))
@@ -266,12 +266,12 @@ info:
 				return d, nil
 			})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(*c).To(HaveKey("mario"))
-			Expect(*c).To(HaveKey("luigi"))
-			Expect(*c).To(HaveKey("princess"))
-			Expect((*c)["mario"]).To(Equal("bros"))
-			Expect((*c)["luigi"]).To(Equal("bros"))
-			Expect((*c)["princess"]).To(Equal("peach"))
+			Expect(c.Values).To(HaveKey("mario"))
+			Expect(c.Values).To(HaveKey("luigi"))
+			Expect(c.Values).To(HaveKey("princess"))
+			Expect(c.Values["mario"]).To(Equal("bros"))
+			Expect(c.Values["luigi"]).To(Equal("bros"))
+			Expect(c.Values["princess"]).To(Equal("peach"))
 		})
 		It("Fails to read from a reader which is neither json or yaml", func() {
 			obj1 := bytes.NewReader([]byte(`blip`))
@@ -288,9 +288,9 @@ info:
 				return d, nil
 			})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(*c).ToNot(HaveKey("mario"))
-			Expect(*c).ToNot(HaveKey("luigi"))
-			Expect(*c).ToNot(HaveKey("princess"))
+			Expect(c.Values).ToNot(HaveKey("mario"))
+			Expect(c.Values).ToNot(HaveKey("luigi"))
+			Expect(c.Values).ToNot(HaveKey("princess"))
 		})
 	})
 
@@ -384,27 +384,27 @@ info:
 		})
 
 		Context("empty map", func() {
-			a := map[string]interface{}{}
-			b := map[string]interface{}{
+			a := ConfigValues{}
+			b := ConfigValues{
 				"foo": "bar",
 			}
 
 			It("merges", func() {
 				c, err := DeepMerge(a, b)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(c).To(Equal(map[string]interface{}{
+				Expect(c).To(Equal(ConfigValues{
 					"foo": "bar",
 				}))
 			})
 		})
 
 		Context("simple map", func() {
-			a := map[string]interface{}{
+			a := ConfigValues{
 				"es": "uno",
 				"nl": "een",
 				"#":  0,
 			}
-			b := map[string]interface{}{
+			b := ConfigValues{
 				"en": "one",
 				"nl": "één",
 				"de": "Eins",
@@ -414,7 +414,7 @@ info:
 			It("merges", func() {
 				c, err := DeepMerge(a, b)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(c).To(Equal(map[string]interface{}{
+				Expect(c).To(Equal(ConfigValues{
 					"#":  1,
 					"de": "Eins",
 					"en": "one",
@@ -425,7 +425,7 @@ info:
 		})
 
 		Context("reset key", func() {
-			a := map[string]interface{}{
+			a := ConfigValues{
 				"string": "val",
 				"slice":  []interface{}{"valA", "valB"},
 				"map": map[string]interface{}{
@@ -433,7 +433,7 @@ info:
 					"valB": "",
 				},
 			}
-			b := map[string]interface{}{
+			b := ConfigValues{
 				"string": nil,
 				"slice":  nil,
 				"map":    nil,
@@ -442,7 +442,7 @@ info:
 			It("merges", func() {
 				c, err := DeepMerge(a, b)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(c).To(Equal(map[string]interface{}{
+				Expect(c).To(Equal(ConfigValues{
 					"string": "",
 					"slice":  []interface{}{},
 					"map":    map[string]interface{}{},
@@ -506,8 +506,12 @@ stages:
 				c, err := Scan(o, FilterKeysTestMerge)
 				Expect(err).ToNot(HaveOccurred())
 
-				fmt.Println(c.String())
-				Expect(c.String()).To(Equal(`#cloud-config
+				Expect(c.String()).To(MatchRegexp(`#cloud-config
+
+# Sources:
+# - .*/local_config_1.yaml
+# - .*/local_config_2.yaml
+# - cmdline
 
 install:
     auto: true
@@ -582,15 +586,19 @@ stages:
 				c, err := Scan(o, FilterKeysTestMerge)
 				Expect(err).ToNot(HaveOccurred())
 
-				fmt.Println(c.String())
-				Expect(c.String()).To(Equal(`#cloud-config
+				Expect(c.String()).To(MatchRegexp(`#cloud-config
+
+# Sources:
+# - .*/local_config_1.yaml
+# - .*/local_config_2.yaml
+# - cmdline
 
 stages:
     initramfs:
         - users:
             kairos:
                 passwd: kairos
-        - if: '[ ! -f /oem/80_stylus.yaml ]'
+        - if: '\[ ! -f /oem/80_stylus.yaml \]'
           name: set_inotify_max_values
           sysctl:
             fs.inotify.max_user_instances: "8192"
@@ -674,8 +682,12 @@ install:
 				c, err := Scan(o, FilterKeysTestMerge)
 				Expect(err).ToNot(HaveOccurred())
 
-				fmt.Println(c.String())
-				Expect(c.String()).To(Equal(`#cloud-config
+				Expect(c.String()).To(MatchRegexp(`#cloud-config
+
+# Sources:
+# - .*/local_config_1.yaml
+# - .*/local_config_2.yaml
+# - cmdline
 
 install:
     auto: true
@@ -761,7 +773,10 @@ stages:
 				c, err := Scan(o, FilterKeysTestMerge)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(c.String()).To(Equal(`#cloud-config
+				Expect(c.String()).To(MatchRegexp(`#cloud-config
+
+# Sources:
+# - .*/local_config_1.yaml
 
 foo: bar
 install:
@@ -837,7 +852,12 @@ stages:
 				c, err := Scan(o, FilterKeysTestMerge)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(c.String()).To(Equal(`#cloud-config
+				Expect(c.String()).To(MatchRegexp(`#cloud-config
+
+# Sources:
+# .*/local_config_1\.yaml
+# .*/local_config_2\.yaml
+# - cmdline
 
 install:
     auto: true
@@ -950,34 +970,51 @@ options:
 				c, err := Scan(o, FilterKeysTestMerge)
 				Expect(err).ToNot(HaveOccurred())
 
-				configURL, ok := (*c)["config_url"].(string)
+				configURL, ok := c.Values["config_url"].(string)
 				Expect(ok).To(BeTrue())
 				Expect(configURL).To(MatchRegexp("remote_config_2.yaml"))
 
-				k := (*c)["local_key_1"].(string)
+				k := c.Values["local_key_1"].(string)
 				Expect(k).To(Equal("local_value_1"))
-				k = (*c)["local_key_2"].(string)
+				k = c.Values["local_key_2"].(string)
 				Expect(k).To(Equal("local_value_2"))
-				k = (*c)["local_key_3"].(string)
+				k = c.Values["local_key_3"].(string)
 				Expect(k).To(Equal("local_value_3"))
-				k = (*c)["remote_key_1"].(string)
+				k = c.Values["remote_key_1"].(string)
 				Expect(k).To(Equal("remote_value_1"))
-				k = (*c)["remote_key_2"].(string)
+				k = c.Values["remote_key_2"].(string)
 				Expect(k).To(Equal("remote_value_2"))
-				k = (*c)["remote_key_3"].(string)
+				k = c.Values["remote_key_3"].(string)
 				Expect(k).To(Equal("remote_value_3"))
-				k = (*c)["remote_key_4"].(string)
+				k = c.Values["remote_key_4"].(string)
 				Expect(k).To(Equal("remote_value_4"))
 
-				options := (*c)["options"].(Config)
+				options := c.Values["options"].(ConfigValues)
 				Expect(options["foo"]).To(Equal("bar"))
 				Expect(options["remote_option_1"]).To(Equal("remote_option_value_1"))
 				Expect(options["remote_option_2"]).To(Equal("remote_option_value_2"))
 
-				player := (*c)["player"].(Config)
+				player := c.Values["player"].(ConfigValues)
 				fmt.Print(player)
 				Expect(player["name"]).NotTo(Equal("Toad"))
 				Expect(player["surname"]).To(Equal("Bros"))
+
+				cs, _ := c.String()
+				// Check "Sources" comment
+				Expect(cs).To(MatchRegexp(`.*
+# Sources:
+# - /tmp/.*/local_config_1.yaml
+# - http://127.0.0.1:.*/remote_config_3.yaml
+# - http://127.0.0.1:.*/remote_config_4.yaml
+# - /tmp/.*/local_config_2.yaml
+# - http://127.0.0.1:.*/remote_config_5.yaml
+# - http://127.0.0.1:.*/remote_config_6.yaml
+# - /tmp/.*/local_config_3.yaml
+# - cmdline
+# - http://127.0.0.1:.*/remote_config_1.yaml
+# - http://127.0.0.1:.*/remote_config_2.yaml
+.*
+`))
 			})
 		})
 
@@ -1036,19 +1073,19 @@ remote_key_2: remote_value_2`), os.ModePerm)
 				c, err := Scan(o, FilterKeysTest)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect((*c)["local_key_2"]).To(BeNil())
-				Expect((*c)["remote_key_2"]).To(BeNil())
+				Expect(c.Values["local_key_2"]).To(BeNil())
+				Expect(c.Values["remote_key_2"]).To(BeNil())
 
 				// sanity check, the rest should be there
-				v, ok := (*c)["config_url"].(string)
+				v, ok := c.Values["config_url"].(string)
 				Expect(ok).To(BeTrue())
 				Expect(v).To(MatchRegexp("remote_config_2.yaml"))
 
-				v, ok = (*c)["local_key_1"].(string)
+				v, ok = c.Values["local_key_1"].(string)
 				Expect(ok).To(BeTrue())
 				Expect(v).To(Equal("local_value_1"))
 
-				v, ok = (*c)["remote_key_1"].(string)
+				v, ok = c.Values["remote_key_1"].(string)
 				Expect(ok).To(BeTrue())
 				Expect(v).To(Equal("remote_value_1"))
 			})
@@ -1095,14 +1132,14 @@ local_key_2: local_value_2
 				c, err := Scan(o, FilterKeysTest)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect((*c)["local_key_1"]).ToNot(BeNil())
-				Expect((*c)["local_key_2"]).ToNot(BeNil())
+				Expect(c.Values["local_key_1"]).ToNot(BeNil())
+				Expect(c.Values["local_key_2"]).ToNot(BeNil())
 
-				v, ok := (*c)["local_key_1"].(string)
+				v, ok := c.Values["local_key_1"].(string)
 				Expect(ok).To(BeTrue())
 				Expect(v).To(Equal("local_value_1"))
 
-				v, ok = (*c)["local_key_2"].(string)
+				v, ok = c.Values["local_key_2"].(string)
 				Expect(ok).To(BeTrue())
 				Expect(v).To(Equal("local_value_2"))
 			})
@@ -1113,7 +1150,7 @@ local_key_2: local_value_2
 		var conf *Config
 		BeforeEach(func() {
 			conf = &Config{}
-			err := yaml.Unmarshal([]byte("name: Mario"), conf)
+			err := yaml.Unmarshal([]byte("name: Mario"), &conf.Values)
 			Expect(err).ToNot(HaveOccurred())
 		})
 
