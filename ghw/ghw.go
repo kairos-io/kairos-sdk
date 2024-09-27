@@ -182,7 +182,7 @@ func partitionInfo(paths *Paths, part string, logger *types.KairosLogger) (strin
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := scanner.Text()
-		logger.Logger.Debug().Str("line", line).Msg("Parsing mount info")
+		logger.Logger.Trace().Str("line", line).Msg("Parsing mount info")
 		entry := parseMountEntry(line, logger)
 		if entry == nil || entry.Partition != part {
 			continue
