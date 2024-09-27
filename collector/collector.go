@@ -464,7 +464,12 @@ func fetchRemoteConfig(url string) (*Config, error) {
 
 	if !HasValidHeader(string(body)) {
 		// TODO: Print a warning when we implement proper logging
-		fmt.Println("No valid header in remote config: %w", err)
+                if err != nil {
+		   fmt.Printf("No valid header in remote config: %s\n", err.Error())
+		} else {
+       	   fmt.Println("No valid header in remote config")
+       	 }
+		
 		return result, nil
 	}
 
