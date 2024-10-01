@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	// KAIROS_VERSION was already used in os-release and we avoided breaking it
+	// KAIROS_VERSION was already used in kairos-release and we avoided breaking it
 	// for consumers by using a new variable KAIROS_RELEASE instead. But it's the
 	// "Artifact.Version".
 	EnvVarVersion               = "RELEASE"
@@ -49,8 +49,8 @@ func NewArtifactFromJSON(jsonStr string) (*Artifact, error) {
 	return result, err
 }
 
-// NewArtifactFromOSRelease generates an artifact by inpecting the variables
-// in the /etc/os-release file of a Kairos image. The variable should be
+// NewArtifactFromOSRelease generates an artifact by inspecting the variables
+// in the /etc/kairos-release file of a Kairos image. The variable should be
 // prefixed with "KAIROS_". E.g. KAIROS_VARIANT would be used to set the Variant
 // field. The function optionally takes an argument to specify a different file
 // path (for testing reasons).
@@ -199,7 +199,7 @@ func (a *Artifact) SoftwareVersionForTag() string {
 	return strings.ReplaceAll(a.SoftwareVersion, "+", "-")
 }
 
-// OSReleaseVariables returns a set of variables to be appended in /etc/os-release
+// OSReleaseVariables returns a set of variables to be appended in /etc/kairos-release
 func (a *Artifact) OSReleaseVariables(registryAndOrg, githubRepo, bugURL, homeURL string) (string, error) {
 	if registryAndOrg == "" {
 		return "", errors.New("registry-and-org must be set")

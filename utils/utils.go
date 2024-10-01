@@ -67,11 +67,13 @@ func UUID() string {
 	return fmt.Sprintf("%s-%s", id, hostname)
 }
 
-// OSRelease finds the value of the specified key in the /etc/os-release file
+// OSRelease finds the value of the specified key in the /etc/kairos-release file
+// As a fallback on the /etc/os-release
 // or, if a second argument is passed, on the file specified by the second argument.
 // (optionally file argument is there for testing reasons).
 func OSRelease(key string, file ...string) (string, error) {
 	var osReleaseFile string
+	osReleaseFallback := "/etc/os-release"
 
 	if len(file) > 1 {
 		return "", errors.New("too many arguments passed")
@@ -79,7 +81,7 @@ func OSRelease(key string, file ...string) (string, error) {
 	if len(file) > 0 {
 		osReleaseFile = file[0]
 	} else {
-		osReleaseFile = "/etc/os-release"
+		osReleaseFile = "/etc/kairos-release"
 	}
 	release, err := godotenv.Read(osReleaseFile)
 	if err != nil {
@@ -91,9 +93,23 @@ func OSRelease(key string, file ...string) (string, error) {
 		// We try with the old naming without the prefix in case the key wasn't found
 		v, exists = release[key]
 		if !exists {
-			return "", KeyNotFoundErr{Err: fmt.Errorf("%s key not found", kairosKey)}
+			// We try with fallback file
+			release, err = godotenv.Read(osReleaseFallback)
+			if err != nil {
+				return "", err
+			}
+			kairosKey = "KAIROS_" + key
+			v, exists = release[kairosKey]
+			if !exists {
+				// We try with the old naming without the prefix in case the key wasn't found
+				v, exists = release[key]
+				if !exists {
+					return "", KeyNotFoundErr{Err: fmt.Errorf("%s key not found", kairosKey)}
+				}
+			}
 		}
 	}
+
 	return v, nil
 }
 
