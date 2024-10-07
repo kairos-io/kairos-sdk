@@ -168,7 +168,7 @@ func CliCommands() []*cli.Command {
 		},
 		{
 			Name:  "os-release-variables",
-			Usage: "generates a set of variables to be appended in the /etc/os-release file",
+			Usage: "generates a set of variables to be appended in the /etc/kairos-release file",
 			Flags: []cli.Flag{
 				flavorFlag, flavorReleaseFlag, variantFlag, modelFlag, archFlag, versionFlag,
 				softwareVersionFlag, softwareVersionPrefixFlag, registryAndOrgFlag, bugReportURLFlag, projectHomeURLFlag,

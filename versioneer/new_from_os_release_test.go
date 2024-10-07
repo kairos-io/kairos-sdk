@@ -14,7 +14,7 @@ var _ = Describe("NewArtifactFromOSRelease", func() {
 	var osReleaseContent string
 
 	BeforeEach(func() {
-		tmpOSReleaseFile, err = os.CreateTemp("", "os-release")
+		tmpOSReleaseFile, err = os.CreateTemp("", "kairos-release")
 		Expect(err).ToNot(HaveOccurred())
 
 		osReleaseContent = "KAIROS_FLAVOR=opensuse\n" +
