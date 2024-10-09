@@ -7,7 +7,7 @@ require (
 	github.com/containerd/containerd v1.7.22
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/docker v27.3.1+incompatible
-	github.com/edsrzf/mmap-go v1.1.0
+	github.com/edsrzf/mmap-go v1.2.0
 	github.com/foxboron/go-uefi v0.0.0-20240805124652-e2076f0e58ca
 	github.com/google/go-containerregistry v0.20.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
