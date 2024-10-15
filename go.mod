@@ -4,7 +4,7 @@ go 1.23.1
 
 require (
 	github.com/avast/retry-go v2.7.0+incompatible
-	github.com/containerd/containerd v1.7.22
+	github.com/containerd/containerd v1.7.23
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/docker/docker v27.3.1+incompatible
 	github.com/edsrzf/mmap-go v1.2.0
