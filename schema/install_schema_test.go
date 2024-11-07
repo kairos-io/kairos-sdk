@@ -1,8 +1,6 @@
 package schema_test
 
 import (
-	"strings"
-
 	. "github.com/kairos-io/kairos-sdk/schema"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -59,11 +57,8 @@ device: foobar`
 
 		It("errors", func() {
 			Expect(config.IsValid()).NotTo(BeTrue())
-			Expect(
-				strings.Contains(config.ValidationError.Error(),
-					"does not match pattern '^(auto|/|(/[a-zA-Z0-9_-]+)+)$'",
-				),
-			).To(BeTrue())
+			Expect(config.ValidationError.Error()).
+				To(ContainSubstring("does not match pattern '^(auto|/dev/.+)$'"))
 		})
 	})
 
