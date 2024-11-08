@@ -11,7 +11,7 @@ type InstallSchema struct {
 	BindMounts          []string       `json:"bind_mounts,omitempty"`
 	Bundles             []BundleSchema `json:"bundles,omitempty" description:"Add bundles in runtime"`
 	NoFormat            bool           `json:"no_format,omitempty"`
-	Device              string         `json:"device,omitempty" pattern:"^(auto|/|(/[a-zA-Z0-9_-]+)+)$" description:"Device for automated installs" examples:"[\"auto\",\"/dev/sda\"]"`
+	Device              string         `json:"device,omitempty" pattern:"^(auto|/dev/.+)$" description:"Device for automated installs" examples:"[\"auto\",\"/dev/sda\"]"`
 	EphemeralMounts     []string       `json:"ephemeral_mounts,omitempty"`
 	EncryptedPartitions []string       `json:"encrypted_partitions,omitempty"`
 	Env                 []interface{}  `json:"env,omitempty"`
@@ -30,8 +30,8 @@ type InstallSchema struct {
 }
 
 type Image struct {
-	Size       uint   `json:"size,omitempty" mapstructure:"size"`
-	Source     string `json:"uri,omitempty" mapstructure:"uri"`
+	Size   uint   `json:"size,omitempty" mapstructure:"size"`
+	Source string `json:"uri,omitempty" mapstructure:"uri"`
 }
 
 type Partition struct {

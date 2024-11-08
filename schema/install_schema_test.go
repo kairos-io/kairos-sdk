@@ -1,8 +1,6 @@
 package schema_test
 
 import (
-	"strings"
-
 	. "github.com/kairos-io/kairos-sdk/schema"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -29,6 +27,17 @@ device: auto`
 		})
 	})
 
+	Context("when device has 'special' characters", func() {
+		BeforeEach(func() {
+			yaml = `#cloud-config
+device: "/dev/disk/by-path/pci-0000:03:00.0-scsi-0:0:0:0"`
+		})
+
+		It("succeedes", func() {
+			Expect(config.IsValid()).To(BeTrue(), func() string { return config.ValidationError.Error() })
+		})
+	})
+
 	Context("when device is a path", func() {
 		BeforeEach(func() {
 			yaml = `#cloud-config
@@ -48,11 +57,8 @@ device: foobar`
 
 		It("errors", func() {
 			Expect(config.IsValid()).NotTo(BeTrue())
-			Expect(
-				strings.Contains(config.ValidationError.Error(),
-					"does not match pattern '^(auto|/|(/[a-zA-Z0-9_-]+)+)$'",
-				),
-			).To(BeTrue())
+			Expect(config.ValidationError.Error()).
+				To(ContainSubstring("does not match pattern '^(auto|/dev/.+)$'"))
 		})
 	})
 
