@@ -23,7 +23,7 @@ require (
 	github.com/pterm/pterm v0.12.63
 	github.com/qeesung/image2ascii v1.0.1
 	github.com/rs/zerolog v1.33.0
-	github.com/saferwall/pe v1.5.4
+	github.com/saferwall/pe v1.5.5
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
 	github.com/swaggest/jsonschema-go v0.3.62
 	github.com/twpayne/go-vfs/v4 v4.3.0
