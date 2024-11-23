@@ -28,7 +28,7 @@ require (
 	github.com/swaggest/jsonschema-go v0.3.62
 	github.com/twpayne/go-vfs/v4 v4.3.0
 	github.com/urfave/cli/v2 v2.27.5
-	github.com/zcalusic/sysinfo v1.1.2
+	github.com/zcalusic/sysinfo v1.1.3
 	golang.org/x/mod v0.22.0
 	gopkg.in/yaml.v3 v3.0.1
 )
