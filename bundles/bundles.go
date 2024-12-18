@@ -284,11 +284,13 @@ func (l *LuetInstaller) Install(config *BundleConfig) error {
 	}
 	out, err := utils.SH(
 		fmt.Sprintf(
-			`LUET_CONFIG_FROM_HOST=false luet repo add --system-dbpath %s --system-target %s kairos-system -y --description "Automatically generated kairos-system" --url "%s" --type "%s"`,
+			`LUET_CONFIG_FROM_HOST=false luet repo add --system-dbpath %s --system-target %s kairos-system -y --description "Automatically generated kairos-system" --url "%s" --type "%s" --username "%s" --passwd "%s"`,
 			config.DBPath,
 			config.RootPath,
 			repo,
 			t,
+			config.Auth.Username,
+			config.Auth.Password,
 		),
 	)
 	if err != nil {
