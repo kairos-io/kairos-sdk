@@ -9,7 +9,7 @@ require (
 	github.com/diskfs/go-diskfs v1.4.2
 	github.com/docker/docker v27.3.1+incompatible
 	github.com/edsrzf/mmap-go v1.2.0
-	github.com/foxboron/go-uefi v0.0.0-20241017190036-fab4fdf2f2f3
+	github.com/foxboron/go-uefi 19dc140271bf
 	github.com/google/go-containerregistry v0.20.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/hashicorp/go-multierror v1.1.1
