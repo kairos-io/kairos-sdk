@@ -7,7 +7,7 @@ require (
 	github.com/containerd/containerd/v2 v2.0.1
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/diskfs/go-diskfs v1.5.0
-	github.com/docker/docker v27.3.1+incompatible
+	github.com/docker/docker v27.4.1+incompatible
 	github.com/edsrzf/mmap-go v1.2.0
 	github.com/foxboron/go-uefi 19dc140271bf
 	github.com/google/go-containerregistry v0.20.2
