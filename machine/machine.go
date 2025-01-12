@@ -106,6 +106,37 @@ func K3sEnvUnit(unit string) string {
 
 	return fmt.Sprintf("/etc/sysconfig/%s", unit)
 }
+func K0s() (Service, error) {
+	if utils.IsOpenRCBased() {
+		return openrc.NewService(
+			openrc.WithName("k0scontroller"),
+		)
+	}
+
+	return systemd.NewService(
+		systemd.WithName("k0scontroller"),
+	)
+}
+
+func K0sWorker() (Service, error) {
+	if utils.IsOpenRCBased() {
+		return openrc.NewService(
+			openrc.WithName("k3sworker"),
+		)
+	}
+
+	return systemd.NewService(
+		systemd.WithName("k0sworker"),
+	)
+}
+
+func K0sEnvUnit(unit string) string {
+	if utils.IsOpenRCBased() {
+		return fmt.Sprintf("/etc/k0s/%s.env", unit)
+	}
+
+	return fmt.Sprintf("/etc/sysconfig/%s", unit)
+}
 
 func UUID() string {
 	if os.Getenv("UUID") != "" {
