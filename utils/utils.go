@@ -135,8 +135,21 @@ func K3sBin() string {
 	return ""
 }
 
+func K0sBin() string {
+	for _, p := range []string{"/usr/bin/k0s", "/usr/local/bin/k0s"} {
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+
+	return ""
+}
+
 func WriteEnv(envFile string, config map[string]string) error {
-	content, _ := os.ReadFile(envFile)
+	content, err := os.ReadFile(envFile)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
 	env, _ := godotenv.Unmarshal(string(content))
 
 	for key, val := range config {
@@ -157,18 +170,14 @@ func Flavor() string {
 
 // GetInit Return the init system used by the OS
 func GetInit() string {
-	for _, file := range []string{"/run/systemd/system", "/sbin/systemctl", "/usr/bin/systemctl", "/usr/sbin/systemctl", "/usr/bin/systemctl"} {
-		_, err := os.Stat(file)
-		// Found systemd
-		if err == nil {
+	for _, file := range []string{"/run/systemd/system", "/sbin/systemctl", "/usr/bin/systemctl", "/usr/sbin/systemctl"} {
+		if _, err := os.Stat(file); err == nil {
 			return systemd
 		}
 	}
 
 	for _, file := range []string{"/sbin/openrc", "/usr/sbin/openrc", "/bin/openrc", "/usr/bin/openrc"} {
-		_, err := os.Stat(file)
-		// Found openrc
-		if err == nil {
+		if _, err := os.Stat(file); err == nil {
 			return openrc
 		}
 	}
@@ -260,16 +269,6 @@ func PowerOFF() {
 	} else {
 		SH("shutdown") //nolint:errcheck
 	}
-}
-
-func Version() string {
-	v, err := OSRelease("VERSION")
-	if err != nil {
-		return ""
-	}
-	v = strings.ReplaceAll(v, "+k3s1-Kairos", "-")
-	v = strings.ReplaceAll(v, "+k3s-Kairos", "-")
-	return strings.ReplaceAll(v, "Kairos", "")
 }
 
 func ListToOutput(rels []string, output string) []string {
