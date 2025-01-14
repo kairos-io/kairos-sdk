@@ -271,7 +271,7 @@ func PowerOFF() {
 	if IsOpenRCBased() {
 		SH("poweroff") //nolint:errcheck
 	} else {
-		SH("shutdown now") //nolint:errcheck
+		SH("shutdown") //nolint:errcheck
 	}
 }
 
