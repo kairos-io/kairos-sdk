@@ -125,26 +125,6 @@ func FindCommand(def string, options []string) string {
 	return def
 }
 
-func K3sBin() string {
-	for _, p := range []string{"/usr/bin/k3s", "/usr/local/bin/k3s"} {
-		if _, err := os.Stat(p); err == nil {
-			return p
-		}
-	}
-
-	return ""
-}
-
-func K0sBin() string {
-	for _, p := range []string{"/usr/bin/k0s", "/usr/local/bin/k0s"} {
-		if _, err := os.Stat(p); err == nil {
-			return p
-		}
-	}
-
-	return ""
-}
-
 func WriteEnv(envFile string, config map[string]string) error {
 	content, err := os.ReadFile(envFile)
 	if err != nil && !os.IsNotExist(err) {
@@ -269,28 +249,6 @@ func PowerOFF() {
 	} else {
 		SH("shutdown") //nolint:errcheck
 	}
-}
-
-func Version() string {
-	// Check for K3s version
-	k3sBin := K3sBin()
-	if k3sBin != "" {
-		v, err := OSRelease("VERSION")
-		if err == nil {
-			return strings.ReplaceAll(v, "+k3s1-Kairos", "-")
-		}
-	}
-
-	// Check for K0s version
-	k0sBin := K0sBin()
-	if k0sBin != "" {
-		v, err := SH(fmt.Sprintf("%s version", k0sBin))
-		if err == nil {
-			return strings.TrimSpace(v)
-		}
-	}
-
-	return ""
 }
 
 func ListToOutput(rels []string, output string) []string {
