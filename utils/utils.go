@@ -271,28 +271,6 @@ func PowerOFF() {
 	}
 }
 
-func Version() string {
-	// Check for K3s version
-	k3sBin := K3sBin()
-	if k3sBin != "" {
-		v, err := OSRelease("VERSION")
-		if err == nil {
-			return strings.ReplaceAll(v, "+k3s1-Kairos", "-")
-		}
-	}
-
-	// Check for K0s version
-	k0sBin := K0sBin()
-	if k0sBin != "" {
-		v, err := SH(fmt.Sprintf("%s version", k0sBin))
-		if err == nil {
-			return strings.TrimSpace(v)
-		}
-	}
-
-	return ""
-}
-
 func ListToOutput(rels []string, output string) []string {
 	switch strings.ToLower(output) {
 	case "yaml":
