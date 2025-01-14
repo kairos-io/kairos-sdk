@@ -120,10 +120,6 @@ func FindCommand(def string, options []string) string {
 			return path
 		}
 	}
-	// Additional check for K0s binary
-	if def == "k0s" {
-		return K0sBin()
-	}
 
 	// Otherwise return default
 	return def
