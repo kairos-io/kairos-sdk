@@ -122,7 +122,7 @@ func K0s() (Service, error) {
 func K0sWorker() (Service, error) {
 	if utils.IsOpenRCBased() {
 		return openrc.NewService(
-			openrc.WithName("k3sworker"),
+			openrc.WithName("k0sworker"),
 		)
 	}
 
