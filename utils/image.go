@@ -103,21 +103,27 @@ func GetImage(targetImage, targetPlatform string, auth *registrytypes.AuthConfig
 		transport.WithRetryPredicate(defaultRetryPredicate),
 	)
 
+	// Try to get the image from the local Docker daemon
 	image, err = daemon.Image(ref)
-
-	if err != nil {
-		opts := []remote.Option{
-			remote.WithTransport(tr),
-			remote.WithPlatform(*platform),
+	if err == nil {
+		// Check if the image matches the requested platform
+		imgConfig, err := image.ConfigFile()
+		if err == nil && imgConfig.Architecture == platform.Architecture && imgConfig.OS == platform.OS {
+			return image, nil
 		}
-		if auth != nil {
-			opts = append(opts, remote.WithAuth(staticAuth{auth}))
-		} else {
-			opts = append(opts, remote.WithAuthFromKeychain(authn.DefaultKeychain))
-		}
-
-		image, err = remote.Image(ref, opts...)
 	}
+
+	opts := []remote.Option{
+		remote.WithTransport(tr),
+		remote.WithPlatform(*platform),
+	}
+	if auth != nil {
+		opts = append(opts, remote.WithAuth(staticAuth{auth}))
+	} else {
+		opts = append(opts, remote.WithAuthFromKeychain(authn.DefaultKeychain))
+	}
+
+	image, err = remote.Image(ref, opts...)
 
 	return image, err
 }
