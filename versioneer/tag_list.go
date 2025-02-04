@@ -245,7 +245,9 @@ func (tl TagList) newerSomeVersions() TagList {
 	newTags := []string{}
 	for _, t := range tl.Tags {
 		versions := extractVersions(t, *tl.Artifact)
-		if len(versions) < 1 {
+		// skip badly named artifacts that may not have a software version
+		// https://github.com/kairos-io/kairos/issues/3167#issuecomment-2633282993
+		if len(versions) < 2 {
 			continue
 		}
 
