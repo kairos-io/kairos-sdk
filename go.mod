@@ -7,10 +7,10 @@ require (
 	github.com/containerd/containerd v1.7.25
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/diskfs/go-diskfs v1.4.2
-	github.com/docker/docker v27.5.0+incompatible
+	github.com/docker/docker v27.5.1+incompatible
 	github.com/edsrzf/mmap-go v1.2.0
-	github.com/foxboron/go-uefi v0.0.0-20241219185318-19dc140271bf
-	github.com/gofrs/flock v0.8.1
+	github.com/foxboron/go-uefi 69fb7dba244f
+  github.com/gofrs/flock v0.8.1
 	github.com/google/go-containerregistry v0.20.3
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/hashicorp/go-multierror v1.1.1
@@ -18,7 +18,7 @@ require (
 	github.com/jaypipes/ghw v0.13.0
 	github.com/joho/godotenv v1.5.1
 	github.com/mudler/go-pluggable v0.0.0-20230126220627-7710299a0ae5
-	github.com/mudler/yip v1.13.1
+	github.com/mudler/yip v1.14.1
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
 	github.com/pterm/pterm v0.12.80
@@ -30,7 +30,7 @@ require (
 	github.com/twpayne/go-vfs/v4 v4.3.0
 	github.com/urfave/cli/v2 v2.27.5
 	github.com/zcalusic/sysinfo v1.1.3
-	golang.org/x/mod v0.22.0
+	golang.org/x/mod v0.23.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
