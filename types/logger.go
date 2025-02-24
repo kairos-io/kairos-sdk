@@ -7,11 +7,9 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
-	"github.com/gofrs/flock"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/journald"
 )
@@ -32,8 +30,6 @@ func isJournaldAvailable() bool {
 func NewKairosLogger(name, level string, quiet bool) KairosLogger {
 	var loggers []io.Writer
 	var l zerolog.Level
-	var fileLock *flock.Flock
-	var logfile *os.File
 	var err error
 
 	// Add journald logger
@@ -45,12 +41,11 @@ func NewKairosLogger(name, level string, quiet bool) KairosLogger {
 		_ = os.MkdirAll("/var/log/kairos/", os.ModeDir|os.ModePerm)
 		logFileName := filepath.Join("/var/log/kairos/", logName)
 
-		logfile, err = os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		logfile, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err == nil {
 			loggers = append(loggers, zerolog.ConsoleWriter{Out: logfile, TimeFormat: time.RFC3339, NoColor: true})
 		}
 
-		fileLock = flock.New(logFileName + ".lock")
 	}
 
 	if !quiet {
@@ -79,40 +74,15 @@ func NewKairosLogger(name, level string, quiet bool) KairosLogger {
 	}
 	k := KairosLogger{
 		zerolog.New(multi).With().Timestamp().Logger().Level(l),
-		fileLock,
-		logfile,
 		isJournaldAvailable(),
 	}
 
-	// Set the finalizer to call the cleanup method
-	runtime.SetFinalizer(&k, func(k *KairosLogger) {
-		k.Cleanup()
-	})
-
 	return k
-}
-
-func (k *KairosLogger) Cleanup() {
-	if k.fileLock != nil {
-		k.fileLock.Lock()
-		defer k.fileLock.Unlock()
-	}
-
-	if k.logFile != nil {
-		k.logFile.Close()
-		k.logFile = nil
-	}
-	if k.fileLock != nil {
-		k.fileLock.Unlock()
-		k.fileLock = nil
-	}
 }
 
 func NewBufferLogger(b *bytes.Buffer) KairosLogger {
 	return KairosLogger{
 		zerolog.New(b).With().Timestamp().Logger(),
-		nil,
-		nil,
 		true,
 	}
 }
@@ -120,8 +90,6 @@ func NewBufferLogger(b *bytes.Buffer) KairosLogger {
 func NewNullLogger() KairosLogger {
 	return KairosLogger{
 		zerolog.New(io.Discard).With().Timestamp().Logger(),
-		nil,
-		nil,
 		true,
 	}
 }
@@ -129,8 +97,6 @@ func NewNullLogger() KairosLogger {
 // KairosLogger implements the bridge between zerolog and the logger.Interface that yip needs.
 type KairosLogger struct {
 	zerolog.Logger
-	fileLock *flock.Flock
-	logFile  *os.File
 	journald bool // Whether we are logging to journald, to avoid the file lock
 }
 
@@ -152,8 +118,6 @@ func (m KairosLogger) IsDebug() bool {
 
 func (m KairosLogger) Infof(tpl string, args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		// Add the pid to the log line so searching for it is easier
 		tpl = fmt.Sprintf("[%v] ", os.Getpid()) + tpl
 	}
@@ -161,24 +125,18 @@ func (m KairosLogger) Infof(tpl string, args ...interface{}) {
 }
 func (m KairosLogger) Info(args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
 	}
 	m.Logger.Info().Msg(fmt.Sprint(args...))
 }
 func (m KairosLogger) Warnf(tpl string, args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		tpl = fmt.Sprintf("[%v] ", os.Getpid()) + tpl
 	}
 	m.Logger.Warn().Msg(fmt.Sprintf(tpl, args...))
 }
 func (m KairosLogger) Warn(args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
 	}
 	m.Logger.Warn().Msg(fmt.Sprint(args...))
@@ -186,8 +144,6 @@ func (m KairosLogger) Warn(args ...interface{}) {
 
 func (m KairosLogger) Warning(args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
 	}
 	m.Logger.Warn().Msg(fmt.Sprint(args...))
@@ -195,8 +151,6 @@ func (m KairosLogger) Warning(args ...interface{}) {
 
 func (m KairosLogger) Warningf(tpl string, args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		tpl = fmt.Sprintf("[%v] ", os.Getpid()) + tpl
 	}
 	m.Logger.Warn().Msg(fmt.Sprintf(tpl, args...))
@@ -204,80 +158,60 @@ func (m KairosLogger) Warningf(tpl string, args ...interface{}) {
 
 func (m KairosLogger) Debugf(tpl string, args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		tpl = fmt.Sprintf("[%v] ", os.Getpid()) + tpl
 	}
 	m.Logger.Debug().Msg(fmt.Sprintf(tpl, args...))
 }
 func (m KairosLogger) Debug(args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
 	}
 	m.Logger.Debug().Msg(fmt.Sprint(args...))
 }
 func (m KairosLogger) Errorf(tpl string, args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		tpl = fmt.Sprintf("[%v] ", os.Getpid()) + tpl
 	}
 	m.Logger.Error().Msg(fmt.Sprintf(tpl, args...))
 }
 func (m KairosLogger) Error(args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
 	}
 	m.Logger.Error().Msg(fmt.Sprint(args...))
 }
 func (m KairosLogger) Fatalf(tpl string, args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		tpl = fmt.Sprintf("[%v] ", os.Getpid()) + tpl
 	}
 	m.Logger.Fatal().Msg(fmt.Sprintf(tpl, args...))
 }
 func (m KairosLogger) Fatal(args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
 	}
 	m.Logger.Fatal().Msg(fmt.Sprint(args...))
 }
 func (m KairosLogger) Panicf(tpl string, args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		tpl = fmt.Sprintf("[%v] ", os.Getpid()) + tpl
 	}
 	m.Logger.Panic().Msg(fmt.Sprintf(tpl, args...))
 }
 func (m KairosLogger) Panic(args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
 	}
 	m.Logger.Panic().Msg(fmt.Sprint(args...))
 }
 func (m KairosLogger) Tracef(tpl string, args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		tpl = fmt.Sprintf("[%v] ", os.Getpid()) + tpl
 	}
 	m.Logger.Trace().Msg(fmt.Sprintf(tpl, args...))
 }
 func (m KairosLogger) Trace(args ...interface{}) {
 	if !m.journald {
-		m.fileLock.Lock()
-		defer m.fileLock.Unlock()
 		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
 	}
 	m.Logger.Trace().Msg(fmt.Sprint(args...))
