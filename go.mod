@@ -4,9 +4,9 @@ go 1.23.1
 
 require (
 	github.com/avast/retry-go v2.7.0+incompatible
-	github.com/containerd/containerd v1.7.25
+	github.com/containerd/containerd v1.7.26
 	github.com/denisbrodbeck/machineid v1.0.1
-	github.com/diskfs/go-diskfs v1.4.2
+	github.com/diskfs/go-diskfs v1.5.1
 	github.com/docker/docker v27.5.1+incompatible
 	github.com/edsrzf/mmap-go v1.2.0
 	github.com/foxboron/go-uefi v0.0.0-20250207204325-69fb7dba244f
@@ -14,7 +14,7 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/itchyny/gojq v0.12.17
-	github.com/jaypipes/ghw v0.13.0
+	github.com/jaypipes/ghw v0.14.0
 	github.com/joho/godotenv v1.5.1
 	github.com/mudler/go-pluggable v0.0.0-20230126220627-7710299a0ae5
 	github.com/mudler/yip v1.15.0
