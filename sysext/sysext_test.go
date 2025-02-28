@@ -13,7 +13,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
-
 	"github.com/kairos-io/kairos-sdk/types"
 	"github.com/kairos-io/kairos-sdk/utils"
 	. "github.com/onsi/ginkgo/v2"
@@ -123,6 +122,15 @@ func createEmptyDockerImage() string {
 
 	img, err := mutate.AppendLayers(empty.Image)
 	Expect(err).ToNot(HaveOccurred())
+
+	// Set the platform to AMD64
+	cfg, err := img.ConfigFile()
+	Expect(err).ToNot(HaveOccurred())
+	cfg.Architecture = "amd64"
+	cfg.OS = "linux"
+	img, err = mutate.ConfigFile(img, cfg)
+	Expect(err).ToNot(HaveOccurred())
+
 	tag, err := name.NewTag(fmt.Sprintf("kairos-empty-%s:latest", string(b)))
 	Expect(err).ToNot(HaveOccurred())
 	_, err = daemon.Write(tag, img)
@@ -149,6 +157,15 @@ func createTestDockerImage() string {
 	Expect(err).ToNot(HaveOccurred())
 	img, err := mutate.AppendLayers(empty.Image, fistLayer, secondLayer)
 	Expect(err).ToNot(HaveOccurred())
+
+	// Set the platform to AMD64
+	cfg, err := img.ConfigFile()
+	Expect(err).ToNot(HaveOccurred())
+	cfg.Architecture = "amd64"
+	cfg.OS = "linux"
+	img, err = mutate.ConfigFile(img, cfg)
+	Expect(err).ToNot(HaveOccurred())
+
 	tag, err := name.NewTag(fmt.Sprintf("kairos-test-%s:latest", string(b)))
 	Expect(err).ToNot(HaveOccurred())
 	_, err = daemon.Write(tag, img)
