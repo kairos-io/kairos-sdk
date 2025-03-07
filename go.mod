@@ -3,7 +3,7 @@ module github.com/kairos-io/kairos-sdk
 go 1.23.6
 
 require (
-	github.com/avast/retry-go v2.7.0+incompatible
+	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/containerd/containerd v1.7.26
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/diskfs/go-diskfs v1.5.1
