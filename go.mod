@@ -4,7 +4,7 @@ go 1.23.6
 
 require (
 	github.com/avast/retry-go v3.0.0+incompatible
-	github.com/containerd/containerd v1.7.26
+	github.com/containerd/containerd v1.7.27
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/diskfs/go-diskfs v1.5.1
 	github.com/docker/docker v27.5.1+incompatible
