@@ -43,7 +43,7 @@ func NewKairosLogger(name, level string, quiet bool) KairosLogger {
 
 		logfile, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err == nil {
-			loggers = append(loggers, zerolog.ConsoleWriter{Out: logfile, TimeFormat: time.RFC3339, NoColor: true})
+			loggers = append(loggers, zerolog.ConsoleWriter{Out: logfile, TimeFormat: time.RFC3339, NoColor: true, FieldsExclude: []string{"SYSLOG_IDENTIFIER"}})
 		}
 
 	}
@@ -51,6 +51,7 @@ func NewKairosLogger(name, level string, quiet bool) KairosLogger {
 	if !quiet {
 		loggers = append(loggers, zerolog.NewConsoleWriter(func(w *zerolog.ConsoleWriter) {
 			w.TimeFormat = time.RFC3339
+			w.FieldsExclude = []string{"SYSLOG_IDENTIFIER"}
 		}))
 	}
 
@@ -73,7 +74,7 @@ func NewKairosLogger(name, level string, quiet bool) KairosLogger {
 		l = zerolog.TraceLevel
 	}
 	k := KairosLogger{
-		zerolog.New(multi).With().Timestamp().Logger().Level(l),
+		zerolog.New(multi).With().Str("SYSLOG_IDENTIFIER", fmt.Sprintf("kairos-%s", name)).Timestamp().Logger().Level(l),
 		isJournaldAvailable(),
 	}
 
