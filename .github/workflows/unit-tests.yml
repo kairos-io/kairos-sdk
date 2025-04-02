@@ -11,6 +11,11 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     steps:
+      - name: Install kairos-agent (for versioneer)
+        uses: Luet-lab/luet-install-action@cec77490c3f2416d7d07a47cfab04d448641d7ce # v1.1
+        with:
+          repository: quay.io/kairos/packages
+          packages: system/kairos-agent
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -24,10 +29,7 @@ jobs:
           go-version-file: "go.mod"
       - name: Run tests
         run: |
-          curl -L  https://github.com/mudler/luet/releases/download/0.33.0/luet-0.33.0-linux-amd64 -o luet
-          chmod +x luet
-          sudo mv luet /usr/local/bin/luet
-          go run github.com/onsi/ginkgo/v2/ginkgo run --fail-fast --covermode=atomic --coverprofile=coverage.out -p -r ./...
+          sudo go run github.com/onsi/ginkgo/v2/ginkgo run --fail-fast --covermode=atomic --coverprofile=coverage.out -p -r ./...
       - name: Codecov
         uses: codecov/codecov-action@v5
         env:
