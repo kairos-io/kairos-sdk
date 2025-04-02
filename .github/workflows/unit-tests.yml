@@ -11,11 +11,8 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Install kairos-agent (for versioneer)
-        uses: Luet-lab/luet-install-action@cec77490c3f2416d7d07a47cfab04d448641d7ce # v1.1
-        with:
-          repository: quay.io/kairos/packages
-          packages: system/kairos-agent
+      - name: Setup earthly
+        uses: earthly/actions-setup@v1.0.13
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -23,13 +20,9 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@master
-      - name: Setup Go environment
-        uses: actions/setup-go@v5.4.0
-        with:
-          go-version-file: "go.mod"
       - name: Run tests
         run: |
-          sudo go run github.com/onsi/ginkgo/v2/ginkgo run --fail-fast --covermode=atomic --coverprofile=coverage.out -p -r ./...
+          earthly -P +test
       - name: Codecov
         uses: codecov/codecov-action@v5
         env:
