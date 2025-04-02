@@ -1,10 +1,10 @@
 module github.com/kairos-io/kairos-sdk
 
-go 1.23.6
+go 1.24.2
 
 require (
 	github.com/avast/retry-go v3.0.0+incompatible
-	github.com/containerd/containerd v1.7.26
+	github.com/containerd/containerd v1.7.27
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/diskfs/go-diskfs v1.5.1
 	github.com/docker/docker v27.5.1+incompatible
@@ -114,12 +114,12 @@ require (
 	go.opentelemetry.io/otel/metric v1.34.0 // indirect
 	go.opentelemetry.io/otel/trace v1.34.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.4.0 // indirect
-	golang.org/x/crypto v0.35.0 // indirect
-	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/sync v0.11.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/term v0.29.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
+	golang.org/x/sync v0.12.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/term v0.30.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.30.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250212204824-5a70512c5d8b // indirect
