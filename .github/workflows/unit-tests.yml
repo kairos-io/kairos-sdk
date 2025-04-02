@@ -11,13 +11,8 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Build packages
+      - name: Build packages  # This is used so luet is available in the machine for the tests
         uses: mudler/luet-github-action@v0.3.1
-      - name: Install something
-        uses: Luet-lab/luet-install-action@v1.1
-        with:
-          packages: ''
-          repository: ''
       - name: Checkout code
         uses: actions/checkout@v4
         with:
