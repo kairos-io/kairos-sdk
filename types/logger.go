@@ -13,7 +13,7 @@ import (
 )
 
 // NewKairosLogger creates a new logger with the given name and level.
-// The name is used to create a log file in /run/kairos/NAME-DATE.log and /var/log/kairos/NAME-DATE.log
+// The name is used to create a log file in /var/log/kairos/kairos-NAME.log
 // The level is used to set the log level, defaulting to info
 // The log level can be overridden by setting the environment variable $NAME_DEBUG to any parseable value.
 // If quiet is true, the logger will not log to the console.
@@ -23,13 +23,8 @@ func NewKairosLogger(name, level string, quiet bool) KairosLogger {
 
 	// Have I ever mentioned how terrible the format of time is in golang?
 	// Whats with this 20060102150405 format? Do anyone actually remembers that?
-	logName := fmt.Sprintf("%s-%s.log", name, time.Now().Format("20060102150405.0000"))
-	_ = os.MkdirAll("/run/kairos/", os.ModeDir|os.ModePerm)
+	logName := fmt.Sprintf("kairos-%s.log", name)
 	_ = os.MkdirAll("/var/log/kairos/", os.ModeDir|os.ModePerm)
-	logfileRun, err := os.Create(filepath.Join("/run/kairos/", logName))
-	if err == nil {
-		loggers = append(loggers, zerolog.ConsoleWriter{Out: logfileRun, TimeFormat: time.RFC3339, NoColor: true})
-	}
 	logfileVar, err := os.Create(filepath.Join("/var/log/kairos/", logName))
 	if err == nil {
 		loggers = append(loggers, zerolog.ConsoleWriter{Out: logfileVar, TimeFormat: time.RFC3339, NoColor: true})
