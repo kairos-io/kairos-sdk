@@ -2,9 +2,9 @@ package bus
 
 import (
 	"fmt"
-	"github.com/kairos-io/kairos-sdk/types"
 	"os"
 
+	"github.com/kairos-io/kairos-sdk/types"
 	"github.com/mudler/go-pluggable"
 )
 
@@ -41,7 +41,7 @@ type Bus struct {
 
 func (b *Bus) LoadProviders() {
 	wd, _ := os.Getwd()
-	b.Manager.Autoload(prefix, append(extensionPaths, wd)...).Register()
+	b.Autoload(prefix, append(extensionPaths, wd)...).Register()
 }
 
 func (b *Bus) Initialize() {
@@ -57,17 +57,16 @@ func (b *Bus) Initialize() {
 	log := types.NewKairosLogger("kcrypt", level, false)
 
 	b.LoadProviders()
-	for i := range b.Manager.Events {
-		e := b.Manager.Events[i]
-		b.Manager.Response(e, func(p *pluggable.Plugin, r *pluggable.EventResponse) {
+	for i := range b.Events {
+		e := b.Events[i]
+		b.Response(e, func(p *pluggable.Plugin, r *pluggable.EventResponse) {
 			log.Logger.Debug().Str("from", p.Name).Str("at", p.Executable).Str("type", string(e)).Msg("Received event from provider")
 			if r.Errored() {
-				log.Logger.Error().Err(fmt.Errorf(r.Error)).Str("from", p.Name).Str("at", p.Executable).Str("type", string(e)).Msg("Error in provider")
+				log.Logger.Error().Err(fmt.Errorf("%s", r.Error)).Str("from", p.Name).Str("at", p.Executable).Str("type", string(e)).Msg("Error in provider")
 				os.Exit(1)
-			} else {
-				if r.State != "" {
-					log.Logger.Debug().Str("state", r.State).Str("from", p.Name).Str("at", p.Executable).Str("type", string(e)).Msg("Received event from provider")
-				}
+			}
+			if r.State != "" {
+				log.Logger.Debug().Str("state", r.State).Str("from", p.Name).Str("at", p.Executable).Str("type", string(e)).Msg("Received event from provider")
 			}
 		})
 	}

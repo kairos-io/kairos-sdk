@@ -79,7 +79,7 @@ func UnlockDisk(b *block.Partition) error {
 func getPassword(b *block.Partition) (password string, err error) {
 	bus.Reload()
 
-	bus.Manager.Response(bus.EventDiscoveryPassword, func(p *pluggable.Plugin, r *pluggable.EventResponse) {
+	bus.Manager.Response(bus.EventDiscoveryPassword, func(_ *pluggable.Plugin, r *pluggable.EventResponse) {
 		password = r.Data
 		if r.Errored() {
 			err = fmt.Errorf("failed discovery: %s", r.Error)
