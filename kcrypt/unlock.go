@@ -14,7 +14,7 @@ import (
 	"github.com/mudler/go-pluggable"
 )
 
-// UnlockAll Unlocks all encrypted devices found in the system
+// UnlockAll Unlocks all encrypted devices found in the system.
 func UnlockAll(tpm bool, log types.KairosLogger) error {
 	bus.Manager.Initialize()
 	logger := log.Logger
@@ -64,7 +64,7 @@ func UnlockAll(tpm bool, log types.KairosLogger) error {
 	return nil
 }
 
-// UnlockDisk unlocks a single block.Partition
+// UnlockDisk unlocks a single block.Partition.
 func UnlockDisk(b *block.Partition) error {
 	pass, err := getPassword(b)
 	if err != nil {
@@ -75,7 +75,7 @@ func UnlockDisk(b *block.Partition) error {
 }
 
 // GetPassword gets the password for a block.Partition
-// TODO: Ask to discovery a pass to unlock. keep waiting until we get it and a timeout is exhausted with retrials (exp backoff)
+// TODO: Ask to discovery a pass to unlock. keep waiting until we get it and a timeout is exhausted with retrials (exp backoff).
 func getPassword(b *block.Partition) (password string, err error) {
 	bus.Reload()
 

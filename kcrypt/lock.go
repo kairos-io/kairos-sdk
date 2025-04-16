@@ -53,7 +53,7 @@ func getRandomString(length int) string {
 	return string(b)
 }
 
-// luksify Take a part label, and recreates it with LUKS. IT OVERWRITES DATA!
+// luksify Take a part label, and recreates it with LUKS. IT OVERWRITES DATA!.
 // On success, it returns a machine parseable string with the partition information
 // (label:name:uuid) so that it can be stored by the caller for later use.
 // This is because the label of the encrypted partition is not accessible unless
@@ -103,7 +103,7 @@ func luksify(label string, logger types.KairosLogger, argsCreate ...string) (str
 	return fmt.Sprintf("%s:%s:%s", b.FilesystemLabel, b.Name, b.UUID), nil
 }
 
-// luksifyMeasurements takes a label and a list if public-keys and pcrs to bind and uses the measurements
+// luksifyMeasurements takes a label and a list if public-keys and pcrs to bind and uses the measurements.
 // in the current node to encrypt the partition with those and bind those to the given pcrs
 // this expects systemd 255 as it needs the SRK public key that systemd extracts
 // Sets a random password, enrolls the policy, unlocks and formats the partition, closes it and tfinally removes the random password from it
@@ -116,7 +116,7 @@ func luksify(label string, logger types.KairosLogger, argsCreate ...string) (str
 // the whole lifetime of a machine
 // It can also be used to bind to things like the firmware code or efi drivers that we dont expect to change
 // default for publicKeyPcrs is 11
-// default for pcrs is nothing, so it doesn't bind as we want to expand things like DBX and be able to blacklist certs and such
+// default for pcrs is nothing, so it doesn't bind as we want to expand things like DBX and be able to blacklist certs and such.
 func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, logger types.KairosLogger, argsCreate ...string) error {
 	// Make sure ghw will see all partitions correctly.
 	// older versions don't have --type=all. Try the simpler version then.
@@ -199,7 +199,7 @@ func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, lo
 // format luks will unlock the device, wait for it and then format it
 // device is the actual /dev/X luks device
 // label is the label we will set to the formatted partition
-// password is the pass to unlock the device to be able to format the underlying mapper
+// password is the pass to unlock the device to be able to format the underlying mapper.
 func formatLuks(device, name, mapper, label, pass string, logger types.KairosLogger) error {
 	l := logger.Logger.With().Str("device", device).Str("name", name).Str("mapper", mapper).Logger()
 	l.Debug().Msg("unlock")
