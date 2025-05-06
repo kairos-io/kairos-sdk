@@ -4,24 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/journald"
 )
-
-func isJournaldAvailable() bool {
-	conn, err := net.Dial("unixgram", "/run/systemd/journal/socket")
-	if err != nil {
-		return false
-	}
-	defer conn.Close()
-	return true
-}
 
 // NewKairosLogger creates a new logger with the given name and level.
 // The level is used to set the log level, defaulting to info
@@ -32,9 +21,9 @@ func NewKairosLogger(name, level string, quiet bool) KairosLogger {
 	var l zerolog.Level
 	var err error
 
-	// Add journald logger
-	if isJournaldAvailable() {
-		loggers = append(loggers, journald.NewJournalDWriter())
+	// Add journald logger if available
+	if writer := getJournaldWriter(); writer != nil {
+		loggers = append(loggers, writer)
 	} else {
 		// Default to file logging
 		logName := fmt.Sprintf("%s.log", name)
