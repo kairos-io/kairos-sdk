@@ -115,7 +115,7 @@ func (m KairosLogger) Infof(tpl string, args ...interface{}) {
 }
 func (m KairosLogger) Info(args ...interface{}) {
 	if !m.journald {
-		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
+		args = append([]interface{}{fmt.Sprintf("[%v] ", os.Getpid())}, args...)
 	}
 	m.Logger.Info().Msg(fmt.Sprint(args...))
 }
@@ -127,14 +127,14 @@ func (m KairosLogger) Warnf(tpl string, args ...interface{}) {
 }
 func (m KairosLogger) Warn(args ...interface{}) {
 	if !m.journald {
-		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
+		args = append([]interface{}{fmt.Sprintf("[%v] ", os.Getpid())}, args...)
 	}
 	m.Logger.Warn().Msg(fmt.Sprint(args...))
 }
 
 func (m KairosLogger) Warning(args ...interface{}) {
 	if !m.journald {
-		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
+		args = append([]interface{}{fmt.Sprintf("[%v] ", os.Getpid())}, args...)
 	}
 	m.Logger.Warn().Msg(fmt.Sprint(args...))
 }
@@ -154,7 +154,7 @@ func (m KairosLogger) Debugf(tpl string, args ...interface{}) {
 }
 func (m KairosLogger) Debug(args ...interface{}) {
 	if !m.journald {
-		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
+		args = append([]interface{}{fmt.Sprintf("[%v] ", os.Getpid())}, args...)
 	}
 	m.Logger.Debug().Msg(fmt.Sprint(args...))
 }
@@ -166,7 +166,7 @@ func (m KairosLogger) Errorf(tpl string, args ...interface{}) {
 }
 func (m KairosLogger) Error(args ...interface{}) {
 	if !m.journald {
-		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
+		args = append([]interface{}{fmt.Sprintf("[%v] ", os.Getpid())}, args...)
 	}
 	m.Logger.Error().Msg(fmt.Sprint(args...))
 }
@@ -178,7 +178,7 @@ func (m KairosLogger) Fatalf(tpl string, args ...interface{}) {
 }
 func (m KairosLogger) Fatal(args ...interface{}) {
 	if !m.journald {
-		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
+		args = append([]interface{}{fmt.Sprintf("[%v] ", os.Getpid())}, args...)
 	}
 	m.Logger.Fatal().Msg(fmt.Sprint(args...))
 }
@@ -190,7 +190,7 @@ func (m KairosLogger) Panicf(tpl string, args ...interface{}) {
 }
 func (m KairosLogger) Panic(args ...interface{}) {
 	if !m.journald {
-		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
+		args = append([]interface{}{fmt.Sprintf("[%v] ", os.Getpid())}, args...)
 	}
 	m.Logger.Panic().Msg(fmt.Sprint(args...))
 }
@@ -202,7 +202,7 @@ func (m KairosLogger) Tracef(tpl string, args ...interface{}) {
 }
 func (m KairosLogger) Trace(args ...interface{}) {
 	if !m.journald {
-		args = append([]interface{}{fmt.Sprintf("[%v]", os.Getpid())}, args...)
+		args = append([]interface{}{fmt.Sprintf("[%v] ", os.Getpid())}, args...)
 	}
 	m.Logger.Trace().Msg(fmt.Sprint(args...))
 }

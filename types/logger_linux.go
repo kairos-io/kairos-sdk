@@ -19,5 +19,8 @@ func isJournaldAvailable() bool {
 }
 
 func getJournaldWriter() io.Writer {
+	if !isJournaldAvailable() {
+		return nil
+	}
 	return journald.NewJournalDWriter()
 }
