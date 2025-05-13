@@ -30,7 +30,7 @@ func NewKairosLoggerWithExtraDirs(name, level string, quiet bool, dirs ...string
 	return newKairosLogger(name, level, quiet, dirs...)
 }
 
-// real function to create a new KairosLogger
+// real function to create a new KairosLogger.
 func newKairosLogger(name, level string, quiet bool, dirs ...string) KairosLogger {
 	var loggers []io.Writer
 	var l zerolog.Level
