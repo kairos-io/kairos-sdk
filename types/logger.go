@@ -17,6 +17,21 @@ import (
 // The log level can be overridden by setting the environment variable $NAME_DEBUG to any parseable value.
 // If quiet is true, the logger will not log to the console.
 func NewKairosLogger(name, level string, quiet bool) KairosLogger {
+	return newKairosLogger(name, level, quiet)
+}
+
+// NewKairosLoggerWithExtraDirs creates a new logger with the given name and level.
+// The level is used to set the log level, defaulting to info
+// The log level can be overridden by setting the environment variable $NAME_DEBUG to any parseable value.
+// If quiet is true, the logger will not log to the console.
+// Extra directories can be passed to the logger, which will be created if they do not exist.
+// The log files will be created in these directories as well.
+func NewKairosLoggerWithExtraDirs(name, level string, quiet bool, dirs ...string) KairosLogger {
+	return newKairosLogger(name, level, quiet, dirs...)
+}
+
+// real function to create a new KairosLogger.
+func newKairosLogger(name, level string, quiet bool, dirs ...string) KairosLogger {
 	var loggers []io.Writer
 	var l zerolog.Level
 	var err error
@@ -29,12 +44,21 @@ func NewKairosLogger(name, level string, quiet bool) KairosLogger {
 		logName := fmt.Sprintf("%s.log", name)
 		_ = os.MkdirAll("/var/log/kairos/", os.ModeDir|os.ModePerm)
 		logFileName := filepath.Join("/var/log/kairos/", logName)
-
 		logfile, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err == nil {
 			loggers = append(loggers, zerolog.ConsoleWriter{Out: logfile, TimeFormat: time.RFC3339, NoColor: true, FieldsExclude: []string{"SYSLOG_IDENTIFIER"}})
 		}
+	}
 
+	// Add extra dirs to the logger
+	for _, dir := range dirs {
+		logName := fmt.Sprintf("%s.log", name)
+		_ = os.MkdirAll(dir, os.ModeDir|os.ModePerm)
+		logFileName := filepath.Join(dir, logName)
+		logfile, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err == nil {
+			loggers = append(loggers, zerolog.ConsoleWriter{Out: logfile, TimeFormat: time.RFC3339, NoColor: true, FieldsExclude: []string{"SYSLOG_IDENTIFIER"}})
+		}
 	}
 
 	if !quiet {
@@ -66,7 +90,6 @@ func NewKairosLogger(name, level string, quiet bool) KairosLogger {
 		zerolog.New(multi).With().Str("SYSLOG_IDENTIFIER", fmt.Sprintf("kairos-%s", name)).Timestamp().Logger().Level(l),
 		isJournaldAvailable(),
 	}
-
 	return k
 }
 
