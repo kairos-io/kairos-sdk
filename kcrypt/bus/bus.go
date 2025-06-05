@@ -55,6 +55,7 @@ func (b *Bus) Initialize() {
 	}
 
 	log := types.NewKairosLogger("kcrypt", level, false)
+	defer log.Close()
 
 	b.LoadProviders()
 	for i := range b.Events {

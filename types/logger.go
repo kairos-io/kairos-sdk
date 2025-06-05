@@ -35,6 +35,7 @@ func newKairosLogger(name, level string, quiet bool, dirs ...string) KairosLogge
 	var loggers []io.Writer
 	var l zerolog.Level
 	var err error
+	var fds []int
 
 	// Add journald logger if available
 	if writer := getJournaldWriter(); writer != nil {
@@ -46,6 +47,7 @@ func newKairosLogger(name, level string, quiet bool, dirs ...string) KairosLogge
 		logFileName := filepath.Join("/var/log/kairos/", logName)
 		logfile, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err == nil {
+			fds = append(fds, int(logfile.Fd()))
 			loggers = append(loggers, zerolog.ConsoleWriter{Out: logfile, TimeFormat: time.RFC3339, NoColor: true, FieldsExclude: []string{"SYSLOG_IDENTIFIER"}})
 		}
 	}
@@ -57,6 +59,7 @@ func newKairosLogger(name, level string, quiet bool, dirs ...string) KairosLogge
 		logFileName := filepath.Join(dir, logName)
 		logfile, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err == nil {
+			fds = append(fds, int(logfile.Fd()))
 			loggers = append(loggers, zerolog.ConsoleWriter{Out: logfile, TimeFormat: time.RFC3339, NoColor: true, FieldsExclude: []string{"SYSLOG_IDENTIFIER"}})
 		}
 	}
@@ -89,6 +92,7 @@ func newKairosLogger(name, level string, quiet bool, dirs ...string) KairosLogge
 	k := KairosLogger{
 		zerolog.New(multi).With().Str("SYSLOG_IDENTIFIER", fmt.Sprintf("kairos-%s", name)).Timestamp().Logger().Level(l),
 		isJournaldAvailable(),
+		fds,
 	}
 	return k
 }
@@ -97,6 +101,7 @@ func NewBufferLogger(b *bytes.Buffer) KairosLogger {
 	return KairosLogger{
 		zerolog.New(b).With().Timestamp().Logger(),
 		true,
+		[]int{},
 	}
 }
 
@@ -104,13 +109,22 @@ func NewNullLogger() KairosLogger {
 	return KairosLogger{
 		zerolog.New(io.Discard).With().Timestamp().Logger(),
 		true,
+		[]int{},
 	}
 }
 
 // KairosLogger implements the bridge between zerolog and the logger.Interface that yip needs.
 type KairosLogger struct {
 	zerolog.Logger
-	journald bool // Whether we are logging to journald, to avoid the file lock
+	journald bool  // Whether we are logging to journald, to avoid the file lock
+	openFds  []int // Keep track of open file descriptors to close them later
+}
+
+func (m *KairosLogger) Close() {
+	// Close all open file descriptors
+	for _, fd := range m.openFds {
+		_ = os.NewFile(uintptr(fd), "").Close()
+	}
 }
 
 func (m *KairosLogger) SetLevel(level string) {
