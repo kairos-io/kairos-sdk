@@ -14,13 +14,7 @@ func main() {
 		return
 	}
 	defer loop.Unloop(loopDevice, l)
-	devs, err := loop.CreateMappingsFromImage(loopDevice)
-	if err != nil {
-		fmt.Println("Error:", err)
-	} else {
-		fmt.Println("Created GPT partitions:")
-		for _, d := range devs {
-			fmt.Println(" -", d)
-		}
-	}
+	fmt.Println("Loop device created:", loopDevice)
+
+	loop.CreateMappingsFromDevice(loopDevice)
 }
