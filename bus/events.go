@@ -83,14 +83,16 @@ var AllEvents = []pluggable.EventType{
 	EventRecoveryStop,
 	EventAvailableReleases,
 	EventVersionImage,
+	InitProviderInstall,
+	InitProviderConfigure,
 }
 
 // IsEventDefined checks wether an event is defined in the bus.
 // It accepts strings or EventType, returns a boolean indicating that
 // the event was defined among the events emitted by the bus.
-func IsEventDefined(i interface{}) bool {
+func IsEventDefined(i interface{}, events ...pluggable.EventType) bool {
 	checkEvent := func(e pluggable.EventType) bool {
-		for _, ee := range AllEvents {
+		for _, ee := range append(AllEvents, events...) {
 			if ee == e {
 				return true
 			}
