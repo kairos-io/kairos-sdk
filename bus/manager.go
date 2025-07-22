@@ -1,7 +1,6 @@
 package bus
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/kairos-io/kairos-sdk/types"
@@ -20,11 +19,11 @@ func NewBus(withEvents ...pluggable.EventType) *Bus {
 type Bus struct {
 	*pluggable.Manager
 	registered     bool
-	logger         types.KairosLogger // Fully override the logger
-	logLevel       string             // Log level for the logger, defaults to "info" unless BUS_DEBUG is set to "true". This only valid if logger is not set.
-	logName        string             // Name of the logger, defaults to "bus". This only valid if logger is not set.
-	providerPrefix string             // Prefix for provider plugins, defaults to "agent-provider". This is used to autoload providers.
-	providerPaths  []string           // Paths to search for provider plugins, defaults to system and current working directory.
+	logger         *types.KairosLogger // Fully override the logger
+	logLevel       string              // Log level for the logger, defaults to "info" unless BUS_DEBUG is set to "true". This only valid if logger is not set.
+	logName        string              // Name of the logger, defaults to "bus". This only valid if logger is not set.
+	providerPrefix string              // Prefix for provider plugins, defaults to "agent-provider". This is used to autoload providers.
+	providerPaths  []string            // Paths to search for provider plugins, defaults to system and current working directory.
 }
 
 func (b *Bus) LoadProviders() {
@@ -52,7 +51,7 @@ func (b *Bus) Initialize(o ...Options) {
 	}
 
 	// If no logger is set, create a new one with the default log level and name
-	if b.logger == (types.KairosLogger{}) {
+	if b.logger == nil {
 		if b.logLevel == "" {
 			b.logLevel = "info"
 		}
@@ -61,32 +60,21 @@ func (b *Bus) Initialize(o ...Options) {
 			b.logLevel = "debug"
 		}
 		if b.logName == "" {
-			b.logName = "bus"
+			b.logName = "kairos-bus"
 		}
-		b.logger = types.NewKairosLogger(b.logName, b.logLevel, false)
+		l := types.NewKairosLogger(b.logName, b.logLevel, false)
+		b.logger = &l
 	}
 
 	b.LoadProviders()
-	for i := range b.Events {
-		e := b.Events[i]
-		b.Response(e, func(p *pluggable.Plugin, r *pluggable.EventResponse) {
-			b.logger.Logger.Debug().Str("from", p.Name).Str("at", p.Executable).Str("type", string(e)).Msg("Received event from provider")
-			if r.Errored() {
-				b.logger.Logger.Error().Err(fmt.Errorf("%s", r.Error)).Str("from", p.Name).Str("at", p.Executable).Str("type", string(e)).Msg("Error in provider")
-				os.Exit(1)
-			}
-			if r.State != "" {
-				b.logger.Logger.Debug().Str("state", r.State).Str("from", p.Name).Str("at", p.Executable).Str("type", string(e)).Msg("Received event from provider")
-			}
-		})
-	}
 	b.registered = true
+	b.logger.Logger.Debug().Interface("bus", b).Msg("Bus initialized with options")
 }
 
 type Options func(d *Bus)
 
 // WithLogger allows to set a custom logger for the bus. If set, it will override the default logger.
-func WithLogger(logger types.KairosLogger) Options {
+func WithLogger(logger *types.KairosLogger) Options {
 	return func(d *Bus) {
 		d.logger = logger
 	}
