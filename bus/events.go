@@ -33,6 +33,11 @@ const (
 
 	EventAfterReset  pluggable.EventType = "agent.reset.after"
 	EventBeforeReset pluggable.EventType = "agent.reset.before"
+
+	// Kairos-init will emit this event to let providers know its time to install their stuff.
+	InitProviderInstall pluggable.EventType = "init.provider.install"
+	// Kairos-init will emit this event to let providers know its time to configure their stuff. Not used for now.
+	InitProviderConfigure pluggable.EventType = "init.provider.configure"
 )
 
 type InstallPayload struct {
