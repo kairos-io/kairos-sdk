@@ -7,6 +7,13 @@ import (
 	"github.com/mudler/go-pluggable"
 )
 
+const (
+	DefaultProviderPrefix = "agent-provider"
+	DefaultLogName        = "kairos-bus"
+)
+
+var DefaultProviderPaths = []string{"/system/providers", "/usr/local/system/providers"}
+
 func NewBus(withEvents ...pluggable.EventType) *Bus {
 	if len(withEvents) == 0 {
 		withEvents = AllEvents
@@ -26,8 +33,8 @@ type Bus struct {
 	providerPaths  []string            // Paths to search for provider plugins, defaults to system and current working directory.
 }
 
-func (b *Bus) LoadProviders() {
-	b.Autoload(b.providerPrefix, b.providerPaths...).Register()
+func (b *Bus) LoadProviders() *pluggable.Manager {
+	return b.Autoload(b.providerPrefix, b.providerPaths...).Register()
 }
 
 func (b *Bus) Initialize(o ...Options) {
@@ -41,13 +48,13 @@ func (b *Bus) Initialize(o ...Options) {
 
 	// If no provider prefix is set, use the default "agent-provider"
 	if b.providerPrefix == "" {
-		b.providerPrefix = "agent-provider"
+		b.providerPrefix = DefaultProviderPrefix
 	}
 
 	// If no provider paths are set, use the default system paths and current working directory
 	if b.providerPaths == nil {
 		wd, _ := os.Getwd()
-		b.providerPaths = []string{"/system/providers", "/usr/local/system/providers", wd}
+		b.providerPaths = append(DefaultProviderPaths, wd)
 	}
 
 	// If no logger is set, create a new one with the default log level and name
@@ -60,7 +67,7 @@ func (b *Bus) Initialize(o ...Options) {
 			b.logLevel = "debug"
 		}
 		if b.logName == "" {
-			b.logName = "kairos-bus"
+			b.logName = DefaultLogName
 		}
 		l := types.NewKairosLogger(b.logName, b.logLevel, false)
 		b.logger = &l
