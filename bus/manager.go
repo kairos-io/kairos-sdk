@@ -52,7 +52,7 @@ func (b *Bus) Initialize(o ...Options) {
 	}
 
 	// If no logger is set, create a new one with the default log level and name
-	if &b.logger == nil {
+	if b.logger == (types.KairosLogger{}) {
 		if b.logLevel == "" {
 			b.logLevel = "info"
 		}
