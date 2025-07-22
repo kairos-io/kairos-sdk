@@ -64,7 +64,6 @@ func (b *Bus) Initialize(o ...Options) {
 			b.logName = "bus"
 		}
 		b.logger = types.NewKairosLogger(b.logName, b.logLevel, false)
-		defer b.logger.Close()
 	}
 
 	b.LoadProviders()
