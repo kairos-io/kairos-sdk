@@ -13,6 +13,7 @@ type ServiceUnit struct {
 	content        string
 	name, instance string
 	rootdir        string
+	reload         bool
 }
 
 const overrideCmdTemplate string = `
@@ -51,8 +52,17 @@ func WithUnitContent(n string) ServiceOpts {
 	}
 }
 
+func WithReload(reload bool) ServiceOpts {
+	return func(su *ServiceUnit) error {
+		su.reload = reload
+		return nil
+	}
+}
+
 func NewService(opts ...ServiceOpts) (ServiceUnit, error) {
-	s := &ServiceUnit{}
+	s := &ServiceUnit{
+		reload: true, // default to reload to keep the same behavior as before
+	}
 	for _, o := range opts {
 		if err := o(s); err != nil {
 			return *s, err
@@ -62,16 +72,18 @@ func NewService(opts ...ServiceOpts) (ServiceUnit, error) {
 }
 
 func (s ServiceUnit) WriteUnit() error {
+	var err error
 	uname := s.name
 	if s.instance != "" {
 		uname = fmt.Sprintf("%s@", s.name)
 	}
 
-	if err := os.WriteFile(filepath.Join(s.rootdir, fmt.Sprintf("/etc/systemd/system/%s.service", uname)), []byte(s.content), 0600); err != nil {
+	if err = os.WriteFile(filepath.Join(s.rootdir, fmt.Sprintf("/etc/systemd/system/%s.service", uname)), []byte(s.content), 0600); err != nil {
 		return err
 	}
-
-	_, err := utils.SH("systemctl daemon-reload")
+	if s.reload {
+		_, err = utils.SH("systemctl daemon-reload")
+	}
 	return err
 }
 
