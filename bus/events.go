@@ -62,6 +62,7 @@ type ProviderPayload struct {
 	Version  string `json:"version"`  // What version of the provider, can be empty to signal latest
 	LogLevel string `json:"logLevel"` // The log level to use for the provider
 	Config   string `json:"config"`   // The config file to pass to the provider, can be empty if not needed
+	Family   string `json:"family"`   // The family of the system, e.g. "alpine", "debian", "rhel", etc.
 }
 
 type InstallPayload struct {
