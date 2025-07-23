@@ -34,11 +34,35 @@ const (
 	EventAfterReset  pluggable.EventType = "agent.reset.after"
 	EventBeforeReset pluggable.EventType = "agent.reset.before"
 
-	// Kairos-init will emit this event to let providers know its time to install their stuff.
+	// InitProviderInstall Kairos-init will emit this event to let providers know its time to install their stuff.
 	InitProviderInstall pluggable.EventType = "init.provider.install"
-	// Kairos-init will emit this event to let providers know its time to configure their stuff. Not used for now.
+	// InitProviderConfigure Kairos-init will emit this event to let providers know its time to configure their stuff. Not used for now.
 	InitProviderConfigure pluggable.EventType = "init.provider.configure"
+	// InitProviderInfo Kairos-init will emit this event to get info about the provider version and software.
+	InitProviderInfo pluggable.EventType = "init.provider.info"
 )
+
+// EventResponseSuccess, EventResponseError and EventResponseNotApplicable are the possible responses to an event.
+// You can use whatever you want as a response but we provide this constants so consumers can use the same values.
+const (
+	EventResponseSuccess       = "success"
+	EventResponseError         = "error"
+	EventResponseNotApplicable = "non-applicable"
+)
+
+// ProviderInstalledVersionPayload is the payload sent by the provider to inform about the software installed.
+type ProviderInstalledVersionPayload struct {
+	Provider string `json:"provider"` // What provider is installed
+	Version  string `json:"version"`  // What version of the provider, can be empty to signal latest
+}
+
+// ProviderPayload is the payload sent by the user to request a provider to be installed or configured.
+type ProviderPayload struct {
+	Provider string `json:"provider"` // What provider the user requested
+	Version  string `json:"version"`  // What version of the provider, can be empty to signal latest
+	LogLevel string `json:"logLevel"` // The log level to use for the provider
+	Config   string `json:"config"`   // The config file to pass to the provider, can be empty if not needed
+}
 
 type InstallPayload struct {
 	Token  string `json:"token"`
@@ -85,6 +109,7 @@ var AllEvents = []pluggable.EventType{
 	EventVersionImage,
 	InitProviderInstall,
 	InitProviderConfigure,
+	InitProviderInfo,
 }
 
 // IsEventDefined checks wether an event is defined in the bus.
