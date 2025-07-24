@@ -354,6 +354,7 @@ func GetEfiShimFiles(arch string) []string {
 		modNames = append(modNames, "/boot/efi/EFI/fedora/shim.efi")            // fedora
 		modNames = append(modNames, "/boot/efi/EFI/rocky/shim.efi")             // rocky
 		modNames = append(modNames, "/boot/efi/EFI/redhat/shim.efi")            // redhat
+		modNames = append(modNames, "/boot/efi/EFI/redhat/shimaa64.efi")        // redhat
 		modNames = append(modNames, "/boot/efi/EFI/almalinux/shim.efi")         // almalinux
 	default:
 		modNames = append(modNames, "/usr/share/efi/x86_64/shim.efi")          // suse
@@ -363,6 +364,7 @@ func GetEfiShimFiles(arch string) []string {
 		modNames = append(modNames, "/boot/efi/EFI/fedora/shim.efi")           // fedora
 		modNames = append(modNames, "/boot/efi/EFI/rocky/shim.efi")            // rocky
 		modNames = append(modNames, "/boot/efi/EFI/redhat/shim.efi")           // redhat
+		modNames = append(modNames, "/boot/efi/EFI/redhat/shimx64.efi")        // redhat
 		modNames = append(modNames, "/boot/efi/EFI/almalinux/shim.efi")        // almalinux
 	}
 
