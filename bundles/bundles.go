@@ -282,17 +282,7 @@ func (l *LuetInstaller) Install(config *BundleConfig) error {
 	if err != nil {
 		return err
 	}
-	out, err := utils.SH(
-		fmt.Sprintf(
-			`LUET_CONFIG_FROM_HOST=false luet repo add --system-dbpath %s --system-target %s kairos-system -y --description "Automatically generated kairos-system" --url "%s" --type "%s" --username "%s" --passwd "%s"`,
-			config.DBPath,
-			config.RootPath,
-			repo,
-			t,
-			config.Auth.Username,
-			config.Auth.Password,
-		),
-	)
+	out, err := utils.SH(luetInstallCommand(config, repo, t))
 	if err != nil {
 		return fmt.Errorf("could not add repository: %w - %s", err, out)
 	}
@@ -315,4 +305,20 @@ func (l *LuetInstaller) Install(config *BundleConfig) error {
 
 	// copy bins to /usr/local/bin
 	return nil
+}
+
+func luetInstallCommand(config *BundleConfig, repo, t string) string {
+	baseCommand := fmt.Sprintf(
+		`LUET_CONFIG_FROM_HOST=false luet repo add --system-dbpath %s --system-target %s kairos-system -y --description "Automatically generated kairos-system" --url "%s" --type "%s"`,
+		config.DBPath,
+		config.RootPath,
+		repo,
+		t,
+	)
+
+	if config.Auth != nil {
+		baseCommand += fmt.Sprintf(` --username "%s" --passwd "%s"`, config.Auth.Username, config.Auth.Password)
+	}
+
+	return baseCommand
 }
