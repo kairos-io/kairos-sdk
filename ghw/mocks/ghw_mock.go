@@ -73,9 +73,6 @@ func (g *GhwMock) CreateDevices() {
 		// Add DM_NAME for dm devices (needed for isMultipathDevice detection)
 		if strings.HasPrefix(disk.Name, "dm-") {
 			diskUdevData = append(diskUdevData, fmt.Sprintf("E:DM_NAME=%s\n", disk.Name))
-			diskUdevData = append(diskUdevData, "E:DM_SUSPENDED=0\n")
-			diskUdevData = append(diskUdevData, "E:DM_UDEV_RULES=1\n")
-			diskUdevData = append(diskUdevData, "E:SUBSYSTEM=block\n")
 		}
 		
 		_ = os.WriteFile(filepath.Join(g.paths.RunUdevData, fmt.Sprintf("b%d:0", indexDisk)), []byte(strings.Join(diskUdevData, "")), 0644)
