@@ -47,8 +47,41 @@ func NewPaths(withOptionalPrefix string) *Paths {
 	return p
 }
 
-func isMultipathDevice(entry os.DirEntry) bool {
-	return strings.HasPrefix(entry.Name(), "dm-")
+func isMultipathDevice(paths *Paths, entry os.DirEntry, logger *types.KairosLogger) bool {
+	hasPrefix := strings.HasPrefix(entry.Name(), "dm-")
+	if !hasPrefix {
+		return false
+	}
+
+	// Check if the device has a "slaves" directory, which is a common indicator
+	_, err := os.Stat(filepath.Join(paths.SysBlock, entry.Name(), "slaves"))
+	if err != nil {
+		var msg string
+		if os.IsNotExist(err) {
+			msg = "No slaves directory, not a multipath device"
+		} else {
+			msg = "Error checking slaves directory"
+		}
+		
+		logger.Logger.Debug().Str("devNo", entry.Name()).Msg(msg)
+		return false
+	}
+
+	// If the device has a "slaves" directory, we can check its udev info
+	// to confirm it's a multipath device.
+	// This is a more reliable check than just the name.
+	udevInfo, err := udevInfoPartition(paths, entry.Name(), logger)
+	if err != nil {
+		logger.Logger.Error().Err(err).Str("devNo", entry.Name()).Msg("Failed to get udev info")
+		return false
+	}
+	// Check if the udev info contains DM_NAME indicating it's a multipath device
+	_, ok := udevInfo["DM_NAME"]
+	if !ok {
+		logger.Logger.Debug().Str("devNo", entry.Name()).Msg("Not a multipath device")
+	}
+
+	return ok
 }
 
 func GetDisks(paths *Paths, logger *types.KairosLogger) []*types.Disk {
@@ -85,7 +118,7 @@ func GetDisks(paths *Paths, logger *types.KairosLogger) []*types.Disk {
 			UUID:      diskUUID(paths, dname, logger),
 		}
 
-		if(isMultipathDevice(file)) {
+		if(isMultipathDevice(paths, file, logger)) {
 			partitionHandler = NewMultipathPartitionHandler(dname)
 		} else {
 			partitionHandler = NewDiskPartitionHandler(dname)
@@ -103,7 +136,7 @@ func GetDisks(paths *Paths, logger *types.KairosLogger) []*types.Disk {
 
 func isMultipathPartition(entry os.DirEntry, paths *Paths, logger *types.KairosLogger) bool {
     // Must be a dm device to be a multipath partition
-    if !isMultipathDevice(entry) {
+    if !isMultipathDevice(paths, entry, logger) {
 		return false
 	}
 

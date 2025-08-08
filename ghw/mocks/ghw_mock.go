@@ -67,7 +67,18 @@ func (g *GhwMock) CreateDevices() {
 		// Also write the size
 		_ = os.WriteFile(filepath.Join(g.paths.SysBlock, disk.Name, "size"), []byte(strconv.FormatUint(disk.SizeBytes, 10)), 0644)
 		// Create the udevdata for this disk
-		_ = os.WriteFile(filepath.Join(g.paths.RunUdevData, fmt.Sprintf("b%d:0", indexDisk)), []byte(fmt.Sprintf("E:ID_PART_TABLE_UUID=%s\n", disk.UUID)), 0644)
+		var diskUdevData []string
+		diskUdevData = append(diskUdevData, fmt.Sprintf("E:ID_PART_TABLE_UUID=%s\n", disk.UUID))
+		
+		// Add DM_NAME for dm devices (needed for isMultipathDevice detection)
+		if strings.HasPrefix(disk.Name, "dm-") {
+			diskUdevData = append(diskUdevData, fmt.Sprintf("E:DM_NAME=%s\n", disk.Name))
+			diskUdevData = append(diskUdevData, "E:DM_SUSPENDED=0\n")
+			diskUdevData = append(diskUdevData, "E:DM_UDEV_RULES=1\n")
+			diskUdevData = append(diskUdevData, "E:SUBSYSTEM=block\n")
+		}
+		
+		_ = os.WriteFile(filepath.Join(g.paths.RunUdevData, fmt.Sprintf("b%d:0", indexDisk)), []byte(strings.Join(diskUdevData, "")), 0644)
 		for indexPart, partition := range disk.Partitions {
 			// For each partition we create the /sys/block/DISK_NAME/PARTITION_NAME
 			_ = os.Mkdir(filepath.Join(diskPath, partition.Name), 0755)
@@ -249,6 +260,11 @@ func (g *GhwMock) createMultipathPartitionWithMountFormat(parentDiskName string,
 	_ = os.WriteFile(filepath.Join(partDmDir, "name"), []byte(fmt.Sprintf("%s%s", parentDiskName, partitionSuffix)), 0644)
 	_ = os.WriteFile(filepath.Join(partDmDir, "uuid"), []byte(fmt.Sprintf("part-mpath-%s", partition.UUID)), 0644)
 	
+	// Create slaves directory for partition pointing to parent
+	partSlavesDir := filepath.Join(partitionPath, "slaves")
+	_ = os.MkdirAll(partSlavesDir, 0755)
+	_ = os.WriteFile(filepath.Join(partSlavesDir, parentDiskName), []byte(""), 0644)
+	
 	// Create holder symlink from parent to partition
 	_ = os.WriteFile(filepath.Join(holdersDir, partition.Name), []byte(""), 0644)
 	
@@ -326,6 +342,11 @@ func (g *GhwMock) AddMultipathPartition(parentDiskName string, partition *types.
 	_ = os.MkdirAll(partDmDir, 0755)
 	_ = os.WriteFile(filepath.Join(partDmDir, "name"), []byte(fmt.Sprintf("%s%s", parentDiskName, partitionSuffix)), 0644)
 	_ = os.WriteFile(filepath.Join(partDmDir, "uuid"), []byte(fmt.Sprintf("part-mpath-%s", partition.UUID)), 0644)
+	
+	// Create slaves directory for partition pointing to parent
+	partSlavesDir := filepath.Join(partitionPath, "slaves")
+	_ = os.MkdirAll(partSlavesDir, 0755)
+	_ = os.WriteFile(filepath.Join(partSlavesDir, parentDiskName), []byte(""), 0644)
 	
 	// Create holder symlink from parent to partition
 	_ = os.WriteFile(filepath.Join(holdersDir, partition.Name), []byte(""), 0644)
