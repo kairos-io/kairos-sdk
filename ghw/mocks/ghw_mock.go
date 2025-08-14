@@ -73,6 +73,8 @@ func (g *GhwMock) CreateDevices() {
 		// Add DM_NAME for dm devices (needed for isMultipathDevice detection)
 		if strings.HasPrefix(disk.Name, "dm-") {
 			diskUdevData = append(diskUdevData, fmt.Sprintf("E:DM_NAME=%s\n", disk.Name))
+			// Add DM_UUID for multipath devices - must be prefixed with "mpath" for multipath detection
+			diskUdevData = append(diskUdevData, fmt.Sprintf("E:DM_UUID=%s\n", disk.UUID))
 		}
 		
 		_ = os.WriteFile(filepath.Join(g.paths.RunUdevData, fmt.Sprintf("b%d:0", indexDisk)), []byte(strings.Join(diskUdevData, "")), 0644)
@@ -269,6 +271,7 @@ func (g *GhwMock) createMultipathPartitionWithMountFormat(parentDiskName string,
 	udevData := []string{
 		fmt.Sprintf("E:ID_FS_LABEL=%s\n", partition.FilesystemLabel),
 		fmt.Sprintf("E:DM_NAME=%s%s\n", parentDiskName, partitionSuffix),
+		fmt.Sprintf("E:DM_UUID=mpath-%s\n", partitionSuffix), // This indicates it's a multipath partition
 		fmt.Sprintf("E:DM_PART=%d\n", partNum), // This indicates it's a multipath partition
 	}
 	if partition.FS != "" {
