@@ -53,35 +53,34 @@ func isMultipathDevice(paths *Paths, entry os.DirEntry, logger *types.KairosLogg
 		return false
 	}
 
-	// Check if the device has a "slaves" directory, which is a common indicator
-	_, err := os.Stat(filepath.Join(paths.SysBlock, entry.Name(), "slaves"))
-	if err != nil {
-		var msg string
-		if os.IsNotExist(err) {
-			msg = "No slaves directory, not a multipath device"
-		} else {
-			msg = "Error checking slaves directory"
-		}
-		
-		logger.Logger.Debug().Str("devNo", entry.Name()).Msg(msg)
-		return false
-	}
-
-	// If the device has a "slaves" directory, we can check its udev info
-	// to confirm it's a multipath device.
-	// This is a more reliable check than just the name.
+	// If the device is prefixed with "dm-", it is a device mapper device
+	// We can check if it has the DM_UUID attribute to confirm it's a multipath device
 	udevInfo, err := udevInfoPartition(paths, entry.Name(), logger)
 	if err != nil {
 		logger.Logger.Error().Err(err).Str("devNo", entry.Name()).Msg("Failed to get udev info")
 		return false
 	}
-	// Check if the udev info contains DM_NAME indicating it's a multipath device
-	_, ok := udevInfo["DM_NAME"]
+
+	// Check if the udev info contains DM_UUID indicating it's a device mapper device
+	uuid, ok := udevInfo["DM_UUID"]
 	if !ok {
-		logger.Logger.Debug().Str("devNo", entry.Name()).Msg("Not a multipath device")
+		logger.Logger.Debug().Str("devNo", entry.Name()).Msg("Not a multipath device. DM_UUID not found")
+		return false
 	}
 
-	return ok
+	// DM_UUID should contain mpath-<uuid> for multipath devices
+	// We can check if it starts with "mpath" to confirm it's a multipath device
+	// for partitions they are normally named part<number>-mpath-<uuid>
+	// for disks they are normally named mpath-<uuid>
+	if !strings.Contains(uuid, "mpath") {
+		logger.Logger.Debug().Str("devNo", entry.Name()).Msg("Not a multipath device. DM_UUID does not contain 'mpath'")
+		return false
+	}
+	
+	logger.Logger.Debug().Str("devNo", entry.Name()).Msg("Is a multipath device")
+
+	// If we have a DM_UUID, prefixed with "mpath", it's a multipath device
+	return true
 }
 
 func GetDisks(paths *Paths, logger *types.KairosLogger) []*types.Disk {
