@@ -76,7 +76,7 @@ func isMultipathDevice(paths *Paths, entry os.DirEntry, logger *types.KairosLogg
 		logger.Logger.Debug().Str("devNo", entry.Name()).Msg("Not a multipath device. DM_UUID does not contain 'mpath'")
 		return false
 	}
-	
+
 	logger.Logger.Debug().Str("devNo", entry.Name()).Msg("Is a multipath device")
 
 	// If we have a DM_UUID, prefixed with "mpath", it's a multipath device
@@ -95,7 +95,7 @@ func GetDisks(paths *Paths, logger *types.KairosLogger) []*types.Disk {
 		return nil
 	}
 	for _, file := range files {
-		var partitionHandler PartitionHandler;
+		var partitionHandler PartitionHandler
 		logger.Logger.Debug().Str("file", file.Name()).Msg("Reading file")
 		dname := file.Name()
 		size := diskSizeBytes(paths, dname, logger)
@@ -117,12 +117,11 @@ func GetDisks(paths *Paths, logger *types.KairosLogger) []*types.Disk {
 			UUID:      diskUUID(paths, dname, logger),
 		}
 
-		if(isMultipathDevice(paths, file, logger)) {
+		if isMultipathDevice(paths, file, logger) {
 			partitionHandler = NewMultipathPartitionHandler(dname)
 		} else {
 			partitionHandler = NewDiskPartitionHandler(dname)
 		}
-		
 
 		parts := partitionHandler.GetPartitions(paths, logger)
 		d.Partitions = parts
@@ -134,8 +133,8 @@ func GetDisks(paths *Paths, logger *types.KairosLogger) []*types.Disk {
 }
 
 func isMultipathPartition(entry os.DirEntry, paths *Paths, logger *types.KairosLogger) bool {
-    // Must be a dm device to be a multipath partition
-    if !isMultipathDevice(paths, entry, logger) {
+	// Must be a dm device to be a multipath partition
+	if !isMultipathDevice(paths, entry, logger) {
 		return false
 	}
 
