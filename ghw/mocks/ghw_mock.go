@@ -11,6 +11,8 @@ import (
 	"github.com/kairos-io/kairos-sdk/types"
 )
 
+const ext4 = "ext4"
+
 // GhwMock is used to construct a fake disk to present to ghw when scanning block devices
 // The way this works is ghw will use the existing files in the system to determine the different disks, partitions and
 // mountpoints. It uses /sys/block, /proc/self/mounts and /run/udev/data to gather everything
@@ -97,7 +99,7 @@ func (g *GhwMock) CreateDevices() {
 			if partition.MountPoint != "" {
 				// Check if the partition has a fs, otherwise default to ext4
 				if partition.FS == "" {
-					partition.FS = "ext4"
+					partition.FS = ext4
 				}
 				// Prepare the g.mounts with all the mount lines
 				g.mounts = append(
@@ -286,7 +288,7 @@ func (g *GhwMock) createMultipathPartitionWithMountFormat(parentDiskName string,
 	// Add mount if specified
 	if partition.MountPoint != "" {
 		if partition.FS == "" {
-			partition.FS = "ext4"
+			partition.FS = ext4
 		}
 		
 		var mountDevice string
@@ -305,11 +307,6 @@ func (g *GhwMock) createMultipathPartitionWithMountFormat(parentDiskName string,
 		// Rewrite mounts file
 		_ = os.WriteFile(g.paths.ProcMounts, []byte(strings.Join(g.mounts, "")), 0644)
 	}
-}
-
-// createMultipathPartition creates a multipath partition structure using /dev/mapper mount format
-func (g *GhwMock) createMultipathPartition(parentDiskName string, partition *types.Partition, partNum int) {
-	g.createMultipathPartitionWithMountFormat(parentDiskName, partition, partNum, false)
 }
 
 // AddMultipathPartition adds a multipath partition to a multipath device
@@ -369,7 +366,7 @@ func (g *GhwMock) AddMultipathPartition(parentDiskName string, partition *types.
 	// Add mount if specified
 	if partition.MountPoint != "" {
 		if partition.FS == "" {
-			partition.FS = "ext4"
+			partition.FS = ext4
 		}
 		// For multipath partitions, they can be mounted by /dev/mapper/ name or /dev/dm- name
 		g.mounts = append(

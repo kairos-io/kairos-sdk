@@ -139,7 +139,7 @@ func diskPartUUID(paths *Paths, partitionPath string, logger *types.KairosLogger
 }
 
 // diskPartTypeUdev gets the partition type from the udev database directly and its only used as fallback when
-// the partition is not mounted, so we cannot get the type from paths.ProcMounts from the partitionInfo function
+// the partition is not mounted, so we cannot get the type from paths.ProcMounts from the partitionInfo function.
 func diskPartTypeUdev(paths *Paths, partitionPath string, logger *types.KairosLogger) string {
 	info, err := udevInfoPartition(paths, partitionPath, logger)
 	logger.Logger.Trace().Interface("info", info).Msg("Disk Part Type")
@@ -180,7 +180,7 @@ func udevInfoPartition(paths *Paths, partitionPath string, logger *types.KairosL
 	return UdevInfo(paths, string(devNo), logger)
 }
 
-// UdevInfo will return information on udev database about a device number
+// UdevInfo will return information on udev database about a device number.
 func UdevInfo(paths *Paths, devNo string, logger *types.KairosLogger) (map[string]string, error) {
 	// Look up block device in udev runtime database
 	udevID := "b" + strings.TrimSpace(devNo)

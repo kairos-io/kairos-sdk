@@ -12,7 +12,7 @@ type DiskPartitionHandler struct {
 	DiskName string
 }
 
-// Validate that DiskPartitionHandler implements PartitionHandler interface
+// Validate that DiskPartitionHandler implements PartitionHandler interface.
 var _ PartitionHandler = &DiskPartitionHandler{}
 
 func NewDiskPartitionHandler(diskName string) *DiskPartitionHandler {
@@ -30,7 +30,7 @@ func (d *DiskPartitionHandler) GetPartitions(paths *Paths, logger *types.KairosL
 	}
 	for _, file := range files {
 		fname := file.Name()
-		if !strings.HasPrefix(fname,  d.DiskName) {
+		if !strings.HasPrefix(fname, d.DiskName) {
 			continue
 		}
 		logger.Logger.Debug().Str("file", fname).Msg("Reading partition file")
