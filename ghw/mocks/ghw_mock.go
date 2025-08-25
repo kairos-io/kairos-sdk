@@ -208,15 +208,15 @@ func (g *GhwMock) createMultipathDevicesWithMountFormat(useDmMount bool) {
 	g.CreateDevices()
 
 	// Now add multipath-specific structure for dm- devices
-	for indexDisk, disk := range g.disks {
+	for _, disk := range g.disks {
 		if strings.HasPrefix(disk.Name, "dm-") {
 			diskPath := filepath.Join(g.paths.SysBlock, disk.Name)
 
 			// Create dm/name file
 			dmDir := filepath.Join(diskPath, "dm")
 			_ = os.MkdirAll(dmDir, 0755)
-			_ = os.WriteFile(filepath.Join(dmDir, "name"), []byte(fmt.Sprintf("mpath%d", indexDisk)), 0644)
-			_ = os.WriteFile(filepath.Join(dmDir, "uuid"), []byte(fmt.Sprintf("mpath-%s", disk.UUID)), 0644)
+			_ = os.WriteFile(filepath.Join(dmDir, "name"), []byte(fmt.Sprintf(disk.Name)), 0644)
+			_ = os.WriteFile(filepath.Join(dmDir, "uuid"), []byte(disk.UUID), 0644)
 
 			// Create holders directory for partitions
 			holdersDir := filepath.Join(diskPath, "holders")
@@ -251,7 +251,12 @@ func (g *GhwMock) createMultipathPartitionWithMountFormat(parentDiskName string,
 	_ = os.MkdirAll(partitionPath, 0755)
 
 	// Create partition dev file (use unique device numbers)
-	partIndex := 100 + partNum // Ensure unique device numbers
+	udevDataIndex, err := strconv.Atoi((strings.TrimPrefix(partition.Name, "dm-")))
+	if err != nil {
+		udevDataIndex = 0 // Fallback in case of error
+	}
+
+	partIndex := 100 + partNum + udevDataIndex // Ensure unique device numbers
 	_ = os.WriteFile(filepath.Join(partitionPath, "dev"), []byte(fmt.Sprintf("253:%d\n", partIndex)), 0644)
 	_ = os.WriteFile(filepath.Join(partitionPath, "size"), []byte(fmt.Sprintf("%d\n", partition.Size)), 0644)
 
@@ -259,7 +264,7 @@ func (g *GhwMock) createMultipathPartitionWithMountFormat(parentDiskName string,
 	partDmDir := filepath.Join(partitionPath, "dm")
 	_ = os.MkdirAll(partDmDir, 0755)
 	_ = os.WriteFile(filepath.Join(partDmDir, "name"), []byte(fmt.Sprintf("%s%s", parentDiskName, partitionSuffix)), 0644)
-	_ = os.WriteFile(filepath.Join(partDmDir, "uuid"), []byte(fmt.Sprintf("part-mpath-%s", partition.UUID)), 0644)
+	_ = os.WriteFile(filepath.Join(partDmDir, "uuid"), []byte(partition.UUID), 0644)
 
 	// Create slaves directory for partition pointing to parent
 	partSlavesDir := filepath.Join(partitionPath, "slaves")
@@ -273,7 +278,7 @@ func (g *GhwMock) createMultipathPartitionWithMountFormat(parentDiskName string,
 	udevData := []string{
 		fmt.Sprintf("E:ID_FS_LABEL=%s\n", partition.FilesystemLabel),
 		fmt.Sprintf("E:DM_NAME=%s%s\n", parentDiskName, partitionSuffix),
-		fmt.Sprintf("E:DM_UUID=mpath-%s\n", partitionSuffix), // This indicates it's a multipath partition
+		fmt.Sprintf("E:DM_UUID=%s\n", partition.UUID), // This indicates it's a multipath partition
 		fmt.Sprintf("E:DM_PART=%d\n", partNum),               // This indicates it's a multipath partition
 	}
 	if partition.FS != "" {
@@ -338,7 +343,7 @@ func (g *GhwMock) AddMultipathPartition(parentDiskName string, partition *types.
 	partDmDir := filepath.Join(partitionPath, "dm")
 	_ = os.MkdirAll(partDmDir, 0755)
 	_ = os.WriteFile(filepath.Join(partDmDir, "name"), []byte(fmt.Sprintf("%s%s", parentDiskName, partitionSuffix)), 0644)
-	_ = os.WriteFile(filepath.Join(partDmDir, "uuid"), []byte(fmt.Sprintf("part-mpath-%s", partition.UUID)), 0644)
+	_ = os.WriteFile(filepath.Join(partDmDir, "uuid"), []byte(partition.UUID), 0644)
 
 	// Create slaves directory for partition pointing to parent
 	partSlavesDir := filepath.Join(partitionPath, "slaves")
