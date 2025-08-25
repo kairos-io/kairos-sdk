@@ -83,7 +83,7 @@ var _ = Describe("GHW functions tests", func() {
 						FS:              "ext4",
 						MountPoint:      "/boot",
 						Size:            512,
-						UUID:            "part1-uuid-456",
+						UUID:            "part1-mpath-uuid-456",
 					},
 					{
 						Name:            "dm-2", 
@@ -91,7 +91,7 @@ var _ = Describe("GHW functions tests", func() {
 						FS:              "xfs",
 						MountPoint:      "/data",
 						Size:            1024,
-						UUID:            "part2-uuid-789",
+						UUID:            "part2-mpath-uuid-789",
 					},
 				},
 			}
@@ -127,7 +127,7 @@ var _ = Describe("GHW functions tests", func() {
 			Expect(part1.FilesystemLabel).To(Equal("MPATH_BOOT"))
 			Expect(part1.FS).To(Equal("ext4"))
 			Expect(part1.MountPoint).To(Equal("/boot"))
-			Expect(part1.UUID).To(Equal("part1-uuid-456"))
+			Expect(part1.UUID).To(Equal("part1-mpath-uuid-456"))
 			Expect(part1.Path).To(Equal("/dev/dm-1"))
 			Expect(part1.Disk).To(Equal("/dev/dm-0"))
 			
@@ -137,7 +137,7 @@ var _ = Describe("GHW functions tests", func() {
 			Expect(part2.FilesystemLabel).To(Equal("MPATH_DATA"))
 			Expect(part2.FS).To(Equal("xfs"))
 			Expect(part2.MountPoint).To(Equal("/data"))
-			Expect(part2.UUID).To(Equal("part2-uuid-789"))
+			Expect(part2.UUID).To(Equal("part2-mpath-uuid-789"))
 			Expect(part2.Path).To(Equal("/dev/dm-2"))
 			Expect(part2.Disk).To(Equal("/dev/dm-0"))
 		})
@@ -173,7 +173,7 @@ var _ = Describe("GHW functions tests", func() {
 						FS:              "ext4",
 						MountPoint:      "/boot",
 						Size:            256,
-						UUID:            "dm-part1-uuid",
+						UUID:            "part1-mpath-uuid",
 					},
 					{
 						Name:            "dm-5", 
@@ -181,7 +181,7 @@ var _ = Describe("GHW functions tests", func() {
 						FS:              "xfs",
 						MountPoint:      "/data",
 						Size:            512,
-						UUID:            "dm-part2-uuid",
+						UUID:            "part2-mpath-uuid",
 					},
 				},
 			}
@@ -259,7 +259,7 @@ var _ = Describe("GHW functions tests", func() {
 						FS:              "ext4",
 						MountPoint:      "/boot",
 						Size:            512,
-						UUID:            "part1-uuid-456",
+						UUID:            "part1-mpath-uuid-456",
 					},
 				},
 			}
@@ -312,6 +312,72 @@ var _ = Describe("GHW functions tests", func() {
 			// Verify regular device has its partition
 			Expect(len(foundRegularDisk.Partitions)).To(Equal(1))
 			Expect(foundRegularDisk.Partitions[0].Name).To(Equal("sda1"))
+		})
+	})
+
+	Describe("It can differentiate between multipath-disks and other device-mapper devices", func() {
+		It("Identifies only multipath devices", func() {
+			// Create multipath device
+			multipathDeviceDef := types.Disk{
+				Name:      "dm-0",
+				UUID:      "mpath-uuid-123",
+				SizeBytes: 10 * 1024 * 1024,
+				Partitions: []*types.Partition{
+					{
+						Name:            "dm-1",
+						FilesystemLabel: "MPATH_BOOT",
+						FS:              "ext4",
+						MountPoint:      "/boot",
+						Size:            512,
+						UUID:            "part1-mpath-uuid-456",
+					},
+				},
+			}
+			
+			// Create a device-mapper device that is not multipath
+			cryptsDisk := types.Disk{
+				Name:      "dm-2",
+				UUID:      "CRYPT-LUKS1-fdsfsdfsdgxv-luks-34214546534dfd",
+				SizeBytes: 8 * 1024 * 1024,
+				Partitions: []*types.Partition{
+					{
+						Name:            "dm-3",
+						FilesystemLabel: "REGULAR_ROOT",
+						FS:              "ext4",
+						MountPoint:      "/",
+						Size:            2048,
+						UUID:            "part1-CRYPT-LUKS1-fdsfsdfsdgxv-luks-34214546534dfd",
+					},
+				},
+			}
+			
+			// Add both disks
+			ghwMock.AddDisk(multipathDeviceDef)
+			ghwMock.AddDisk(cryptsDisk)
+			
+			// Create multipath structure (this will handle both disks appropriately)
+			ghwMock.CreateMultipathDevices()
+			
+			disks := ghw.GetDisks(ghw.NewPaths(ghwMock.Chroot), nil)
+
+			// The LUKS device is identified as a regular disk, so we have 3 disks in total. 
+			// This is because the LUKS device is not skipped like multipath partitions are and currently will not work
+			// with Kairos.
+			Expect(len(disks)).To(Equal(3))
+
+			// Make sure we can identify the multipath device
+			var foundMultipathDisk *types.Disk
+			for _, disk := range disks {
+				if disk.Name == "dm-0" {
+					foundMultipathDisk = disk
+				}
+			}
+			
+			Expect(foundMultipathDisk).ToNot(BeNil())
+			
+			// Verify multipath device has its partition
+			Expect(len(foundMultipathDisk.Partitions)).To(Equal(1))
+			Expect(foundMultipathDisk.Partitions[0].Name).To(Equal("dm-1"))
 		})
 	})
 
