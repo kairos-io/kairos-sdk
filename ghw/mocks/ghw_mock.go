@@ -215,7 +215,7 @@ func (g *GhwMock) createMultipathDevicesWithMountFormat(useDmMount bool) {
 			// Create dm/name file
 			dmDir := filepath.Join(diskPath, "dm")
 			_ = os.MkdirAll(dmDir, 0755)
-			_ = os.WriteFile(filepath.Join(dmDir, "name"), []byte(fmt.Sprintf(disk.Name)), 0644)
+			_ = os.WriteFile(filepath.Join(dmDir, "name"), []byte(disk.Name), 0644)
 			_ = os.WriteFile(filepath.Join(dmDir, "uuid"), []byte(disk.UUID), 0644)
 
 			// Create holders directory for partitions
@@ -240,7 +240,7 @@ func (g *GhwMock) createMultipathDevicesWithMountFormat(useDmMount bool) {
 }
 
 // createMultipathPartitionWithMountFormat creates a multipath partition structure
-// useDmMount determines the mount format: true for /dev/dm-<n>, false for /dev/mapper/<name>
+// useDmMount determines the mount format: true for /dev/dm-<n>, false for /dev/mapper/<name>.
 func (g *GhwMock) createMultipathPartitionWithMountFormat(parentDiskName string, partition *types.Partition, partNum int, useDmMount bool) {
 	parentDiskPath := filepath.Join(g.paths.SysBlock, parentDiskName)
 	holdersDir := filepath.Join(parentDiskPath, "holders")
@@ -279,7 +279,7 @@ func (g *GhwMock) createMultipathPartitionWithMountFormat(parentDiskName string,
 		fmt.Sprintf("E:ID_FS_LABEL=%s\n", partition.FilesystemLabel),
 		fmt.Sprintf("E:DM_NAME=%s%s\n", parentDiskName, partitionSuffix),
 		fmt.Sprintf("E:DM_UUID=%s\n", partition.UUID), // This indicates it's a multipath partition
-		fmt.Sprintf("E:DM_PART=%d\n", partNum),               // This indicates it's a multipath partition
+		fmt.Sprintf("E:DM_PART=%d\n", partNum),        // This indicates it's a multipath partition
 	}
 	if partition.FS != "" {
 		udevData = append(udevData, fmt.Sprintf("E:ID_FS_TYPE=%s\n", partition.FS))
@@ -316,7 +316,7 @@ func (g *GhwMock) createMultipathPartitionWithMountFormat(parentDiskName string,
 
 // AddMultipathPartition adds a multipath partition to a multipath device
 // This creates the partition as a holder of the parent device and sets up
-// the necessary dm structure for the partition
+// the necessary dm structure for the partition.
 func (g *GhwMock) AddMultipathPartition(parentDiskName string, partition *types.Partition) {
 	if g.paths == nil {
 		return // Must call CreateMultipathDevices first
