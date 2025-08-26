@@ -86,7 +86,7 @@ var _ = Describe("GHW functions tests", func() {
 						UUID:            "part1-mpath-uuid-456",
 					},
 					{
-						Name:            "dm-2", 
+						Name:            "dm-2",
 						FilesystemLabel: "MPATH_DATA",
 						FS:              "xfs",
 						MountPoint:      "/data",
@@ -102,10 +102,10 @@ var _ = Describe("GHW functions tests", func() {
 
 		It("Identifies multipath device correctly", func() {
 			disks := ghw.GetDisks(ghw.NewPaths(ghwMock.Chroot), nil)
-			
+
 			// Should find the multipath device but not the partitions as separate disks
 			Expect(len(disks)).To(Equal(1), "Should find only the multipath device")
-			
+
 			disk := disks[0]
 			Expect(disk.Name).To(Equal("dm-0"))
 			Expect(disk.UUID).To(Equal("mpath-uuid-123"))
@@ -114,13 +114,13 @@ var _ = Describe("GHW functions tests", func() {
 
 		It("Finds multipath partitions using MultipathPartitionHandler", func() {
 			disks := ghw.GetDisks(ghw.NewPaths(ghwMock.Chroot), nil)
-			
+
 			Expect(len(disks)).To(Equal(1))
 			disk := disks[0]
-			
+
 			// Should find both partitions
 			Expect(len(disk.Partitions)).To(Equal(2))
-			
+
 			// Verify first partition
 			part1 := disk.Partitions[0]
 			Expect(part1.Name).To(Equal("dm-1"))
@@ -130,7 +130,7 @@ var _ = Describe("GHW functions tests", func() {
 			Expect(part1.UUID).To(Equal("part1-mpath-uuid-456"))
 			Expect(part1.Path).To(Equal("/dev/dm-1"))
 			Expect(part1.Disk).To(Equal("/dev/dm-0"))
-			
+
 			// Verify second partition
 			part2 := disk.Partitions[1]
 			Expect(part2.Name).To(Equal("dm-2"))
@@ -143,14 +143,14 @@ var _ = Describe("GHW functions tests", func() {
 		})
 
 		It("Skips multipath partitions in main disk enumeration", func() {
-			// This test verifies that multipath partitions (dm-1, dm-2) are not 
+			// This test verifies that multipath partitions (dm-1, dm-2) are not
 			// returned as separate disks in the main GetDisks call
 			disks := ghw.GetDisks(ghw.NewPaths(ghwMock.Chroot), nil)
-			
+
 			// Should only find the parent multipath device, not the partition devices
 			Expect(len(disks)).To(Equal(1))
 			Expect(disks[0].Name).To(Equal("dm-0"))
-			
+
 			// Verify no disk named dm-1 or dm-2 is returned
 			for _, disk := range disks {
 				Expect(disk.Name).ToNot(Equal("dm-1"))
@@ -176,7 +176,7 @@ var _ = Describe("GHW functions tests", func() {
 						UUID:            "part1-mpath-uuid",
 					},
 					{
-						Name:            "dm-5", 
+						Name:            "dm-5",
 						FilesystemLabel: "DM_DATA",
 						FS:              "xfs",
 						MountPoint:      "/data",
@@ -192,13 +192,13 @@ var _ = Describe("GHW functions tests", func() {
 
 		It("Finds multipath partitions mounted as /dev/dm-<n>", func() {
 			disks := ghw.GetDisks(ghw.NewPaths(ghwMock.Chroot), nil)
-			
+
 			Expect(len(disks)).To(Equal(1))
 			disk := disks[0]
-			
+
 			// Should find both partitions
 			Expect(len(disk.Partitions)).To(Equal(2))
-			
+
 			// Verify partitions can be found regardless of mount format
 			var bootPartition, dataPartition *types.Partition
 			for _, part := range disk.Partitions {
@@ -208,14 +208,14 @@ var _ = Describe("GHW functions tests", func() {
 					dataPartition = part
 				}
 			}
-			
+
 			Expect(bootPartition).ToNot(BeNil())
 			Expect(bootPartition.Name).To(Equal("dm-4"))
 			Expect(bootPartition.FilesystemLabel).To(Equal("DM_BOOT"))
 			Expect(bootPartition.MountPoint).To(Equal("/boot"))
 			Expect(bootPartition.FS).To(Equal("ext4"))
 			Expect(bootPartition.Path).To(Equal("/dev/dm-4"))
-			
+
 			Expect(dataPartition).ToNot(BeNil())
 			Expect(dataPartition.Name).To(Equal("dm-5"))
 			Expect(dataPartition.FilesystemLabel).To(Equal("DM_DATA"))
@@ -232,12 +232,12 @@ var _ = Describe("GHW functions tests", func() {
 				UUID:      "mpath-empty-uuid",
 				SizeBytes: 5 * 1024 * 1024,
 			}
-			
+
 			ghwMock.AddDisk(multipathDisk)
 			ghwMock.CreateMultipathDevices()
-			
+
 			disks := ghw.GetDisks(ghw.NewPaths(ghwMock.Chroot), nil)
-			
+
 			Expect(len(disks)).To(Equal(1))
 			disk := disks[0]
 			Expect(disk.Name).To(Equal("dm-5"))
@@ -263,7 +263,7 @@ var _ = Describe("GHW functions tests", func() {
 					},
 				},
 			}
-			
+
 			// Create regular disk
 			regularDisk := types.Disk{
 				Name:      "sda",
@@ -280,19 +280,19 @@ var _ = Describe("GHW functions tests", func() {
 					},
 				},
 			}
-			
+
 			// Add both disks
 			ghwMock.AddDisk(multipathDeviceDef)
 			ghwMock.AddDisk(regularDisk)
-			
+
 			// Create multipath structure (this will handle both disks appropriately)
 			ghwMock.CreateMultipathDevices()
-			
+
 			disks := ghw.GetDisks(ghw.NewPaths(ghwMock.Chroot), nil)
-			
+
 			// Should find both the regular disk and multipath device
 			Expect(len(disks)).To(Equal(2))
-			
+
 			var foundMultipathDisk, foundRegularDisk *types.Disk
 			for _, disk := range disks {
 				if disk.Name == "dm-0" {
@@ -301,14 +301,14 @@ var _ = Describe("GHW functions tests", func() {
 					foundRegularDisk = disk
 				}
 			}
-			
+
 			Expect(foundMultipathDisk).ToNot(BeNil())
 			Expect(foundRegularDisk).ToNot(BeNil())
-			
+
 			// Verify multipath device has its partition
 			Expect(len(foundMultipathDisk.Partitions)).To(Equal(1))
 			Expect(foundMultipathDisk.Partitions[0].Name).To(Equal("dm-1"))
-			
+
 			// Verify regular device has its partition
 			Expect(len(foundRegularDisk.Partitions)).To(Equal(1))
 			Expect(foundRegularDisk.Partitions[0].Name).To(Equal("sda1"))
@@ -333,7 +333,7 @@ var _ = Describe("GHW functions tests", func() {
 					},
 				},
 			}
-			
+
 			// Create a device-mapper device that is not multipath
 			cryptsDisk := types.Disk{
 				Name:      "dm-2",
@@ -350,17 +350,17 @@ var _ = Describe("GHW functions tests", func() {
 					},
 				},
 			}
-			
+
 			// Add both disks
 			ghwMock.AddDisk(multipathDeviceDef)
 			ghwMock.AddDisk(cryptsDisk)
-			
+
 			// Create multipath structure (this will handle both disks appropriately)
 			ghwMock.CreateMultipathDevices()
-			
+
 			disks := ghw.GetDisks(ghw.NewPaths(ghwMock.Chroot), nil)
 
-			// The LUKS device is identified as a regular disk, so we have 3 disks in total. 
+			// The LUKS device is identified as a regular disk, so we have 3 disks in total.
 			// This is because the LUKS device is not skipped like multipath partitions are and currently will not work
 			// with Kairos.
 			Expect(len(disks)).To(Equal(3))
@@ -372,9 +372,9 @@ var _ = Describe("GHW functions tests", func() {
 					foundMultipathDisk = disk
 				}
 			}
-			
+
 			Expect(foundMultipathDisk).ToNot(BeNil())
-			
+
 			// Verify multipath device has its partition
 			Expect(len(foundMultipathDisk.Partitions)).To(Equal(1))
 			Expect(foundMultipathDisk.Partitions[0].Name).To(Equal("dm-1"))
