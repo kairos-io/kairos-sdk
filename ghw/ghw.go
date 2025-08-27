@@ -85,7 +85,7 @@ func isMultipathDevice(paths *Paths, entry os.DirEntry, logger *types.KairosLogg
 
 func GetDisks(paths *Paths, logger *types.KairosLogger) []*types.Disk {
 	if logger == nil {
-		newLogger := types.NewKairosLogger("ghw", "info", false)
+		newLogger := types.NewKairosLogger("ghw", "info", true)
 		logger = &newLogger
 	}
 	disks := make([]*types.Disk, 0)
