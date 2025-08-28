@@ -431,8 +431,8 @@ github.com/tmc/scp v0.0.0-20170824174625-f7b48647feef h1:7D6Nm4D6f0ci9yttWaKjM1T
 github.com/tmc/scp v0.0.0-20170824174625-f7b48647feef/go.mod h1:WLFStEdnJXpjK8kd4qKLwQKX/1vrDzp5BcDyiZJBHJM=
 github.com/twpayne/go-vfs/v4 v4.3.0 h1:rTqFzzOQ/6ESKTSiwVubHlCBedJDOhQyVSnw8rQNZhU=
 github.com/twpayne/go-vfs/v4 v4.3.0/go.mod h1:tq2UVhnUepesc0lSnPJH/jQ8HruGhzwZe2r5kDFpEIw=
-github.com/ulikunitz/xz v0.5.11 h1:kpFauv27b6ynzBNT/Xy+1k+fK4WswhN/6PN5WhFAGw8=
-github.com/ulikunitz/xz v0.5.11/go.mod h1:nbz6k7qbPmH4IRqmfOplQw/tblSgqTqBwxkY0oWt/14=
+github.com/ulikunitz/xz v0.5.14 h1:uv/0Bq533iFdnMHZdRBTOlaNMdb1+ZxXIlHDZHIHcvg=
+github.com/ulikunitz/xz v0.5.14/go.mod h1:nbz6k7qbPmH4IRqmfOplQw/tblSgqTqBwxkY0oWt/14=
 github.com/urfave/cli/v2 v2.27.6 h1:VdRdS98FNhKZ8/Az8B7MTyGQmpIr36O1EHybx/LaZ4g=
 github.com/urfave/cli/v2 v2.27.6/go.mod h1:3Sevf16NykTbInEnD0yKkjDAeZDS0A6bzhBH5hrMvTQ=
 github.com/vbatts/tar-split v0.12.1 h1:CqKoORW7BUWBe7UL/iqTVvkTBOF8UvOMKOIZykxnnbo=
