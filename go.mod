@@ -105,7 +105,7 @@ require (
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/swaggest/refl v1.3.0 // indirect
-	github.com/ulikunitz/xz v0.5.11 // indirect
+	github.com/ulikunitz/xz v0.5.14 // indirect
 	github.com/vbatts/tar-split v0.12.1 // indirect
 	github.com/wayneashleyberry/terminal-dimensions v1.1.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
