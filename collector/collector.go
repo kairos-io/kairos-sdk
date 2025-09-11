@@ -457,19 +457,12 @@ func fetchRemoteConfig(url string) (*Config, error) {
 	)
 
 	if err != nil {
-		// TODO: improve logging
-		fmt.Printf("WARNING: Couldn't fetch config_url: %s", err)
+		// TODO: This keeps the old behaviour but IMHO we should return an error here
 		return result, nil
 	}
 
 	if !HasValidHeader(string(body)) {
-		// TODO: Print a warning when we implement proper logging
-                if err != nil {
-		   fmt.Printf("No valid header in remote config: %s\n", err.Error())
-		} else {
-       	   fmt.Println("No valid header in remote config")
-       	 }
-		
+		// TODO: This keeps the old behaviour but IMHO we should return an error here
 		return result, nil
 	}
 
