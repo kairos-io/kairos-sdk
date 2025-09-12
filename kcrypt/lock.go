@@ -221,6 +221,8 @@ func formatLuks(device, name, mapper, label, pass string, logger types.KairosLog
 
 	// Refresh needs the password as its doing actions on the device directly
 	l.Debug().Msg("discards")
+	// Note: cryptsetup v2.8+ expects the device name (not the device path) for the 'refresh' command.
+	// Using 'name' with v2.7 also works, hence why no fallback is needed for backward compatibility.
 	cmd := exec.Command("cryptsetup", "refresh", "--persistent", "--allow-discards", name)
 	cmd.Stdin = strings.NewReader(pass)
 	output, err := cmd.CombinedOutput()
