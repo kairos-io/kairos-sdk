@@ -221,7 +221,7 @@ func formatLuks(device, name, mapper, label, pass string, logger types.KairosLog
 
 	// Refresh needs the password as its doing actions on the device directly
 	l.Debug().Msg("discards")
-	cmd := exec.Command("cryptsetup", "refresh", "--persistent", "--allow-discards", mapper)
+	cmd := exec.Command("cryptsetup", "refresh", "--persistent", "--allow-discards", name)
 	cmd.Stdin = strings.NewReader(pass)
 	output, err := cmd.CombinedOutput()
 
