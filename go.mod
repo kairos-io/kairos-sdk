@@ -5,7 +5,7 @@ go 1.25
 require (
 	github.com/anatol/luks.go v0.0.0-20250316021219-8cd744c3576f
 	github.com/avast/retry-go v3.0.0+incompatible
-	github.com/containerd/containerd v1.7.27
+	github.com/containerd/containerd v1.7.28
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/diskfs/go-diskfs v1.7.0
 	github.com/docker/docker v28.3.3+incompatible
