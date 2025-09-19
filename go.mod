@@ -22,7 +22,7 @@ require (
 	github.com/mudler/yip v1.15.0
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
-	github.com/pterm/pterm v0.12.80
+	github.com/pterm/pterm v0.12.81
 	github.com/qeesung/image2ascii v1.0.1
 	github.com/rs/zerolog v1.33.0
 	github.com/saferwall/pe v1.5.7
@@ -46,7 +46,7 @@ require (
 	github.com/aybabtme/rgbterm v0.0.0-20170906152045-cc83f3b3ce59 // indirect
 	github.com/chuckpreslar/emission v0.0.0-20170206194824-a7ddd980baf9 // indirect
 	github.com/containerd/cgroups/v3 v3.0.5 // indirect
-	github.com/containerd/console v1.0.4 // indirect
+	github.com/containerd/console v1.0.5 // indirect
 	github.com/containerd/continuity v0.4.5 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
