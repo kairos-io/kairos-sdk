@@ -10,7 +10,7 @@ require (
 	github.com/diskfs/go-diskfs v1.7.0
 	github.com/docker/docker v28.3.3+incompatible
 	github.com/edsrzf/mmap-go v1.2.0
-	github.com/foxboron/go-uefi v0.0.0-20250207204325-69fb7dba244f
+	github.com/foxboron/go-uefi bf180abb62ac
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/google/go-containerregistry v0.20.6
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
