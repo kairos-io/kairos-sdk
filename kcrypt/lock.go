@@ -269,8 +269,8 @@ func waitDevice(device string, attempts int) error {
 	return fmt.Errorf("no device found %s", device)
 }
 
-// runUdevadmTrigger runs `udevadm trigger` and waits for the results to be
-// visible.  It returns an error if the command fails or if the "settle"
+// udevAdmTrigger runs `udevadm trigger` and waits for the results to be
+// visible. It returns an error if the command fails or if the "settle"
 // timeout is exceeded.
 func udevAdmTrigger(timeout time.Duration) error {
 	// Make sure ghw will see all partitions correctly.
