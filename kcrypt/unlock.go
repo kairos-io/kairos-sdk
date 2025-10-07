@@ -26,11 +26,7 @@ func UnlockAll(tpm bool, log types.KairosLogger) error {
 		return nil
 	}
 
-	// Some versions of udevadm don't support --settle (e.g. alpine)
-	// and older versions don't have --type=all. Try the simpler version then.
-	logger.Info().Msgf("triggering udev to populate disk info")
-	_, err = utils.SH("udevadm trigger --type=all || udevadm trigger")
-	if err != nil {
+	if err := udevAdmTrigger(UDEV_TIMEOUT); err != nil {
 		return err
 	}
 

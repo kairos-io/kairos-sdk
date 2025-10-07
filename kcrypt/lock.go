@@ -2,6 +2,7 @@ package kcrypt
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -16,6 +17,8 @@ import (
 	"github.com/kairos-io/kairos-sdk/types"
 	"github.com/kairos-io/kairos-sdk/utils"
 )
+
+const UDEV_TIMEOUT = 30 * time.Second
 
 // Encrypt is the entrypoint to encrypt a partition with LUKS.
 func Encrypt(label string, logger types.KairosLogger, argsCreate ...string) (string, error) {
@@ -62,13 +65,9 @@ func getRandomString(length int) string {
 func luksify(label string, logger types.KairosLogger, argsCreate ...string) (string, error) {
 	var pass string
 
-	// Make sure ghw will see all partitions correctly.
-	// older versions don't have --type=all. Try the simpler version then.
-	out, err := utils.SH("udevadm trigger --type=all || udevadm trigger")
-	if err != nil {
-		return "", fmt.Errorf("udevadm trigger failed: %w, out: %s", err, out)
+	if err := udevAdmTrigger(UDEV_TIMEOUT); err != nil {
+		return "", err
 	}
-	syscall.Sync()
 
 	part, b, err := findPartition(label)
 	if err != nil {
@@ -118,13 +117,9 @@ func luksify(label string, logger types.KairosLogger, argsCreate ...string) (str
 // default for publicKeyPcrs is 11
 // default for pcrs is nothing, so it doesn't bind as we want to expand things like DBX and be able to blacklist certs and such.
 func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, logger types.KairosLogger, argsCreate ...string) error {
-	// Make sure ghw will see all partitions correctly.
-	// older versions don't have --type=all. Try the simpler version then.
-	out, err := utils.SH("udevadm trigger --type=all || udevadm trigger")
-	if err != nil {
-		return fmt.Errorf("udevadm trigger failed: %w, out: %s", err, out)
+	if err := udevAdmTrigger(UDEV_TIMEOUT); err != nil {
+		return err
 	}
-	syscall.Sync()
 
 	part, b, err := findPartition(label)
 	if err != nil {
@@ -188,7 +183,7 @@ func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, lo
 	}
 
 	// Delete password slot from luks device
-	out, err = utils.SH(fmt.Sprintf("systemd-cryptenroll --wipe-slot=password %s", device))
+	out, err := utils.SH(fmt.Sprintf("systemd-cryptenroll --wipe-slot=password %s", device))
 	if err != nil {
 		logger.Err(err).Str("out", out).Msg("Removing password")
 		return err
@@ -272,4 +267,31 @@ func waitDevice(device string, attempts int) error {
 		time.Sleep(1 * time.Second)
 	}
 	return fmt.Errorf("no device found %s", device)
+}
+
+// runUdevadmTrigger runs `udevadm trigger` and waits for the results to be
+// visible.  It returns an error if the command fails or if the "settle"
+// timeout is exceeded.
+func udevAdmTrigger(timeout time.Duration) error {
+	// Make sure ghw will see all partitions correctly.
+	// older versions don't have --type=all. Try the simpler version then.
+	out, err := utils.SH("udevadm trigger --type=all || udevadm trigger")
+	if err != nil {
+		return fmt.Errorf("udevadm trigger failed: %w, out: %s", err, out)
+	}
+	syscall.Sync()
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "udevadm", "settle")
+	output, err := cmd.CombinedOutput()
+
+	if ctx.Err() == context.DeadlineExceeded {
+		return fmt.Errorf("udevadm settle timed out after %s", timeout)
+	}
+	if err != nil {
+		return fmt.Errorf("udevadm settle failed: %v (output: %s)", err, string(output))
+	}
+
+	return nil
 }
