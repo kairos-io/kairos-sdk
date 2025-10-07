@@ -26,7 +26,7 @@ func UnlockAll(tpm bool, log types.KairosLogger) error {
 		return nil
 	}
 
-	if err := udevAdmTrigger(UDEV_TIMEOUT); err != nil {
+	if err := udevAdmTrigger(UdevTimeout); err != nil {
 		return err
 	}
 

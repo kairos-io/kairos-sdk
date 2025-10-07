@@ -18,7 +18,7 @@ import (
 	"github.com/kairos-io/kairos-sdk/utils"
 )
 
-const UDEV_TIMEOUT = 30 * time.Second
+const UdevTimeout = 30 * time.Second
 
 // Encrypt is the entrypoint to encrypt a partition with LUKS.
 func Encrypt(label string, logger types.KairosLogger, argsCreate ...string) (string, error) {
@@ -65,7 +65,7 @@ func getRandomString(length int) string {
 func luksify(label string, logger types.KairosLogger, argsCreate ...string) (string, error) {
 	var pass string
 
-	if err := udevAdmTrigger(UDEV_TIMEOUT); err != nil {
+	if err := udevAdmTrigger(UdevTimeout); err != nil {
 		return "", err
 	}
 
@@ -117,7 +117,7 @@ func luksify(label string, logger types.KairosLogger, argsCreate ...string) (str
 // default for publicKeyPcrs is 11
 // default for pcrs is nothing, so it doesn't bind as we want to expand things like DBX and be able to blacklist certs and such.
 func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, logger types.KairosLogger, argsCreate ...string) error {
-	if err := udevAdmTrigger(UDEV_TIMEOUT); err != nil {
+	if err := udevAdmTrigger(UdevTimeout); err != nil {
 		return err
 	}
 
