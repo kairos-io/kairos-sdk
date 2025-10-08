@@ -65,16 +65,19 @@ func getRandomString(length int) string {
 func luksify(label string, logger types.KairosLogger, argsCreate ...string) (string, error) {
 	var pass string
 
+	fmt.Println("running udevadm settle")
 	if err := udevAdmTrigger(udevTimeout); err != nil {
 		return "", err
 	}
 
+	fmt.Printf("finding partition: %s \n ", label)
 	part, b, err := findPartition(label)
 	if err != nil {
 		logger.Err(err).Msg("find partition")
 		return "", err
 	}
 
+	fmt.Println("getting the password")
 	pass, err = getPassword(b)
 	if err != nil {
 		logger.Err(err).Msg("get password")
@@ -88,17 +91,20 @@ func luksify(label string, logger types.KairosLogger, argsCreate ...string) (str
 	extraArgs = append(extraArgs, "--label", label)
 	extraArgs = append(extraArgs, argsCreate...)
 
+	fmt.Println("creating luks")
 	if err := createLuks(device, pass, extraArgs...); err != nil {
 		logger.Err(err).Msg("create luks")
 		return "", err
 	}
 
+	fmt.Println("formatting luks")
 	err = formatLuks(device, b.Name, mapper, label, pass, logger)
 	if err != nil {
 		logger.Err(err).Msg("format luks")
 		return "", err
 	}
 
+	fmt.Println("done with the crypt")
 	return fmt.Sprintf("%s:%s:%s", b.FilesystemLabel, b.Name, b.UUID), nil
 }
 
