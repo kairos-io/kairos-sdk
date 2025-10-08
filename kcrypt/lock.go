@@ -1,6 +1,7 @@
 package kcrypt
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
@@ -28,6 +29,48 @@ func Encrypt(label string, logger types.KairosLogger, argsCreate ...string) (str
 // EncryptWithPcrs is the entrypoint to encrypt a partition with LUKS and bind it to PCRs.
 func EncryptWithPcrs(label string, publicKeyPcrs []string, pcrs []string, logger types.KairosLogger, argsCreate ...string) error {
 	return luksifyMeasurements(label, publicKeyPcrs, pcrs, logger, argsCreate...)
+}
+
+// unmountIfMounted checks if a device is mounted and unmounts it if needed
+// This is necessary because cryptsetup cannot format a mounted partition
+func unmountIfMounted(device string, logger types.KairosLogger) error {
+	// Read /proc/mounts to check if the device is mounted
+	// mount entries look like: /dev/sda6 / ext4 rw,relatime 0 0
+	f, err := os.Open("/proc/mounts")
+	if err != nil {
+		return fmt.Errorf("failed to open /proc/mounts: %w", err)
+	}
+	defer f.Close()
+
+	var mountPoint string
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		fields := strings.Fields(line)
+		// fields[0] is device, fields[1] is mount point
+		if len(fields) >= 2 && fields[0] == device {
+			mountPoint = fields[1]
+			break
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("error reading /proc/mounts: %w", err)
+	}
+
+	// If device is not mounted, nothing to do
+	if mountPoint == "" {
+		return nil
+	}
+
+	logger.Logger.Debug().Str("device", device).Str("mountpoint", mountPoint).Msg("Device is mounted, unmounting before encryption")
+	// Unmount using syscall.Unmount with flags=0 (standard unmount)
+	if err := syscall.Unmount(mountPoint, 0); err != nil {
+		return fmt.Errorf("failed to unmount %s from %s: %w", device, mountPoint, err)
+	}
+
+	logger.Logger.Debug().Str("device", device).Msg("Successfully unmounted device")
+	return nil
 }
 
 func createLuks(dev, password string, cryptsetupArgs ...string) error {
@@ -91,6 +134,13 @@ func luksify(label string, logger types.KairosLogger, argsCreate ...string) (str
 	extraArgs = append(extraArgs, "--label", label)
 	extraArgs = append(extraArgs, argsCreate...)
 
+	// Unmount the device if it's mounted before attempting to encrypt it
+	fmt.Println("checking if device is mounted")
+	if err := unmountIfMounted(device, logger); err != nil {
+		logger.Err(err).Msg("unmount device")
+		return "", err
+	}
+
 	fmt.Println("creating luks")
 	if err := createLuks(device, pass, extraArgs...); err != nil {
 		logger.Err(err).Msg("create luks")
@@ -141,6 +191,12 @@ func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, lo
 	extraArgs := []string{"--uuid", uuid.NewV5(uuid.NamespaceURL, label).String()}
 	extraArgs = append(extraArgs, "--label", label)
 	extraArgs = append(extraArgs, argsCreate...)
+
+	// Unmount the device if it's mounted before attempting to encrypt it
+	if err := unmountIfMounted(device, logger); err != nil {
+		logger.Err(err).Msg("unmount device")
+		return err
+	}
 
 	if err := createLuks(device, pass, extraArgs...); err != nil {
 		return err
