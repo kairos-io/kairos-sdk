@@ -11,7 +11,6 @@ import (
 	"github.com/kairos-io/kairos-sdk/kcrypt/bus"
 	"github.com/kairos-io/kairos-sdk/types"
 	"github.com/kairos-io/kairos-sdk/utils"
-	challengerbus "github.com/kairos-io/kcrypt-challenger/pkg/bus"
 	"github.com/mudler/go-pluggable"
 )
 
@@ -24,7 +23,7 @@ func UnlockAll(tpm bool, log types.KairosLogger) error {
 
 // UnlockAllWithConfig unlocks all encrypted devices with an explicit config.
 // If config is nil, it will scan for configuration automatically.
-func UnlockAllWithConfig(tpm bool, log types.KairosLogger, kcryptConfig *challengerbus.DiscoveryPasswordPayload) error {
+func UnlockAllWithConfig(tpm bool, log types.KairosLogger, kcryptConfig *bus.DiscoveryPasswordPayload) error {
 	bus.Manager.Initialize()
 	logger := log.Logger
 
@@ -92,7 +91,7 @@ func UnlockDisk(b *block.Partition) error {
 }
 
 // UnlockDiskWithConfig unlocks a single block.Partition with explicit config.
-func UnlockDiskWithConfig(b *block.Partition, kcryptConfig *challengerbus.DiscoveryPasswordPayload) error {
+func UnlockDiskWithConfig(b *block.Partition, kcryptConfig *bus.DiscoveryPasswordPayload) error {
 	pass, err := getPassword(b, kcryptConfig)
 	if err != nil {
 		return fmt.Errorf("error retrieving password remotely: %w", err)
@@ -103,7 +102,7 @@ func UnlockDiskWithConfig(b *block.Partition, kcryptConfig *challengerbus.Discov
 
 // GetPassword gets the password for a block.Partition
 // TODO: Ask to discovery a pass to unlock. keep waiting until we get it and a timeout is exhausted with retrials (exp backoff).
-func getPassword(b *block.Partition, kcryptConfig *challengerbus.DiscoveryPasswordPayload) (password string, err error) {
+func getPassword(b *block.Partition, kcryptConfig *bus.DiscoveryPasswordPayload) (password string, err error) {
 	// Get a logger for debugging
 	log := types.NewKairosLogger("kcrypt-getPassword", "info", false)
 	defer log.Close()
@@ -128,7 +127,7 @@ func getPassword(b *block.Partition, kcryptConfig *challengerbus.DiscoveryPasswo
 		}
 	})
 
-	var payload challengerbus.DiscoveryPasswordPayload
+	var payload bus.DiscoveryPasswordPayload
 	if kcryptConfig != nil {
 		payload = *kcryptConfig
 		log.Logger.Info().

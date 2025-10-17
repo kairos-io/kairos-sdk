@@ -3,8 +3,8 @@ package kcrypt
 import (
 	"strings"
 
-	challengerbus "github.com/kairos-io/kcrypt-challenger/pkg/bus"
 	"github.com/kairos-io/kairos-sdk/collector"
+	"github.com/kairos-io/kairos-sdk/kcrypt/bus"
 	"github.com/kairos-io/kairos-sdk/types"
 )
 
@@ -14,7 +14,7 @@ var DefaultConfigDirs = []string{"/oem", "/sysroot/oem", "/run/cos/oem"}
 // ScanKcryptConfig scans for Kairos configuration in the given directories (or defaults),
 // merges with cmdline, and extracts just the kcrypt.challenger configuration.
 // Returns nil if no kcrypt config is found.
-func ScanKcryptConfig(logger types.KairosLogger, dirs ...string) *challengerbus.DiscoveryPasswordPayload {
+func ScanKcryptConfig(logger types.KairosLogger, dirs ...string) *bus.DiscoveryPasswordPayload {
 	if len(dirs) == 0 {
 		dirs = DefaultConfigDirs
 	}
@@ -42,7 +42,7 @@ func ScanKcryptConfig(logger types.KairosLogger, dirs ...string) *challengerbus.
 
 // ExtractKcryptConfigFromCollector extracts kcrypt.challenger configuration from a collector.Config
 // This works with kairos-agent which uses collector to merge file and cmdline configs
-func ExtractKcryptConfigFromCollector(collectorConfig collector.Config) *challengerbus.DiscoveryPasswordPayload {
+func ExtractKcryptConfigFromCollector(collectorConfig collector.Config) *bus.DiscoveryPasswordPayload {
 	if collectorConfig.Values == nil {
 		return nil
 	}
@@ -67,7 +67,7 @@ func ExtractKcryptConfigFromCollector(collectorConfig collector.Config) *challen
 		return nil
 	}
 
-	payload := &challengerbus.DiscoveryPasswordPayload{}
+	payload := &bus.DiscoveryPasswordPayload{}
 
 	if server, ok := challengerMap["challenger_server"].(string); ok {
 		payload.ChallengerServer = server
@@ -94,8 +94,8 @@ func ExtractKcryptConfigFromCollector(collectorConfig collector.Config) *challen
 // ExtractKcryptConfigFromCmdline parses cmdline string and extracts kcrypt.challenger configuration
 // This works with immucore which reads /proc/cmdline directly
 // Returns nil if no kcrypt config is found in cmdline
-func ExtractKcryptConfigFromCmdline(cmdline string) *challengerbus.DiscoveryPasswordPayload {
-	payload := &challengerbus.DiscoveryPasswordPayload{}
+func ExtractKcryptConfigFromCmdline(cmdline string) *bus.DiscoveryPasswordPayload {
+	payload := &bus.DiscoveryPasswordPayload{}
 	foundAny := false
 
 	parts := strings.Fields(cmdline)

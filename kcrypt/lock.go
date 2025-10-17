@@ -15,6 +15,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/block"
+	"github.com/kairos-io/kairos-sdk/kcrypt/bus"
 	"github.com/kairos-io/kairos-sdk/types"
 	"github.com/kairos-io/kairos-sdk/utils"
 )
@@ -29,7 +30,7 @@ func Encrypt(label string, logger types.KairosLogger, argsCreate ...string) (str
 
 // EncryptWithConfig encrypts a partition with explicit kcrypt config.
 // If config is nil, it will scan for configuration automatically.
-func EncryptWithConfig(label string, logger types.KairosLogger, kcryptConfig *challengerbus.DiscoveryPasswordPayload, argsCreate ...string) (string, error) {
+func EncryptWithConfig(label string, logger types.KairosLogger, kcryptConfig *bus.DiscoveryPasswordPayload, argsCreate ...string) (string, error) {
 	return luksifyWithConfig(label, logger, kcryptConfig, argsCreate...)
 }
 
@@ -116,7 +117,7 @@ func luksify(label string, logger types.KairosLogger, argsCreate ...string) (str
 	return luksifyWithConfig(label, logger, nil, argsCreate...)
 }
 
-func luksifyWithConfig(label string, logger types.KairosLogger, kcryptConfig *challengerbus.DiscoveryPasswordPayload, argsCreate ...string) (string, error) {
+func luksifyWithConfig(label string, logger types.KairosLogger, kcryptConfig *bus.DiscoveryPasswordPayload, argsCreate ...string) (string, error) {
 	var pass string
 
 	fmt.Println("running udevadm settle")
