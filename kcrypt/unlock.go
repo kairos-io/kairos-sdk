@@ -11,13 +11,35 @@ import (
 	"github.com/kairos-io/kairos-sdk/kcrypt/bus"
 	"github.com/kairos-io/kairos-sdk/types"
 	"github.com/kairos-io/kairos-sdk/utils"
+	challengerbus "github.com/kairos-io/kcrypt-challenger/pkg/bus"
 	"github.com/mudler/go-pluggable"
 )
 
 // UnlockAll Unlocks all encrypted devices found in the system.
+// It automatically scans for kcrypt configuration from available sources (files + cmdline)
+// and passes it to the kcrypt-challenger plugin.
 func UnlockAll(tpm bool, log types.KairosLogger) error {
+	return UnlockAllWithConfig(tpm, log, nil)
+}
+
+// UnlockAllWithConfig unlocks all encrypted devices with an explicit config.
+// If config is nil, it will scan for configuration automatically.
+func UnlockAllWithConfig(tpm bool, log types.KairosLogger, kcryptConfig *challengerbus.DiscoveryPasswordPayload) error {
 	bus.Manager.Initialize()
 	logger := log.Logger
+
+	// Scan for kcrypt config if not provided
+	if kcryptConfig == nil {
+		kcryptConfig = ScanKcryptConfig(log)
+		if kcryptConfig != nil {
+			logger.Info().
+				Str("challenger_server", kcryptConfig.ChallengerServer).
+				Bool("mdns", kcryptConfig.MDNS).
+				Msg("Scanned kcrypt config for unlock")
+		} else {
+			logger.Debug().Msg("No kcrypt config found, using local encryption")
+		}
+	}
 
 	blk, err := ghw.Block()
 	if err != nil {
@@ -46,7 +68,7 @@ func UnlockAll(tpm bool, log types.KairosLogger) error {
 							logger.Info().Msgf("Unlocking succeeded for '%s'", filepath.Join("/dev", p.Name))
 						}
 					} else {
-						err = UnlockDisk(p)
+						err = UnlockDiskWithConfig(p, kcryptConfig)
 						if err != nil {
 							logger.Warn().Msgf("Unlocking failed for '%s': '%s'", filepath.Join("/dev", p.Name), err.Error())
 						} else {
@@ -64,8 +86,14 @@ func UnlockAll(tpm bool, log types.KairosLogger) error {
 }
 
 // UnlockDisk unlocks a single block.Partition.
+// Deprecated: Use UnlockAll instead which handles config automatically.
 func UnlockDisk(b *block.Partition) error {
-	pass, err := getPassword(b)
+	return UnlockDiskWithConfig(b, nil)
+}
+
+// UnlockDiskWithConfig unlocks a single block.Partition with explicit config.
+func UnlockDiskWithConfig(b *block.Partition, kcryptConfig *challengerbus.DiscoveryPasswordPayload) error {
+	pass, err := getPassword(b, kcryptConfig)
 	if err != nil {
 		return fmt.Errorf("error retrieving password remotely: %w", err)
 	}
@@ -75,7 +103,7 @@ func UnlockDisk(b *block.Partition) error {
 
 // GetPassword gets the password for a block.Partition
 // TODO: Ask to discovery a pass to unlock. keep waiting until we get it and a timeout is exhausted with retrials (exp backoff).
-func getPassword(b *block.Partition) (password string, err error) {
+func getPassword(b *block.Partition, kcryptConfig *challengerbus.DiscoveryPasswordPayload) (password string, err error) {
 	// Get a logger for debugging
 	log := types.NewKairosLogger("kcrypt-getPassword", "info", false)
 	defer log.Close()
@@ -99,7 +127,19 @@ func getPassword(b *block.Partition) (password string, err error) {
 				Msg("Received password from plugin")
 		}
 	})
-	_, err = bus.Manager.Publish(bus.EventDiscoveryPassword, b)
+
+	var payload challengerbus.DiscoveryPasswordPayload
+	if kcryptConfig != nil {
+		payload = *kcryptConfig
+		log.Logger.Info().
+			Str("challenger_server", payload.ChallengerServer).
+			Msg("Using provided kcrypt config")
+	} else {
+		log.Logger.Info().Msg("No kcrypt config provided, using local encryption")
+	}
+	payload.Partition = b
+
+	_, err = bus.Manager.Publish(bus.EventDiscoveryPassword, payload)
 	if err != nil {
 		log.Logger.Error().Err(err).Msg("Failed to publish event to bus")
 		return password, err

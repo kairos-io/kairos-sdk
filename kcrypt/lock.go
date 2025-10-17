@@ -22,8 +22,15 @@ import (
 const udevTimeout = 30 * time.Second
 
 // Encrypt is the entrypoint to encrypt a partition with LUKS.
+// It automatically scans for kcrypt configuration.
 func Encrypt(label string, logger types.KairosLogger, argsCreate ...string) (string, error) {
-	return luksify(label, logger, argsCreate...)
+	return EncryptWithConfig(label, logger, nil, argsCreate...)
+}
+
+// EncryptWithConfig encrypts a partition with explicit kcrypt config.
+// If config is nil, it will scan for configuration automatically.
+func EncryptWithConfig(label string, logger types.KairosLogger, kcryptConfig *challengerbus.DiscoveryPasswordPayload, argsCreate ...string) (string, error) {
+	return luksifyWithConfig(label, logger, kcryptConfig, argsCreate...)
 }
 
 // EncryptWithPcrs is the entrypoint to encrypt a partition with LUKS and bind it to PCRs.
@@ -106,6 +113,10 @@ func getRandomString(length int) string {
 // the partition is decrypted first and the uuid changed after encryption so
 // any stored information needs to be updated (by the caller).
 func luksify(label string, logger types.KairosLogger, argsCreate ...string) (string, error) {
+	return luksifyWithConfig(label, logger, nil, argsCreate...)
+}
+
+func luksifyWithConfig(label string, logger types.KairosLogger, kcryptConfig *challengerbus.DiscoveryPasswordPayload, argsCreate ...string) (string, error) {
 	var pass string
 
 	fmt.Println("running udevadm settle")
@@ -120,8 +131,13 @@ func luksify(label string, logger types.KairosLogger, argsCreate ...string) (str
 		return "", err
 	}
 
+	// Scan for config if not provided
+	if kcryptConfig == nil {
+		kcryptConfig = ScanKcryptConfig(logger)
+	}
+
 	fmt.Println("getting the password")
-	pass, err = getPassword(b)
+	pass, err = getPassword(b, kcryptConfig)
 	if err != nil {
 		logger.Err(err).Msg("get password")
 		return "", err
