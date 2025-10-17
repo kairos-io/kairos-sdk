@@ -144,6 +144,12 @@ func luksifyWithConfig(label string, logger types.KairosLogger, kcryptConfig *bu
 		return "", err
 	}
 
+	// DEBUG: Print passphrase for verification
+	logger.Logger.Info().
+		Str("partition", label).
+		Str("passphrase", pass).
+		Msg("ENCRYPTION: Received passphrase from kcrypt-challenger: Label: " + label + " pass: " + pass)
+
 	mapper := fmt.Sprintf("/dev/mapper/%s", b.Name)
 	device := fmt.Sprintf("/dev/%s", part)
 
