@@ -19,9 +19,11 @@ func ScanKcryptConfig(logger types.KairosLogger, dirs ...string) *bus.DiscoveryP
 		dirs = DefaultConfigDirs
 	}
 
+	logger.Debugf("ScanKcryptConfig: scanning directories: %v", dirs)
+
 	o := &collector.Options{NoLogs: true, MergeBootCMDLine: true}
 	if err := o.Apply(collector.Directories(dirs...)); err != nil {
-		logger.Debugf("Error applying collector options: %v", err)
+		logger.Debugf("ScanKcryptConfig: error applying collector options: %v", err)
 		return nil
 	}
 
@@ -29,15 +31,33 @@ func ScanKcryptConfig(logger types.KairosLogger, dirs ...string) *bus.DiscoveryP
 		return d, nil
 	})
 	if err != nil {
-		logger.Debugf("Error scanning for config: %v", err)
+		logger.Debugf("ScanKcryptConfig: error scanning for config: %v", err)
 		return nil
 	}
 
 	if collectorConfig == nil {
+		logger.Debugf("ScanKcryptConfig: collector returned nil config")
 		return nil
 	}
 
-	return ExtractKcryptConfigFromCollector(*collectorConfig)
+	logger.Debugf("ScanKcryptConfig: collector found config with %d keys", len(collectorConfig.Values))
+	if len(collectorConfig.Values) > 0 {
+		// Log the top-level keys
+		keys := make([]string, 0, len(collectorConfig.Values))
+		for k := range collectorConfig.Values {
+			keys = append(keys, k)
+		}
+		logger.Debugf("ScanKcryptConfig: top-level keys: %v", keys)
+	}
+
+	result := ExtractKcryptConfigFromCollector(*collectorConfig)
+	if result != nil {
+		logger.Debugf("ScanKcryptConfig: extracted kcrypt config - challenger_server=%s", result.ChallengerServer)
+	} else {
+		logger.Debugf("ScanKcryptConfig: no kcrypt config found in collector results")
+	}
+
+	return result
 }
 
 // ExtractKcryptConfigFromCollector extracts kcrypt.challenger configuration from a collector.Config
@@ -47,16 +67,32 @@ func ExtractKcryptConfigFromCollector(collectorConfig collector.Config) *bus.Dis
 		return nil
 	}
 
+	// First check for kairos.kcrypt.challenger (from cmdline like kairos.kcrypt.challenger_server=...)
+	kairosVal, hasKairos := collectorConfig.Values["kairos"]
+	if hasKairos {
+		if kairosMap, ok := kairosVal.(collector.ConfigValues); ok {
+			kcryptVal, hasKcrypt := kairosMap["kcrypt"]
+			if hasKcrypt {
+				if kcryptMap, ok := kcryptVal.(collector.ConfigValues); ok {
+					return extractChallengerConfig(kcryptMap)
+				}
+			}
+		}
+	}
+
+	// Fallback: check for kcrypt.challenger directly (from config files with kcrypt at top level)
 	kcryptVal, hasKcrypt := collectorConfig.Values["kcrypt"]
-	if !hasKcrypt {
-		return nil
+	if hasKcrypt {
+		if kcryptMap, ok := kcryptVal.(collector.ConfigValues); ok {
+			return extractChallengerConfig(kcryptMap)
+		}
 	}
 
-	kcryptMap, ok := kcryptVal.(collector.ConfigValues)
-	if !ok {
-		return nil
-	}
+	return nil
+}
 
+// extractChallengerConfig extracts challenger configuration from a kcrypt config map
+func extractChallengerConfig(kcryptMap collector.ConfigValues) *bus.DiscoveryPasswordPayload {
 	challengerVal, hasChallengerKey := kcryptMap["challenger"]
 	if !hasChallengerKey {
 		return nil
