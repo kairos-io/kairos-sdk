@@ -42,13 +42,16 @@ func UnlockAll(tpm bool, log types.KairosLogger) error {
 						if err != nil {
 							logger.Warn().Msgf("Unlocking failed: '%s'", err.Error())
 							logger.Warn().Msgf("Unlocking failed, command output: '%s'", out)
+						} else {
+							logger.Info().Msgf("Unlocking succeeded for '%s'", filepath.Join("/dev", p.Name))
 						}
 					} else {
 						err = UnlockDisk(p)
 						if err != nil {
-							logger.Warn().Msgf("Unlocking failed: '%s'", err.Error())
+							logger.Warn().Msgf("Unlocking failed for '%s': '%s'", filepath.Join("/dev", p.Name), err.Error())
+						} else {
+							logger.Info().Msgf("Unlocking succeeded for '%s'", filepath.Join("/dev", p.Name))
 						}
-						logger.Info().Msg("Unlocking succeeded")
 					}
 				} else {
 					logger.Info().Msgf("Device %s seems to be mounted at %s, skipping\n", filepath.Join("/dev", p.Name), filepath.Join("/dev", "mapper", p.Name))
