@@ -76,23 +76,41 @@ func UnlockDisk(b *block.Partition) error {
 // GetPassword gets the password for a block.Partition
 // TODO: Ask to discovery a pass to unlock. keep waiting until we get it and a timeout is exhausted with retrials (exp backoff).
 func getPassword(b *block.Partition) (password string, err error) {
+	// Get a logger for debugging
+	log := types.NewKairosLogger("kcrypt-getPassword", "info", false)
+	defer log.Close()
+
+	log.Logger.Info().
+		Str("partition_name", b.Name).
+		Str("partition_label", b.FilesystemLabel).
+		Str("partition_uuid", b.UUID).
+		Msg("Requesting password for partition")
+
 	bus.Reload()
 
 	bus.Manager.Response(bus.EventDiscoveryPassword, func(_ *pluggable.Plugin, r *pluggable.EventResponse) {
 		password = r.Data
 		if r.Errored() {
 			err = fmt.Errorf("failed discovery: %s", r.Error)
+			log.Logger.Error().Err(err).Msg("Plugin returned error")
+		} else {
+			log.Logger.Info().
+				Int("password_length", len(password)).
+				Msg("Received password from plugin")
 		}
 	})
 	_, err = bus.Manager.Publish(bus.EventDiscoveryPassword, b)
 	if err != nil {
+		log.Logger.Error().Err(err).Msg("Failed to publish event to bus")
 		return password, err
 	}
 
 	if password == "" {
+		log.Logger.Error().Msg("Received empty password from plugin")
 		return password, fmt.Errorf("received empty password")
 	}
 
+	log.Logger.Info().Msg("Password retrieval successful")
 	return
 }
 
