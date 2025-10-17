@@ -49,6 +49,7 @@ func ScanKcryptConfig(logger types.KairosLogger, dirs ...string) *bus.DiscoveryP
 		}
 		logger.Debugf("ScanKcryptConfig: top-level keys: %v", keys)
 	}
+	logger.Debugf("ScanKcryptConfig: struct is: %#v", collectorConfig.Values)
 
 	result := ExtractKcryptConfigFromCollector(*collectorConfig, logger)
 	if result != nil {
