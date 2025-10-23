@@ -155,6 +155,51 @@ func extractChallengerConfig(kcryptMap collector.ConfigValues) *bus.DiscoveryPas
 	return payload
 }
 
+// ExtractPCRBindingsFromCollector extracts bind-pcrs and bind-public-pcrs from collector config
+// Returns the PCR bindings, with defaults if not found
+func ExtractPCRBindingsFromCollector(collectorConfig collector.Config, log types.KairosLogger) (bindPCRs []string, bindPublicPCRs []string) {
+	if collectorConfig.Values == nil {
+		log.Debugf("ExtractPCRBindings: no config values")
+		return nil, nil
+	}
+
+	// Try to extract bind-pcrs
+	if bindPCRsVal, ok := collectorConfig.Values["bind-pcrs"]; ok {
+		log.Debugf("ExtractPCRBindings: found bind-pcrs, type=%T", bindPCRsVal)
+		// Handle both []string and []interface{} (from YAML unmarshaling)
+		switch v := bindPCRsVal.(type) {
+		case []string:
+			bindPCRs = v
+		case []interface{}:
+			for _, item := range v {
+				if str, ok := item.(string); ok {
+					bindPCRs = append(bindPCRs, str)
+				}
+			}
+		}
+		log.Debugf("ExtractPCRBindings: extracted bind-pcrs=%v", bindPCRs)
+	}
+
+	// Try to extract bind-public-pcrs
+	if bindPublicPCRsVal, ok := collectorConfig.Values["bind-public-pcrs"]; ok {
+		log.Debugf("ExtractPCRBindings: found bind-public-pcrs, type=%T", bindPublicPCRsVal)
+		// Handle both []string and []interface{} (from YAML unmarshaling)
+		switch v := bindPublicPCRsVal.(type) {
+		case []string:
+			bindPublicPCRs = v
+		case []interface{}:
+			for _, item := range v {
+				if str, ok := item.(string); ok {
+					bindPublicPCRs = append(bindPublicPCRs, str)
+				}
+			}
+		}
+		log.Debugf("ExtractPCRBindings: extracted bind-public-pcrs=%v", bindPublicPCRs)
+	}
+
+	return bindPCRs, bindPublicPCRs
+}
+
 // ExtractKcryptConfigFromCmdline parses cmdline string and extracts kcrypt.challenger configuration
 // This works with immucore which reads /proc/cmdline directly
 // Returns nil if no kcrypt config is found in cmdline

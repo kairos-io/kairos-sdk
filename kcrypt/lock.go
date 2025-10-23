@@ -39,6 +39,72 @@ func EncryptWithPcrs(label string, publicKeyPcrs []string, pcrs []string, logger
 	return luksifyMeasurements(label, publicKeyPcrs, pcrs, logger, argsCreate...)
 }
 
+// EncryptWithLocalTPMPassphrase encrypts a partition using a passphrase stored in TPM NV memory.
+// This bypasses the plugin bus and directly uses kairos-sdk TPM functions.
+// Used for non-UKI local encryption (without remote KMS).
+func EncryptWithLocalTPMPassphrase(label string, nvIndex, cIndex, tpmDevice string, logger types.KairosLogger, argsCreate ...string) (string, error) {
+	logger.Logger.Info().Str("partition", label).Msg("Encrypting with local TPM NV passphrase")
+
+	// Get or create passphrase from TPM NV memory
+	passphrase, err := GetOrCreateLocalTPMPassphrase(nvIndex, cIndex, tpmDevice)
+	if err != nil {
+		return "", fmt.Errorf("failed to get/create local TPM passphrase: %w", err)
+	}
+
+	logger.Logger.Info().
+		Str("partition", label).
+		Int("passphrase_length", len(passphrase)).
+		Msg("Retrieved passphrase from local TPM NV memory")
+
+	// Now encrypt using the passphrase (same logic as luksifyWithConfig but without plugin)
+	return luksifyWithPassphrase(label, passphrase, logger, argsCreate...)
+}
+
+// luksifyWithPassphrase encrypts a partition with an explicit passphrase (no plugin involved)
+func luksifyWithPassphrase(label string, passphrase string, logger types.KairosLogger, argsCreate ...string) (string, error) {
+	logger.Logger.Info().Msg("Running udevadm settle")
+	if err := udevAdmTrigger(udevTimeout); err != nil {
+		return "", err
+	}
+
+	logger.Logger.Info().Str("label", label).Msg("Finding partition")
+	part, b, err := findPartition(label)
+	if err != nil {
+		logger.Err(err).Msg("find partition")
+		return "", err
+	}
+
+	mapper := fmt.Sprintf("/dev/mapper/%s", b.Name)
+	device := fmt.Sprintf("/dev/%s", part)
+
+	extraArgs := []string{"--uuid", uuid.NewV5(uuid.NamespaceURL, label).String()}
+	extraArgs = append(extraArgs, "--label", label)
+	extraArgs = append(extraArgs, argsCreate...)
+
+	// Unmount the device if it's mounted before attempting to encrypt it
+	logger.Logger.Info().Str("device", device).Msg("Checking if device is mounted")
+	if err := unmountIfMounted(device, logger); err != nil {
+		logger.Err(err).Msg("unmount device")
+		return "", err
+	}
+
+	logger.Logger.Info().Str("device", device).Msg("Creating LUKS container")
+	if err := createLuks(device, passphrase, extraArgs...); err != nil {
+		logger.Err(err).Msg("create luks")
+		return "", err
+	}
+
+	logger.Logger.Info().Str("device", device).Str("label", label).Msg("Formatting LUKS container")
+	err = formatLuks(device, b.Name, mapper, label, passphrase, logger)
+	if err != nil {
+		logger.Err(err).Msg("format luks")
+		return "", err
+	}
+
+	logger.Logger.Info().Str("label", label).Msg("Partition encryption completed")
+	return fmt.Sprintf("%s:%s:%s", b.FilesystemLabel, b.Name, b.UUID), nil
+}
+
 // unmountIfMounted checks if a device is mounted and unmounts it if needed
 // This is necessary because cryptsetup cannot format a mounted partition
 func unmountIfMounted(device string, logger types.KairosLogger) error {
@@ -120,12 +186,12 @@ func luksify(label string, logger types.KairosLogger, argsCreate ...string) (str
 func luksifyWithConfig(label string, logger types.KairosLogger, kcryptConfig *bus.DiscoveryPasswordPayload, argsCreate ...string) (string, error) {
 	var pass string
 
-	fmt.Println("running udevadm settle")
+	logger.Logger.Info().Msg("Running udevadm settle")
 	if err := udevAdmTrigger(udevTimeout); err != nil {
 		return "", err
 	}
 
-	fmt.Printf("finding partition: %s \n ", label)
+	logger.Logger.Info().Str("label", label).Msg("Finding partition")
 	part, b, err := findPartition(label)
 	if err != nil {
 		logger.Err(err).Msg("find partition")
@@ -137,7 +203,7 @@ func luksifyWithConfig(label string, logger types.KairosLogger, kcryptConfig *bu
 		kcryptConfig = ScanKcryptConfig(logger)
 	}
 
-	fmt.Println("getting the password")
+	logger.Logger.Info().Str("partition", label).Msg("Getting password from kcrypt-challenger")
 	pass, err = getPassword(b, kcryptConfig)
 	if err != nil {
 		logger.Err(err).Msg("get password")
@@ -158,26 +224,26 @@ func luksifyWithConfig(label string, logger types.KairosLogger, kcryptConfig *bu
 	extraArgs = append(extraArgs, argsCreate...)
 
 	// Unmount the device if it's mounted before attempting to encrypt it
-	fmt.Println("checking if device is mounted")
+	logger.Logger.Info().Str("device", device).Msg("Checking if device is mounted")
 	if err := unmountIfMounted(device, logger); err != nil {
 		logger.Err(err).Msg("unmount device")
 		return "", err
 	}
 
-	fmt.Println("creating luks")
+	logger.Logger.Info().Str("device", device).Msg("Creating LUKS container")
 	if err := createLuks(device, pass, extraArgs...); err != nil {
 		logger.Err(err).Msg("create luks")
 		return "", err
 	}
 
-	fmt.Println("formatting luks")
+	logger.Logger.Info().Str("device", device).Str("label", label).Msg("Formatting LUKS container")
 	err = formatLuks(device, b.Name, mapper, label, pass, logger)
 	if err != nil {
 		logger.Err(err).Msg("format luks")
 		return "", err
 	}
 
-	fmt.Println("done with the crypt")
+	logger.Logger.Info().Str("label", label).Msg("Partition encryption completed")
 	return fmt.Sprintf("%s:%s:%s", b.FilesystemLabel, b.Name, b.UUID), nil
 }
 

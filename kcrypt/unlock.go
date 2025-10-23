@@ -2,7 +2,6 @@ package kcrypt
 
 import (
 	"fmt"
-
 	"path/filepath"
 
 	"github.com/anatol/luks.go"
