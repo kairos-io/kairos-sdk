@@ -123,8 +123,7 @@ func getPassword(b *block.Partition, kcryptConfig *bus.DiscoveryPasswordPayload)
 			log.Logger.Info().
 				Int("password_length", len(password)).
 				Str("partition", b.Name).
-				Str("passphrase", password).
-				Msg("DECRYPTION: Received password from plugin: Label " + b.Name + " Pass: " + password)
+				Msg("DECRYPTION: Received password from plugin")
 		}
 	})
 
