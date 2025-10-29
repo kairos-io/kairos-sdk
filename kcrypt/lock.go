@@ -63,7 +63,7 @@ func EncryptWithLocalTPMPassphrase(label string, nvIndex, cIndex, tpmDevice stri
 // luksifyWithPassphrase encrypts a partition with an explicit passphrase (no plugin involved)
 func luksifyWithPassphrase(label string, passphrase string, logger types.KairosLogger, argsCreate ...string) (string, error) {
 	logger.Logger.Info().Msg("Running udevadm settle")
-	if err := udevAdmTrigger(udevTimeout); err != nil {
+	if err := UdevAdmSettle(&logger, udevTimeout); err != nil {
 		return "", err
 	}
 
@@ -187,7 +187,7 @@ func luksifyWithConfig(label string, logger types.KairosLogger, kcryptConfig *bu
 	var pass string
 
 	logger.Logger.Info().Msg("Running udevadm settle")
-	if err := udevAdmTrigger(udevTimeout); err != nil {
+	if err := UdevAdmSettle(&logger, udevTimeout); err != nil {
 		return "", err
 	}
 
@@ -262,7 +262,7 @@ func luksifyWithConfig(label string, logger types.KairosLogger, kcryptConfig *bu
 // default for publicKeyPcrs is 11
 // default for pcrs is nothing, so it doesn't bind as we want to expand things like DBX and be able to blacklist certs and such.
 func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, logger types.KairosLogger, argsCreate ...string) error {
-	if err := udevAdmTrigger(udevTimeout); err != nil {
+	if err := UdevAdmSettle(&logger, udevTimeout); err != nil {
 		return err
 	}
 
@@ -420,20 +420,40 @@ func waitDevice(device string, attempts int) error {
 	return fmt.Errorf("no device found %s", device)
 }
 
-// udevAdmTrigger runs `udevadm trigger` and waits for the results to be
-// visible. It returns an error if the command fails or if the "settle"
-// timeout is exceeded.
-func udevAdmTrigger(timeout time.Duration) error {
-	// Make sure ghw will see all partitions correctly.
-	// older versions don't have --type=all. Try the simpler version then.
-	out, err := utils.SH("udevadm trigger --type=all || udevadm trigger")
-	if err != nil {
-		return fmt.Errorf("udevadm trigger failed: %w, out: %s", err, out)
+// UdevAdmSettle triggers udev events, syncs, and waits for udev to settle.
+// and adds basic debugging / diagnostics around the device state.
+// This is a comprehensive device settling function that should be used instead of manual sync/trigger/settle calls.
+// The logger parameter can be nil for silent operation.
+func UdevAdmSettle(logger *types.KairosLogger, timeout time.Duration) error {
+	if logger != nil {
+		logger.Logger.Info().Msg("Triggering udev events")
+	}
+
+	// Trigger subsystems and devices (this replays all udev rules)
+	triggerCmds := [][]string{
+		{"udevadm", "trigger", "--action=add", "--type=subsystems"},
+		{"udevadm", "trigger", "--action=add", "--type=devices"},
+	}
+
+	for _, args := range triggerCmds {
+		cmd := exec.Command(args[0], args[1:]...)
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("%s failed: %v (output: %s)", args, err, string(output))
+		}
+	}
+
+	if logger != nil {
+		logger.Logger.Info().Msg("Flushing filesystem buffers (sync)")
 	}
 	syscall.Sync()
 
+	if logger != nil {
+		logger.Logger.Info().Dur("timeout", timeout).Msg("Waiting for udev to settle")
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
+
 	cmd := exec.CommandContext(ctx, "udevadm", "settle")
 	output, err := cmd.CombinedOutput()
 
@@ -442,6 +462,10 @@ func udevAdmTrigger(timeout time.Duration) error {
 	}
 	if err != nil {
 		return fmt.Errorf("udevadm settle failed: %v (output: %s)", err, string(output))
+	}
+
+	if logger != nil {
+		logger.Logger.Info().Msg("udevadm settle completed successfully")
 	}
 
 	return nil
