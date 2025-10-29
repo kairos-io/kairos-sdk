@@ -59,9 +59,6 @@ func (e *RemoteKMSEncryptor) Encrypt(partitions []string) error {
 func (e *RemoteKMSEncryptor) Unlock(partitions []string) error {
 	e.logger.Logger.Info().Str("method", e.Name()).Strs("partitions", partitions).Msg("Unlocking encrypted partitions")
 
-	// Sync filesystem before unlocking
-	_, _ = utils.SH("sync")
-
 	// Unlock each partition and wait for it to be ready
 	for _, partitionLabel := range partitions {
 		if err := e.unlockPartition(partitionLabel); err != nil {
@@ -84,9 +81,6 @@ func (e *RemoteKMSEncryptor) unlockPartition(partitionLabel string) error {
 				Msg("Retrying unlock")
 			time.Sleep(time.Duration(attempt) * time.Second)
 		}
-
-		// Sync before checking
-		_, _ = utils.SH("sync")
 
 		// Find the partition device by label
 		devicePath, err := utils.SH(fmt.Sprintf("blkid -L %s", partitionLabel))
@@ -140,6 +134,7 @@ func (e *RemoteKMSEncryptor) unlockPartition(partitionLabel string) error {
 			continue
 		}
 
+		e.logger.Logger.Debug().Msg("partition name: " + partition.Name)
 		// Attempt to unlock
 		err = UnlockDiskWithConfig(partition, e.kcryptConfig)
 		if err != nil {
@@ -152,7 +147,6 @@ func (e *RemoteKMSEncryptor) unlockPartition(partitionLabel string) error {
 		}
 
 		// Verify the partition is now visible
-		_, _ = utils.SH("sync")
 		checkPath, _ := utils.SH(fmt.Sprintf("blkid -L %s", partitionLabel))
 		if strings.TrimSpace(checkPath) != "" {
 			e.logger.Logger.Info().
@@ -207,9 +201,6 @@ func (e *TPMWithPCREncryptor) Encrypt(partitions []string) error {
 func (e *TPMWithPCREncryptor) Unlock(partitions []string) error {
 	e.logger.Logger.Info().Str("method", e.Name()).Strs("partitions", partitions).Msg("Unlocking encrypted partitions")
 
-	// Sync filesystem before unlocking
-	_, _ = utils.SH("sync")
-
 	// TPM with PCR uses TPM-based unlock with systemd
 	_ = os.Setenv("SYSTEMD_LOG_LEVEL", "debug")
 	defer os.Unsetenv("SYSTEMD_LOG_LEVEL")
@@ -236,9 +227,6 @@ func (e *TPMWithPCREncryptor) unlockPartition(partitionLabel string) error {
 				Msg("Retrying unlock")
 			time.Sleep(time.Duration(attempt) * time.Second)
 		}
-
-		// Sync before checking
-		_, _ = utils.SH("sync")
 
 		// Find the partition device by label
 		devicePath, err := utils.SH(fmt.Sprintf("blkid -L %s", partitionLabel))
@@ -277,7 +265,6 @@ func (e *TPMWithPCREncryptor) unlockPartition(partitionLabel string) error {
 		}
 
 		// Verify the partition is now visible
-		_, _ = utils.SH("sync")
 		checkPath, _ := utils.SH(fmt.Sprintf("blkid -L %s", partitionLabel))
 		if strings.TrimSpace(checkPath) != "" {
 			e.logger.Logger.Info().
@@ -349,9 +336,6 @@ func (e *LocalTPMNVEncryptor) Encrypt(partitions []string) error {
 func (e *LocalTPMNVEncryptor) Unlock(partitions []string) error {
 	e.logger.Logger.Info().Str("method", e.Name()).Strs("partitions", partitions).Msg("Unlocking encrypted partitions")
 
-	// Sync filesystem before unlocking
-	_, _ = utils.SH("sync")
-
 	// Unlock each partition and wait for it to be ready
 	for _, partitionLabel := range partitions {
 		if err := e.unlockPartition(partitionLabel); err != nil {
@@ -374,9 +358,6 @@ func (e *LocalTPMNVEncryptor) unlockPartition(partitionLabel string) error {
 				Msg("Retrying unlock")
 			time.Sleep(time.Duration(attempt) * time.Second)
 		}
-
-		// Sync before checking
-		_, _ = utils.SH("sync")
 
 		// Find the partition device by label
 		devicePath, err := utils.SH(fmt.Sprintf("blkid -L %s", partitionLabel))
@@ -442,7 +423,6 @@ func (e *LocalTPMNVEncryptor) unlockPartition(partitionLabel string) error {
 		}
 
 		// Verify the partition is now visible
-		_, _ = utils.SH("sync")
 		checkPath, _ := utils.SH(fmt.Sprintf("blkid -L %s", partitionLabel))
 		if strings.TrimSpace(checkPath) != "" {
 			e.logger.Logger.Info().
