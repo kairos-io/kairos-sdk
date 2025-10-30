@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/kairos-io/kairos-sdk/kcrypt/bus"
 	"github.com/kairos-io/kairos-sdk/types"
 	"github.com/kairos-io/kairos-sdk/utils"
 )
@@ -154,75 +153,6 @@ func getRandomString(length int) string {
 	return string(b)
 }
 
-// luksify Take a part label, and recreates it with LUKS. IT OVERWRITES DATA!.
-// On success, it returns a machine parseable string with the partition information
-// (label:name:uuid) so that it can be stored by the caller for later use.
-// This is because the label of the encrypted partition is not accessible unless
-// the partition is decrypted first and the uuid changed after encryption so
-// any stored information needs to be updated (by the caller).
-func luksify(label string, logger types.KairosLogger, kcryptConfig *bus.KcryptConfig, argsCreate ...string) (string, error) {
-	var pass string
-
-	logger.Logger.Info().Msg("Running udevadm settle")
-	if err := UdevAdmSettle(&logger, udevTimeout); err != nil {
-		return "", err
-	}
-
-	logger.Logger.Info().Str("label", label).Msg("Finding partition")
-	info, err := findPartitionByLabel(label, logger)
-	if err != nil {
-		logger.Err(err).Msg("find partition")
-		return "", err
-	}
-
-	// Scan for config if not provided
-	if kcryptConfig == nil {
-		kcryptConfig = ScanKcryptConfig(logger)
-	}
-
-	logger.Logger.Info().Str("partition", label).Msg("Getting password from kcrypt-challenger")
-	pass, err = getPassword(info.Partition, kcryptConfig)
-	if err != nil {
-		logger.Err(err).Msg("get password")
-		return "", err
-	}
-
-	// Log that we received a passphrase (without revealing it)
-	logger.Logger.Info().
-		Str("partition", label).
-		Int("passphrase_length", len(pass)).
-		Msg("ENCRYPTION: Received passphrase from kcrypt-challenger")
-
-	mapper := info.MapperPath()
-	device := info.DevicePath
-
-	extraArgs := []string{"--uuid", uuid.NewV5(uuid.NamespaceURL, label).String()}
-	extraArgs = append(extraArgs, "--label", label)
-	extraArgs = append(extraArgs, argsCreate...)
-
-	// Unmount the device if it's mounted before attempting to encrypt it
-	logger.Logger.Info().Str("device", device).Msg("Checking if device is mounted")
-	if err := unmountIfMounted(device, logger); err != nil {
-		logger.Err(err).Msg("unmount device")
-		return "", err
-	}
-
-	logger.Logger.Info().Str("device", device).Msg("Creating LUKS container")
-	if err := createLuks(device, pass, extraArgs...); err != nil {
-		logger.Err(err).Msg("create luks")
-		return "", err
-	}
-
-	logger.Logger.Info().Str("device", device).Str("label", label).Msg("Formatting LUKS container")
-	err = formatLuks(device, info.Partition.Name, mapper, label, pass, logger)
-	if err != nil {
-		logger.Err(err).Msg("format luks")
-		return "", err
-	}
-
-	logger.Logger.Info().Str("label", label).Msg("Partition encryption completed")
-	return fmt.Sprintf("%s:%s:%s", info.Partition.FilesystemLabel, info.Partition.Name, info.Partition.UUID), nil
-}
 
 // luksifyMeasurements takes a label and a list if public-keys and pcrs to bind and uses the measurements.
 // in the current node to encrypt the partition with those and bind those to the given pcrs

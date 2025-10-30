@@ -9,12 +9,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/block"
 	"github.com/kairos-io/kairos-sdk/collector"
 	"github.com/kairos-io/kairos-sdk/kcrypt/bus"
 	"github.com/kairos-io/kairos-sdk/types"
 	"github.com/kairos-io/kairos-sdk/utils"
+	"github.com/mudler/go-pluggable"
 )
 
 // PartitionEncryptor defines the interface for encrypting and decrypting partitions
@@ -45,7 +47,7 @@ func (e *RemoteKMSEncryptor) Encrypt(partitions []string) error {
 	for _, partition := range partitions {
 		e.logger.Logger.Info().Str("partition", partition).Msg("Encrypting partition")
 
-		_, err := luksify(partition, e.logger, e.kcryptConfig)
+		_, err := e.luksify(partition)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt partition %s: %w", partition, err)
 		}
@@ -101,7 +103,7 @@ func (e *RemoteKMSEncryptor) unlockPartition(partitionLabel string) error {
 		e.logger.Logger.Debug().Msg("partition name: " + info.Partition.Name)
 
 		// Get passphrase from remote KMS
-		pass, err := getPassword(info.Partition, e.kcryptConfig)
+		pass, err := e.getPasswordFromChallenger(info.Partition)
 		if err != nil {
 			lastErr = fmt.Errorf("failed to get password: %w", err)
 			e.logger.Logger.Warn().
@@ -144,6 +146,134 @@ func (e *RemoteKMSEncryptor) Validate() error {
 	// No special validation needed for remote KMS
 	// The actual connection will be validated when encrypting
 	return nil
+}
+
+// luksify Take a part label, and recreates it with LUKS. IT OVERWRITES DATA!.
+// On success, it returns a machine parseable string with the partition information
+// (label:name:uuid) so that it can be stored by the caller for later use.
+// This is because the label of the encrypted partition is not accessible unless
+// the partition is decrypted first and the uuid changed after encryption so
+// any stored information needs to be updated (by the caller).
+func (e *RemoteKMSEncryptor) luksify(label string, argsCreate ...string) (string, error) {
+	var pass string
+
+	e.logger.Logger.Info().Msg("Running udevadm settle")
+	if err := UdevAdmSettle(&e.logger, udevTimeout); err != nil {
+		return "", err
+	}
+
+	e.logger.Logger.Info().Str("label", label).Msg("Finding partition")
+	info, err := findPartitionByLabel(label, e.logger)
+	if err != nil {
+		e.logger.Err(err).Msg("find partition")
+		return "", err
+	}
+
+	e.logger.Logger.Info().Str("partition", label).Msg("Getting password from kcrypt-challenger")
+	pass, err = e.getPasswordFromChallenger(info.Partition)
+	if err != nil {
+		e.logger.Err(err).Msg("get password")
+		return "", err
+	}
+
+	// Log that we received a passphrase (without revealing it)
+	e.logger.Logger.Info().
+		Str("partition", label).
+		Int("passphrase_length", len(pass)).
+		Msg("ENCRYPTION: Received passphrase from kcrypt-challenger")
+
+	mapper := info.MapperPath()
+	device := info.DevicePath
+
+	extraArgs := []string{"--uuid", uuid.NewV5(uuid.NamespaceURL, label).String()}
+	extraArgs = append(extraArgs, "--label", label)
+	extraArgs = append(extraArgs, argsCreate...)
+
+	// Unmount the device if it's mounted before attempting to encrypt it
+	e.logger.Logger.Info().Str("device", device).Msg("Checking if device is mounted")
+	if err := unmountIfMounted(device, e.logger); err != nil {
+		e.logger.Err(err).Msg("unmount device")
+		return "", err
+	}
+
+	e.logger.Logger.Info().Str("device", device).Msg("Creating LUKS container")
+	if err := createLuks(device, pass, extraArgs...); err != nil {
+		e.logger.Err(err).Msg("create luks")
+		return "", err
+	}
+
+	e.logger.Logger.Info().Str("device", device).Str("label", label).Msg("Formatting LUKS container")
+	err = formatLuks(device, info.Partition.Name, mapper, label, pass, e.logger)
+	if err != nil {
+		e.logger.Err(err).Msg("format luks")
+		return "", err
+	}
+
+	e.logger.Logger.Info().Str("label", label).Msg("Partition encryption completed")
+	return fmt.Sprintf("%s:%s:%s", info.Partition.FilesystemLabel, info.Partition.Name, info.Partition.UUID), nil
+}
+
+// getPasswordFromChallenger gets the password for a block.Partition using KcryptConfig.
+// It constructs the DiscoveryPasswordPayload internally for communication with the plugin.
+func (e *RemoteKMSEncryptor) getPasswordFromChallenger(b *block.Partition) (password string, err error) {
+	// Get a logger for debugging
+	log := types.NewKairosLogger("kcrypt-getPassword", "info", false)
+	defer log.Close()
+
+	log.Logger.Info().
+		Str("partition_name", b.Name).
+		Str("partition_label", b.FilesystemLabel).
+		Str("partition_uuid", b.UUID).
+		Msg("Requesting password for partition")
+
+	bus.Reload()
+
+	bus.Manager.Response(bus.EventDiscoveryPassword, func(_ *pluggable.Plugin, r *pluggable.EventResponse) {
+		password = r.Data
+		if r.Errored() {
+			err = fmt.Errorf("failed discovery: %s", r.Error)
+			log.Logger.Error().Err(err).Msg("Plugin returned error")
+		} else {
+			log.Logger.Info().
+				Int("password_length", len(password)).
+				Str("partition", b.Name).
+				Msg("DECRYPTION: Received password from plugin")
+		}
+	})
+
+	// Use kcryptConfig from the encryptor, scanning if not provided
+	kcryptConfig := e.kcryptConfig
+	if kcryptConfig == nil {
+		kcryptConfig = ScanKcryptConfig(e.logger)
+	}
+
+	// Construct DiscoveryPasswordPayload from KcryptConfig + partition
+	// This is where we create the payload that will be sent to kcrypt-challenger
+	var payload bus.DiscoveryPasswordPayload
+	payload.Partition = b
+	if kcryptConfig != nil {
+		payload.ChallengerServer = kcryptConfig.ChallengerServer
+		payload.MDNS = kcryptConfig.MDNS
+		log.Logger.Info().
+			Str("challenger_server", payload.ChallengerServer).
+			Msg("Using provided kcrypt config")
+	} else {
+		log.Logger.Info().Msg("No kcrypt config provided, using local encryption")
+	}
+
+	_, err = bus.Manager.Publish(bus.EventDiscoveryPassword, payload)
+	if err != nil {
+		log.Logger.Error().Err(err).Msg("Failed to publish event to bus")
+		return password, err
+	}
+
+	if password == "" {
+		log.Logger.Error().Msg("Received empty password from plugin")
+		return password, fmt.Errorf("received empty password")
+	}
+
+	log.Logger.Info().Msg("Password retrieval successful")
+	return
 }
 
 // TPMWithPCREncryptor encrypts partitions using TPM with PCR policy (UKI mode)
