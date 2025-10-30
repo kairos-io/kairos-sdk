@@ -389,17 +389,16 @@ func UdevAdmSettle(logger *types.KairosLogger, timeout time.Duration) error {
 	}
 
 	// Trigger subsystems and devices (this replays all udev rules)
-	triggerCmds := [][]string{
-		{"udevadm", "trigger", "--action=add", "--type=subsystems"},
-		{"udevadm", "trigger", "--action=add", "--type=devices"},
+	cmd1 := exec.Command("udevadm", "trigger", "--action=add", "--type=subsystems")
+	output1, err := cmd1.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("udevadm trigger subsystems failed: %v (output: %s)", err, string(output1))
 	}
 
-	for _, args := range triggerCmds {
-		cmd := exec.Command(args[0], args[1:]...)
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("%s failed: %v (output: %s)", args, err, string(output))
-		}
+	cmd2 := exec.Command("udevadm", "trigger", "--action=add", "--type=devices")
+	output2, err := cmd2.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("udevadm trigger devices failed: %v (output: %s)", err, string(output2))
 	}
 
 	if logger != nil {
