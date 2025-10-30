@@ -111,7 +111,6 @@ func (e *RemoteKMSEncryptor) unlockPartition(partitionLabel string) error {
 			continue
 		}
 
-		// Attempt to unlock
 		err = luksUnlock(info.DevicePath, info.PartitionName, pass, &e.logger)
 		if err != nil {
 			lastErr = fmt.Errorf("unlock failed: %w", err)
