@@ -12,9 +12,9 @@ import (
 var DefaultConfigDirs = []string{"/oem", "/sysroot/oem", "/run/cos/oem"}
 
 // ScanKcryptConfig scans for Kairos configuration in the given directories (or defaults),
-// merges with cmdline, and extracts just the kcrypt.challenger configuration.
+// merges with cmdline, and extracts the kcrypt configuration.
 // Returns nil if no kcrypt config is found.
-func ScanKcryptConfig(logger types.KairosLogger, dirs ...string) *bus.DiscoveryPasswordPayload {
+func ScanKcryptConfig(logger types.KairosLogger, dirs ...string) *bus.KcryptConfig {
 	if len(dirs) == 0 {
 		dirs = DefaultConfigDirs
 	}
@@ -61,9 +61,9 @@ func ScanKcryptConfig(logger types.KairosLogger, dirs ...string) *bus.DiscoveryP
 	return result
 }
 
-// ExtractKcryptConfigFromCollector extracts kcrypt.challenger configuration from a collector.Config
+// ExtractKcryptConfigFromCollector extracts kcrypt configuration from a collector.Config
 // This works with kairos-agent which uses collector to merge file and cmdline configs
-func ExtractKcryptConfigFromCollector(collectorConfig collector.Config, log types.KairosLogger) *bus.DiscoveryPasswordPayload {
+func ExtractKcryptConfigFromCollector(collectorConfig collector.Config, log types.KairosLogger) *bus.KcryptConfig {
 	if collectorConfig.Values == nil {
 		return nil
 	}
@@ -119,8 +119,8 @@ func ExtractKcryptConfigFromCollector(collectorConfig collector.Config, log type
 	return nil
 }
 
-// extractChallengerConfig extracts challenger configuration from a kcrypt config map
-func extractChallengerConfig(kcryptMap collector.ConfigValues) *bus.DiscoveryPasswordPayload {
+// extractChallengerConfig extracts kcrypt configuration from a kcrypt config map
+func extractChallengerConfig(kcryptMap collector.ConfigValues) *bus.KcryptConfig {
 	challengerVal, hasChallengerKey := kcryptMap["challenger"]
 	if !hasChallengerKey {
 		return nil
@@ -131,28 +131,28 @@ func extractChallengerConfig(kcryptMap collector.ConfigValues) *bus.DiscoveryPas
 		return nil
 	}
 
-	payload := &bus.DiscoveryPasswordPayload{}
+	config := &bus.KcryptConfig{}
 
 	if server, ok := challengerMap["challenger_server"].(string); ok {
-		payload.ChallengerServer = server
+		config.ChallengerServer = server
 	}
 	if mdns, ok := challengerMap["mdns"].(bool); ok {
-		payload.MDNS = mdns
+		config.MDNS = mdns
 	}
 	if cert, ok := challengerMap["certificate"].(string); ok {
-		payload.Certificate = cert
+		config.Certificate = cert
 	}
 	if nvIndex, ok := challengerMap["nv_index"].(string); ok {
-		payload.NVIndex = nvIndex
+		config.NVIndex = nvIndex
 	}
 	if cIndex, ok := challengerMap["c_index"].(string); ok {
-		payload.CIndex = cIndex
+		config.CIndex = cIndex
 	}
 	if tpmDevice, ok := challengerMap["tpm_device"].(string); ok {
-		payload.TPMDevice = tpmDevice
+		config.TPMDevice = tpmDevice
 	}
 
-	return payload
+	return config
 }
 
 // ExtractPCRBindingsFromCollector extracts bind-pcrs and bind-public-pcrs from collector config
@@ -200,11 +200,11 @@ func ExtractPCRBindingsFromCollector(collectorConfig collector.Config, log types
 	return bindPCRs, bindPublicPCRs
 }
 
-// ExtractKcryptConfigFromCmdline parses cmdline string and extracts kcrypt.challenger configuration
+// ExtractKcryptConfigFromCmdline parses cmdline string and extracts kcrypt configuration
 // This works with immucore which reads /proc/cmdline directly
 // Returns nil if no kcrypt config is found in cmdline
-func ExtractKcryptConfigFromCmdline(cmdline string) *bus.DiscoveryPasswordPayload {
-	payload := &bus.DiscoveryPasswordPayload{}
+func ExtractKcryptConfigFromCmdline(cmdline string) *bus.KcryptConfig {
+	config := &bus.KcryptConfig{}
 	foundAny := false
 
 	parts := strings.Fields(cmdline)
@@ -217,22 +217,22 @@ func ExtractKcryptConfigFromCmdline(cmdline string) *bus.DiscoveryPasswordPayloa
 
 		switch key {
 		case "kairos.kcrypt.challenger_server":
-			payload.ChallengerServer = value
+			config.ChallengerServer = value
 			foundAny = true
 		case "kairos.kcrypt.mdns":
-			payload.MDNS = value == "true"
+			config.MDNS = value == "true"
 			foundAny = true
 		case "kairos.kcrypt.certificate":
-			payload.Certificate = value
+			config.Certificate = value
 			foundAny = true
 		case "kairos.kcrypt.nv_index":
-			payload.NVIndex = value
+			config.NVIndex = value
 			foundAny = true
 		case "kairos.kcrypt.c_index":
-			payload.CIndex = value
+			config.CIndex = value
 			foundAny = true
 		case "kairos.kcrypt.tpm_device":
-			payload.TPMDevice = value
+			config.TPMDevice = value
 			foundAny = true
 		}
 	}
@@ -241,5 +241,5 @@ func ExtractKcryptConfigFromCmdline(cmdline string) *bus.DiscoveryPasswordPayloa
 		return nil
 	}
 
-	return payload
+	return config
 }

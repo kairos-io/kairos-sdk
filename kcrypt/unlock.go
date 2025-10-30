@@ -25,7 +25,7 @@ func UnlockAll(tpm bool, log types.KairosLogger) error {
 
 // UnlockAllWithConfig unlocks all encrypted devices with an explicit config.
 // If config is nil, it will scan for configuration automatically.
-func UnlockAllWithConfig(tpm bool, log types.KairosLogger, kcryptConfig *bus.DiscoveryPasswordPayload) error {
+func UnlockAllWithConfig(tpm bool, log types.KairosLogger, kcryptConfig *bus.KcryptConfig) error {
 	bus.Manager.Initialize()
 	logger := log.Logger
 
@@ -93,7 +93,7 @@ func UnlockDisk(b *block.Partition) error {
 }
 
 // UnlockDiskWithConfig unlocks a single block.Partition with explicit config.
-func UnlockDiskWithConfig(b *block.Partition, kcryptConfig *bus.DiscoveryPasswordPayload) error {
+func UnlockDiskWithConfig(b *block.Partition, kcryptConfig *bus.KcryptConfig) error {
 	pass, err := getPassword(b, kcryptConfig)
 	if err != nil {
 		return fmt.Errorf("error retrieving password remotely: %w", err)
@@ -102,9 +102,10 @@ func UnlockDiskWithConfig(b *block.Partition, kcryptConfig *bus.DiscoveryPasswor
 	return luksUnlock(filepath.Join("/dev", b.Name), b.Name, pass)
 }
 
-// GetPassword gets the password for a block.Partition
+// getPassword gets the password for a block.Partition using KcryptConfig.
+// It constructs the DiscoveryPasswordPayload internally for communication with the plugin.
 // TODO: Ask to discovery a pass to unlock. keep waiting until we get it and a timeout is exhausted with retrials (exp backoff).
-func getPassword(b *block.Partition, kcryptConfig *bus.DiscoveryPasswordPayload) (password string, err error) {
+func getPassword(b *block.Partition, kcryptConfig *bus.KcryptConfig) (password string, err error) {
 	// Get a logger for debugging
 	log := types.NewKairosLogger("kcrypt-getPassword", "info", false)
 	defer log.Close()
@@ -130,16 +131,19 @@ func getPassword(b *block.Partition, kcryptConfig *bus.DiscoveryPasswordPayload)
 		}
 	})
 
+	// Construct DiscoveryPasswordPayload from KcryptConfig + partition
+	// This is where we create the payload that will be sent to kcrypt-challenger
 	var payload bus.DiscoveryPasswordPayload
+	payload.Partition = b
 	if kcryptConfig != nil {
-		payload = *kcryptConfig
+		payload.ChallengerServer = kcryptConfig.ChallengerServer
+		payload.MDNS = kcryptConfig.MDNS
 		log.Logger.Info().
 			Str("challenger_server", payload.ChallengerServer).
 			Msg("Using provided kcrypt config")
 	} else {
 		log.Logger.Info().Msg("No kcrypt config provided, using local encryption")
 	}
-	payload.Partition = b
 
 	_, err = bus.Manager.Publish(bus.EventDiscoveryPassword, payload)
 	if err != nil {
@@ -190,7 +194,7 @@ func luksUnlockWithLogger(device, mapper, password string, logger *types.KairosL
 					Int("attempt", attempt+1).
 					Int("max_retries", maxRetries).
 					Str("device", device).
-					Err(openErr).
+					Err(unlockErr).
 					Msg("Failed to open device")
 			}
 
