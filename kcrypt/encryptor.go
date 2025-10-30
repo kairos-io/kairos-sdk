@@ -553,7 +553,7 @@ func GetEncryptor(logger types.KairosLogger) (PartitionEncryptor, error) {
 		// Scan config again to get PCR bindings
 		collectorConfig := scanCollectorConfig(logger)
 		if collectorConfig != nil {
-			bindPCRs, bindPublicPCRs = ExtractPCRBindingsFromCollector(*collectorConfig, logger)
+			bindPCRs, bindPublicPCRs = extractPCRBindingsFromCollector(*collectorConfig, logger)
 		}
 	}
 
