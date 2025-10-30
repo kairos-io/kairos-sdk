@@ -163,7 +163,7 @@ func (e *TPMWithPCREncryptor) Encrypt(partitions []string) error {
 	for _, partition := range partitions {
 		e.logger.Logger.Info().Str("partition", partition).Msg("Encrypting partition")
 
-		err := EncryptWithPcrs(partition, e.bindPublicPCRs, e.bindPCRs, e.logger)
+		err := luksifyMeasurements(partition, e.bindPublicPCRs, e.bindPCRs, e.logger)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt partition %s: %w", partition, err)
 		}
