@@ -1,8 +1,6 @@
 package kcrypt
 
 import (
-	"strings"
-
 	"github.com/kairos-io/kairos-sdk/collector"
 	"github.com/kairos-io/kairos-sdk/kcrypt/bus"
 	"github.com/kairos-io/kairos-sdk/types"

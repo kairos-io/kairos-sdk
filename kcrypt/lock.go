@@ -349,7 +349,7 @@ func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, lo
 func formatLuks(device, name, mapper, label, pass string, logger types.KairosLogger) error {
 	l := logger.Logger.With().Str("device", device).Str("name", name).Str("mapper", mapper).Logger()
 	l.Debug().Msg("unlock")
-	if err := luksUnlock(device, name, pass); err != nil {
+	if err := luksUnlock(device, name, pass, &logger); err != nil {
 		return fmt.Errorf("unlock err: %w", err)
 	}
 

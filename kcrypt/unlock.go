@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/anatol/luks.go"
-	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/block"
 	"github.com/kairos-io/kairos-sdk/kcrypt/bus"
 	"github.com/kairos-io/kairos-sdk/types"
@@ -16,90 +15,15 @@ import (
 	"github.com/mudler/go-pluggable"
 )
 
-// UnlockAll Unlocks all encrypted devices found in the system.
-// It automatically scans for kcrypt configuration from available sources (files + cmdline)
-// and passes it to the kcrypt-challenger plugin.
-func UnlockAll(tpm bool, log types.KairosLogger) error {
-	return UnlockAllWithConfig(tpm, log, nil)
-}
-
-// UnlockAllWithConfig unlocks all encrypted devices with an explicit config.
-// If config is nil, it will scan for configuration automatically.
-func UnlockAllWithConfig(tpm bool, log types.KairosLogger, kcryptConfig *bus.KcryptConfig) error {
-	bus.Manager.Initialize()
-	logger := log.Logger
-
-	// Scan for kcrypt config if not provided
-	if kcryptConfig == nil {
-		kcryptConfig = ScanKcryptConfig(log)
-		if kcryptConfig != nil {
-			logger.Info().
-				Str("challenger_server", kcryptConfig.ChallengerServer).
-				Bool("mdns", kcryptConfig.MDNS).
-				Msg("Scanned kcrypt config for unlock")
-		} else {
-			logger.Debug().Msg("No kcrypt config found, using local encryption")
-		}
-	}
-
-	blk, err := ghw.Block()
-	if err != nil {
-		logger.Warn().Msgf("Warning: Error reading partitions '%s \n", err.Error())
-
-		return nil
-	}
-
-	if err := UdevAdmSettle(&log, udevTimeout); err != nil {
-		return err
-	}
-
-	for _, disk := range blk.Disks {
-		for _, p := range disk.Partitions {
-			if p.Type == "crypto_LUKS" {
-				// Check if device is already mounted
-				// We mount it under /dev/mapper/DEVICE, so It's pretty easy to check
-				if !utils.Exists(filepath.Join("/dev", "mapper", p.Name)) {
-					logger.Info().Msgf("Unmounted Luks found at '%s'", filepath.Join("/dev", p.Name))
-					if tpm {
-						out, err := utils.SH(fmt.Sprintf("/usr/lib/systemd/systemd-cryptsetup attach %s %s - tpm2-device=auto", p.Name, filepath.Join("/dev", p.Name)))
-						if err != nil {
-							logger.Warn().Msgf("Unlocking failed: '%s'", err.Error())
-							logger.Warn().Msgf("Unlocking failed, command output: '%s'", out)
-						} else {
-							logger.Info().Msgf("Unlocking succeeded for '%s'", filepath.Join("/dev", p.Name))
-						}
-					} else {
-						err = UnlockDiskWithConfig(p, kcryptConfig)
-						if err != nil {
-							logger.Warn().Msgf("Unlocking failed for '%s': '%s'", filepath.Join("/dev", p.Name), err.Error())
-						} else {
-							logger.Info().Msgf("Unlocking succeeded for '%s'", filepath.Join("/dev", p.Name))
-						}
-					}
-				} else {
-					logger.Info().Msgf("Device %s seems to be mounted at %s, skipping\n", filepath.Join("/dev", p.Name), filepath.Join("/dev", "mapper", p.Name))
-				}
-
-			}
-		}
-	}
-	return nil
-}
-
-// UnlockDisk unlocks a single block.Partition.
-// Deprecated: Use UnlockAll instead which handles config automatically.
-func UnlockDisk(b *block.Partition) error {
-	return UnlockDiskWithConfig(b, nil)
-}
-
-// UnlockDiskWithConfig unlocks a single block.Partition with explicit config.
-func UnlockDiskWithConfig(b *block.Partition, kcryptConfig *bus.KcryptConfig) error {
+// UnlockWithKMS unlocks a single block.Partition using remote KMS (via plugin bus).
+// This contacts kcrypt-challenger or other plugins to retrieve the passphrase.
+func UnlockWithKMS(b *block.Partition, kcryptConfig *bus.KcryptConfig, logger types.KairosLogger) error {
 	pass, err := getPassword(b, kcryptConfig)
 	if err != nil {
 		return fmt.Errorf("error retrieving password remotely: %w", err)
 	}
 
-	return luksUnlock(filepath.Join("/dev", b.Name), b.Name, pass)
+	return luksUnlock(filepath.Join("/dev", b.Name), b.Name, pass, &logger)
 }
 
 // getPassword gets the password for a block.Partition using KcryptConfig.
@@ -160,11 +84,7 @@ func getPassword(b *block.Partition, kcryptConfig *bus.KcryptConfig) (password s
 	return
 }
 
-func luksUnlock(device, mapper, password string) error {
-	return luksUnlockWithLogger(device, mapper, password, nil)
-}
-
-func luksUnlockWithLogger(device, mapper, password string, logger *types.KairosLogger) error {
+func luksUnlock(device, mapper, password string, logger *types.KairosLogger) error {
 	// Check if device exists and is accessible
 	if _, err := os.Stat(device); err != nil {
 		return fmt.Errorf("device not accessible: %v", err)
