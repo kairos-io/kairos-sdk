@@ -160,9 +160,9 @@ func extractChallengerConfig(kcryptMap collector.ConfigValues) *bus.KcryptConfig
 	return config
 }
 
-// ExtractPCRBindingsFromCollector extracts bind-pcrs and bind-public-pcrs from collector config
+// extractPCRBindingsFromCollector extracts bind-pcrs and bind-public-pcrs from collector config
 // Returns the PCR bindings, with defaults if not found
-func ExtractPCRBindingsFromCollector(collectorConfig collector.Config, log types.KairosLogger) (bindPCRs []string, bindPublicPCRs []string) {
+func extractPCRBindingsFromCollector(collectorConfig collector.Config, log types.KairosLogger) (bindPCRs []string, bindPublicPCRs []string) {
 	if collectorConfig.Values == nil {
 		log.Debugf("ExtractPCRBindings: no config values")
 		return nil, nil
