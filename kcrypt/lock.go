@@ -43,7 +43,7 @@ func encryptWithLocalTPMPassphrase(label string, nvIndex, cIndex, tpmDevice stri
 // luksifyWithPassphrase encrypts a partition with an explicit passphrase (no plugin involved)
 func luksifyWithPassphrase(label string, passphrase string, logger types.KairosLogger, argsCreate ...string) (string, error) {
 	logger.Logger.Info().Msg("Running udevadm settle")
-	if err := UdevAdmSettle(&logger, udevTimeout); err != nil {
+	if err := udevAdmSettle(&logger, udevTimeout); err != nil {
 		return "", err
 	}
 
@@ -153,7 +153,6 @@ func getRandomString(length int) string {
 	return string(b)
 }
 
-
 // luksifyMeasurements takes a label and a list if public-keys and pcrs to bind and uses the measurements.
 // in the current node to encrypt the partition with those and bind those to the given pcrs
 // this expects systemd 255 as it needs the SRK public key that systemd extracts
@@ -169,7 +168,7 @@ func getRandomString(length int) string {
 // default for publicKeyPcrs is 11
 // default for pcrs is nothing, so it doesn't bind as we want to expand things like DBX and be able to blacklist certs and such.
 func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, logger types.KairosLogger, argsCreate ...string) error {
-	if err := UdevAdmSettle(&logger, udevTimeout); err != nil {
+	if err := udevAdmSettle(&logger, udevTimeout); err != nil {
 		return err
 	}
 
@@ -309,11 +308,11 @@ func waitDevice(device string, attempts int) error {
 	return fmt.Errorf("no device found %s", device)
 }
 
-// UdevAdmSettle triggers udev events, syncs, and waits for udev to settle.
+// udevAdmSettle triggers udev events, syncs, and waits for udev to settle.
 // and adds basic debugging / diagnostics around the device state.
 // This is a comprehensive device settling function that should be used instead of manual sync/trigger/settle calls.
 // The logger parameter can be nil for silent operation.
-func UdevAdmSettle(logger *types.KairosLogger, timeout time.Duration) error {
+func udevAdmSettle(logger *types.KairosLogger, timeout time.Duration) error {
 	if logger != nil {
 		logger.Logger.Info().Msg("Triggering udev events")
 	}

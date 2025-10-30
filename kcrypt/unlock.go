@@ -39,7 +39,7 @@ func luksUnlock(device, mapper, password string, logger *types.KairosLogger) err
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		if attempt > 0 {
 			time.Sleep(time.Duration(attempt) * time.Second)
-			if err := UdevAdmSettle(logger, 10*time.Second); err != nil {
+			if err := udevAdmSettle(logger, 10*time.Second); err != nil {
 				if logger != nil {
 					logger.Logger.Warn().
 						Int("attempt", attempt+1).
@@ -92,7 +92,7 @@ func luksUnlock(device, mapper, password string, logger *types.KairosLogger) err
 	}
 
 	// Wait for udev to settle and create the mapper device
-	if err := UdevAdmSettle(logger, 30*time.Second); err != nil {
+	if err := udevAdmSettle(logger, 30*time.Second); err != nil {
 		if logger != nil {
 			logger.Logger.Warn().Err(err).Str("device", device).Msg("UdevAdmSettle failed")
 		}
