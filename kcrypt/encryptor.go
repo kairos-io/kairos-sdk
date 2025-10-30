@@ -135,8 +135,8 @@ func (e *RemoteKMSEncryptor) unlockPartition(partitionLabel string) error {
 		}
 
 		e.logger.Logger.Debug().Msg("partition name: " + partition.Name)
-		// Attempt to unlock
-		err = UnlockDiskWithConfig(partition, e.kcryptConfig)
+		// Attempt to unlock using remote KMS (via plugin bus)
+		err = UnlockWithKMS(partition, e.kcryptConfig, e.logger)
 		if err != nil {
 			lastErr = fmt.Errorf("unlock failed: %w", err)
 			e.logger.Logger.Warn().
@@ -411,8 +411,31 @@ func (e *LocalTPMNVEncryptor) unlockPartition(partitionLabel string) error {
 			continue
 		}
 
-		// Attempt to unlock
-		err = UnlockDiskWithConfig(partition, e.kcryptConfig)
+		// Extract TPM configuration
+		nvIndex := DefaultLocalPassphraseNVIndex
+		cIndex := ""
+		tpmDevice := ""
+		if e.kcryptConfig != nil {
+			if e.kcryptConfig.NVIndex != "" {
+				nvIndex = e.kcryptConfig.NVIndex
+			}
+			cIndex = e.kcryptConfig.CIndex
+			tpmDevice = e.kcryptConfig.TPMDevice
+		}
+
+		// Get passphrase from local TPM NV memory (not from remote)
+		passphrase, err := GetOrCreateLocalTPMPassphrase(nvIndex, cIndex, tpmDevice)
+		if err != nil {
+			lastErr = fmt.Errorf("failed to get passphrase from local TPM: %w", err)
+			e.logger.Logger.Warn().
+				Str("partition", partitionLabel).
+				Err(lastErr).
+				Msg("Failed to get local TPM passphrase, will retry")
+			continue
+		}
+
+		// Unlock directly with the local passphrase (bypass plugin bus)
+		err = luksUnlock(devicePath, partitionName, passphrase, &e.logger)
 		if err != nil {
 			lastErr = fmt.Errorf("unlock failed: %w", err)
 			e.logger.Logger.Warn().
