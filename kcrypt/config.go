@@ -51,7 +51,7 @@ func ScanKcryptConfig(logger types.KairosLogger, dirs ...string) *bus.KcryptConf
 	}
 	logger.Debugf("ScanKcryptConfig: struct is: %#v", collectorConfig.Values)
 
-	result := ExtractKcryptConfigFromCollector(*collectorConfig, logger)
+	result := extractKcryptConfigFromCollector(*collectorConfig, logger)
 	if result != nil {
 		logger.Debugf("ScanKcryptConfig: extracted kcrypt config - challenger_server=%s", result.ChallengerServer)
 	} else {
@@ -61,9 +61,8 @@ func ScanKcryptConfig(logger types.KairosLogger, dirs ...string) *bus.KcryptConf
 	return result
 }
 
-// ExtractKcryptConfigFromCollector extracts kcrypt configuration from a collector.Config
-// This works with kairos-agent which uses collector to merge file and cmdline configs
-func ExtractKcryptConfigFromCollector(collectorConfig collector.Config, log types.KairosLogger) *bus.KcryptConfig {
+// extractKcryptConfigFromCollector extracts kcrypt configuration from a collector.Config
+func extractKcryptConfigFromCollector(collectorConfig collector.Config, log types.KairosLogger) *bus.KcryptConfig {
 	if collectorConfig.Values == nil {
 		return nil
 	}
