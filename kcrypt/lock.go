@@ -34,11 +34,6 @@ func EncryptWithConfig(label string, logger types.KairosLogger, kcryptConfig *bu
 	return luksifyWithConfig(label, logger, kcryptConfig, argsCreate...)
 }
 
-// EncryptWithPcrs is the entrypoint to encrypt a partition with LUKS and bind it to PCRs.
-func EncryptWithPcrs(label string, publicKeyPcrs []string, pcrs []string, logger types.KairosLogger, argsCreate ...string) error {
-	return luksifyMeasurements(label, publicKeyPcrs, pcrs, logger, argsCreate...)
-}
-
 // EncryptWithLocalTPMPassphrase encrypts a partition using a passphrase stored in TPM NV memory.
 // This bypasses the plugin bus and directly uses kairos-sdk TPM functions.
 // Used for non-UKI local encryption (without remote KMS).
