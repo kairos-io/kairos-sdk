@@ -22,22 +22,10 @@ import (
 
 const udevTimeout = 30 * time.Second
 
-// Encrypt is the entrypoint to encrypt a partition with LUKS.
-// It automatically scans for kcrypt configuration.
-func Encrypt(label string, logger types.KairosLogger, argsCreate ...string) (string, error) {
-	return EncryptWithConfig(label, logger, nil, argsCreate...)
-}
-
-// EncryptWithConfig encrypts a partition with explicit kcrypt config.
-// If config is nil, it will scan for configuration automatically.
-func EncryptWithConfig(label string, logger types.KairosLogger, kcryptConfig *bus.KcryptConfig, argsCreate ...string) (string, error) {
-	return luksifyWithConfig(label, logger, kcryptConfig, argsCreate...)
-}
-
-// EncryptWithLocalTPMPassphrase encrypts a partition using a passphrase stored in TPM NV memory.
+// encryptWithLocalTPMPassphrase encrypts a partition using a passphrase stored in TPM NV memory.
 // This bypasses the plugin bus and directly uses kairos-sdk TPM functions.
 // Used for non-UKI local encryption (without remote KMS).
-func EncryptWithLocalTPMPassphrase(label string, nvIndex, cIndex, tpmDevice string, logger types.KairosLogger, argsCreate ...string) (string, error) {
+func encryptWithLocalTPMPassphrase(label string, nvIndex, cIndex, tpmDevice string, logger types.KairosLogger, argsCreate ...string) (string, error) {
 	logger.Logger.Info().Str("partition", label).Msg("Encrypting with local TPM NV passphrase")
 
 	// Get or create passphrase from TPM NV memory
@@ -174,11 +162,7 @@ func getRandomString(length int) string {
 // This is because the label of the encrypted partition is not accessible unless
 // the partition is decrypted first and the uuid changed after encryption so
 // any stored information needs to be updated (by the caller).
-func luksify(label string, logger types.KairosLogger, argsCreate ...string) (string, error) {
-	return luksifyWithConfig(label, logger, nil, argsCreate...)
-}
-
-func luksifyWithConfig(label string, logger types.KairosLogger, kcryptConfig *bus.KcryptConfig, argsCreate ...string) (string, error) {
+func luksify(label string, logger types.KairosLogger, kcryptConfig *bus.KcryptConfig, argsCreate ...string) (string, error) {
 	var pass string
 
 	logger.Logger.Info().Msg("Running udevadm settle")

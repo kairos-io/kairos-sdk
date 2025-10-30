@@ -45,7 +45,7 @@ func (e *RemoteKMSEncryptor) Encrypt(partitions []string) error {
 	for _, partition := range partitions {
 		e.logger.Logger.Info().Str("partition", partition).Msg("Encrypting partition")
 
-		_, err := EncryptWithConfig(partition, e.logger, e.kcryptConfig)
+		_, err := luksify(partition, e.logger, e.kcryptConfig)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt partition %s: %w", partition, err)
 		}
@@ -99,7 +99,7 @@ func (e *RemoteKMSEncryptor) unlockPartition(partitionLabel string) error {
 		}
 
 		e.logger.Logger.Debug().Msg("partition name: " + info.Partition.Name)
-		
+
 		// Get passphrase from remote KMS
 		pass, err := getPassword(info.Partition, e.kcryptConfig)
 		if err != nil {
@@ -110,7 +110,7 @@ func (e *RemoteKMSEncryptor) unlockPartition(partitionLabel string) error {
 				Msg("Failed to get password, will retry")
 			continue
 		}
-		
+
 		// Attempt to unlock
 		err = luksUnlock(info.DevicePath, info.PartitionName, pass, &e.logger)
 		if err != nil {
@@ -289,7 +289,7 @@ func (e *LocalTPMNVEncryptor) Encrypt(partitions []string) error {
 	for _, partition := range partitions {
 		e.logger.Logger.Info().Str("partition", partition).Msg("Encrypting partition")
 
-		_, err := EncryptWithLocalTPMPassphrase(partition, nvIndex, cIndex, tpmDevice, e.logger)
+		_, err := encryptWithLocalTPMPassphrase(partition, nvIndex, cIndex, tpmDevice, e.logger)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt partition %s: %w", partition, err)
 		}
