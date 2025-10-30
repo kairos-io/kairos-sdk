@@ -82,61 +82,37 @@ func (e *RemoteKMSEncryptor) unlockPartition(partitionLabel string) error {
 			time.Sleep(time.Duration(attempt) * time.Second)
 		}
 
-		// Find the partition device by label
-		devicePath, err := utils.SH(fmt.Sprintf("blkid -L %s", partitionLabel))
-		devicePath = strings.TrimSpace(devicePath)
-
-		if err != nil || devicePath == "" {
-			lastErr = fmt.Errorf("partition not found")
+		// Find partition information
+		info, err := findPartitionByLabel(partitionLabel, e.logger)
+		if err != nil {
+			lastErr = err
 			e.logger.Logger.Debug().
 				Str("partition", partitionLabel).
-				Msg("Partition not found, will retry")
+				Err(err).
+				Msg("Failed to find partition, will retry")
 			continue
 		}
 
-		// Get partition name from device path (e.g., /dev/sda1 -> sda1)
-		partitionName := filepath.Base(devicePath)
-		mapperPath := filepath.Join("/dev", "mapper", partitionName)
-
-		// Check if already unlocked
-		if utils.Exists(mapperPath) {
-			e.logger.Logger.Info().
-				Str("partition", partitionLabel).
-				Str("mapper", mapperPath).
-				Msg("Partition already unlocked")
+		// If info is nil, partition is already unlocked
+		if info == nil {
 			return nil
 		}
 
-		// Find the block.Partition for this device
-		blk, err := ghw.Block()
+		e.logger.Logger.Debug().Msg("partition name: " + info.Partition.Name)
+		
+		// Get passphrase from remote KMS
+		pass, err := getPassword(info.Partition, e.kcryptConfig)
 		if err != nil {
-			lastErr = fmt.Errorf("failed to scan block devices: %w", err)
-			e.logger.Logger.Warn().Err(lastErr).Msg("Block scan failed, will retry")
+			lastErr = fmt.Errorf("failed to get password: %w", err)
+			e.logger.Logger.Warn().
+				Str("partition", partitionLabel).
+				Err(lastErr).
+				Msg("Failed to get password, will retry")
 			continue
 		}
-
-		var partition *block.Partition
-		for _, disk := range blk.Disks {
-			for _, p := range disk.Partitions {
-				if p.FilesystemLabel == partitionLabel {
-					partition = p
-					break
-				}
-			}
-			if partition != nil {
-				break
-			}
-		}
-
-		if partition == nil {
-			lastErr = fmt.Errorf("partition not found in block devices")
-			e.logger.Logger.Warn().Str("partition", partitionLabel).Msg("Partition not found, will retry")
-			continue
-		}
-
-		e.logger.Logger.Debug().Msg("partition name: " + partition.Name)
-		// Attempt to unlock using remote KMS (via plugin bus)
-		err = UnlockWithKMS(partition, e.kcryptConfig, e.logger)
+		
+		// Attempt to unlock
+		err = luksUnlock(info.DevicePath, info.PartitionName, pass, &e.logger)
 		if err != nil {
 			lastErr = fmt.Errorf("unlock failed: %w", err)
 			e.logger.Logger.Warn().
@@ -228,33 +204,24 @@ func (e *TPMWithPCREncryptor) unlockPartition(partitionLabel string) error {
 			time.Sleep(time.Duration(attempt) * time.Second)
 		}
 
-		// Find the partition device by label
-		devicePath, err := utils.SH(fmt.Sprintf("blkid -L %s", partitionLabel))
-		devicePath = strings.TrimSpace(devicePath)
-
-		if err != nil || devicePath == "" {
-			lastErr = fmt.Errorf("partition not found")
+		// Find partition information
+		info, err := findPartitionByLabel(partitionLabel, e.logger)
+		if err != nil {
+			lastErr = err
 			e.logger.Logger.Debug().
 				Str("partition", partitionLabel).
-				Msg("Partition not found, will retry")
+				Err(err).
+				Msg("Failed to find partition, will retry")
 			continue
 		}
 
-		// Get partition name from device path (e.g., /dev/sda1 -> sda1)
-		partitionName := filepath.Base(devicePath)
-		mapperPath := filepath.Join("/dev", "mapper", partitionName)
-
-		// Check if already unlocked
-		if utils.Exists(mapperPath) {
-			e.logger.Logger.Info().
-				Str("partition", partitionLabel).
-				Str("mapper", mapperPath).
-				Msg("Partition already unlocked")
+		// If info is nil, partition is already unlocked
+		if info == nil {
 			return nil
 		}
 
 		// Attempt to unlock with TPM
-		out, err := utils.SH(fmt.Sprintf("/usr/lib/systemd/systemd-cryptsetup attach %s %s - tpm2-device=auto", partitionName, devicePath))
+		out, err := utils.SH(fmt.Sprintf("/usr/lib/systemd/systemd-cryptsetup attach %s %s - tpm2-device=auto", info.PartitionName, info.DevicePath))
 		if err != nil {
 			lastErr = fmt.Errorf("TPM unlock failed: %w (output: %s)", err, out)
 			e.logger.Logger.Warn().
@@ -359,56 +326,20 @@ func (e *LocalTPMNVEncryptor) unlockPartition(partitionLabel string) error {
 			time.Sleep(time.Duration(attempt) * time.Second)
 		}
 
-		// Find the partition device by label
-		devicePath, err := utils.SH(fmt.Sprintf("blkid -L %s", partitionLabel))
-		devicePath = strings.TrimSpace(devicePath)
-
-		if err != nil || devicePath == "" {
-			lastErr = fmt.Errorf("partition not found")
+		// Find partition information
+		info, err := findPartitionByLabel(partitionLabel, e.logger)
+		if err != nil {
+			lastErr = err
 			e.logger.Logger.Debug().
 				Str("partition", partitionLabel).
-				Msg("Partition not found, will retry")
+				Err(err).
+				Msg("Failed to find partition, will retry")
 			continue
 		}
 
-		// Get partition name from device path (e.g., /dev/sda1 -> sda1)
-		partitionName := filepath.Base(devicePath)
-		mapperPath := filepath.Join("/dev", "mapper", partitionName)
-
-		// Check if already unlocked
-		if utils.Exists(mapperPath) {
-			e.logger.Logger.Info().
-				Str("partition", partitionLabel).
-				Str("mapper", mapperPath).
-				Msg("Partition already unlocked")
+		// If info is nil, partition is already unlocked
+		if info == nil {
 			return nil
-		}
-
-		// Find the block.Partition for this device
-		blk, err := ghw.Block()
-		if err != nil {
-			lastErr = fmt.Errorf("failed to scan block devices: %w", err)
-			e.logger.Logger.Warn().Err(lastErr).Msg("Block scan failed, will retry")
-			continue
-		}
-
-		var partition *block.Partition
-		for _, disk := range blk.Disks {
-			for _, p := range disk.Partitions {
-				if p.FilesystemLabel == partitionLabel {
-					partition = p
-					break
-				}
-			}
-			if partition != nil {
-				break
-			}
-		}
-
-		if partition == nil {
-			lastErr = fmt.Errorf("partition not found in block devices")
-			e.logger.Logger.Warn().Str("partition", partitionLabel).Msg("Partition not found, will retry")
-			continue
 		}
 
 		// Extract TPM configuration
@@ -434,8 +365,8 @@ func (e *LocalTPMNVEncryptor) unlockPartition(partitionLabel string) error {
 			continue
 		}
 
-		// Unlock directly with the local passphrase (bypass plugin bus)
-		err = luksUnlock(devicePath, partitionName, passphrase, &e.logger)
+		// Unlock directly with the local passphrase
+		err = luksUnlock(info.DevicePath, info.PartitionName, passphrase, &e.logger)
 		if err != nil {
 			lastErr = fmt.Errorf("unlock failed: %w", err)
 			e.logger.Logger.Warn().
@@ -573,6 +504,68 @@ func detectUKIMode(logger types.KairosLogger) bool {
 
 	logger.Logger.Debug().Msg("Not running in UKI mode")
 	return false
+}
+
+// partitionInfo holds information about a partition for unlocking
+type partitionInfo struct {
+	DevicePath    string
+	PartitionName string
+	Partition     *block.Partition
+}
+
+// findPartitionByLabel finds a partition by its filesystem label and returns its information.
+// It performs all the common logic needed before attempting to unlock a partition.
+// Returns nil if the partition is not found or if it's already unlocked.
+func findPartitionByLabel(partitionLabel string, logger types.KairosLogger) (*partitionInfo, error) {
+	// Find the partition device by label
+	devicePath, err := utils.SH(fmt.Sprintf("blkid -L %s", partitionLabel))
+	devicePath = strings.TrimSpace(devicePath)
+
+	if err != nil || devicePath == "" {
+		return nil, fmt.Errorf("partition not found")
+	}
+
+	// Get partition name from device path (e.g., /dev/sda1 -> sda1)
+	partitionName := filepath.Base(devicePath)
+	mapperPath := filepath.Join("/dev", "mapper", partitionName)
+
+	// Check if already unlocked
+	if utils.Exists(mapperPath) {
+		logger.Logger.Info().
+			Str("partition", partitionLabel).
+			Str("mapper", mapperPath).
+			Msg("Partition already unlocked")
+		return nil, nil
+	}
+
+	// Find the block.Partition for this device
+	blk, err := ghw.Block()
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan block devices: %w", err)
+	}
+
+	var partition *block.Partition
+	for _, disk := range blk.Disks {
+		for _, p := range disk.Partitions {
+			if p.FilesystemLabel == partitionLabel {
+				partition = p
+				break
+			}
+		}
+		if partition != nil {
+			break
+		}
+	}
+
+	if partition == nil {
+		return nil, fmt.Errorf("partition not found in block devices")
+	}
+
+	return &partitionInfo{
+		DevicePath:    devicePath,
+		PartitionName: partitionName,
+		Partition:     partition,
+	}, nil
 }
 
 // validateSystemdVersion checks if systemd version is >= required version

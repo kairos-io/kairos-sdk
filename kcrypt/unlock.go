@@ -15,17 +15,6 @@ import (
 	"github.com/mudler/go-pluggable"
 )
 
-// UnlockWithKMS unlocks a single block.Partition using remote KMS (via plugin bus).
-// This contacts kcrypt-challenger or other plugins to retrieve the passphrase.
-func UnlockWithKMS(b *block.Partition, kcryptConfig *bus.KcryptConfig, logger types.KairosLogger) error {
-	pass, err := getPassword(b, kcryptConfig)
-	if err != nil {
-		return fmt.Errorf("error retrieving password remotely: %w", err)
-	}
-
-	return luksUnlock(filepath.Join("/dev", b.Name), b.Name, pass, &logger)
-}
-
 // getPassword gets the password for a block.Partition using KcryptConfig.
 // It constructs the DiscoveryPasswordPayload internally for communication with the plugin.
 // TODO: Ask to discovery a pass to unlock. keep waiting until we get it and a timeout is exhausted with retrials (exp backoff).
@@ -90,8 +79,10 @@ func luksUnlock(device, mapper, password string, logger *types.KairosLogger) err
 		return fmt.Errorf("device not accessible: %v", err)
 	}
 
+	// Construct mapper path
+	mapperPath := filepath.Join("/dev", "mapper", mapper)
+
 	// Check if mapper already exists
-	mapperPath := "/dev/mapper/" + mapper
 	if _, err := os.Stat(mapperPath); err == nil {
 		// Already unlocked
 		if logger != nil {
