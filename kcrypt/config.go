@@ -67,7 +67,10 @@ func extractKcryptConfigFromCollector(collectorConfig collector.Config, log type
 		return nil
 	}
 
-	// First check for kairos.kcrypt.challenger (from cmdline like kairos.kcrypt.challenger_server=...)
+	var kcryptMap collector.ConfigValues
+	var foundLocation string
+
+	// First check for kairos.kcrypt (from cmdline like kairos.kcrypt.challenger.challenger_server=...)
 	kairosVal, hasKairos := collectorConfig.Values["kairos"]
 	if hasKairos {
 		log.Debugf("ExtractKcryptConfig: found kairos key, type=%T", kairosVal)
@@ -84,12 +87,9 @@ func extractKcryptConfigFromCollector(collectorConfig collector.Config, log type
 			kcryptVal, hasKcrypt := kairosMap["kcrypt"]
 			if hasKcrypt {
 				log.Debugf("ExtractKcryptConfig: found kcrypt key, type=%T", kcryptVal)
-				if kcryptMap, ok := kcryptVal.(collector.ConfigValues); ok {
-					result := extractChallengerConfig(kcryptMap)
-					if result != nil {
-						log.Debugf("ExtractKcryptConfig: successfully extracted challenger config from kairos.kcrypt")
-					}
-					return result
+				if km, ok := kcryptVal.(collector.ConfigValues); ok {
+					kcryptMap = km
+					foundLocation = "kairos.kcrypt"
 				} else {
 					log.Debugf("ExtractKcryptConfig: kcrypt value is not ConfigValues, it's %T", kcryptVal)
 				}
@@ -101,17 +101,25 @@ func extractKcryptConfigFromCollector(collectorConfig collector.Config, log type
 		}
 	}
 
-	// Fallback: check for kcrypt.challenger directly (from config files with kcrypt at top level)
-	kcryptVal, hasKcrypt := collectorConfig.Values["kcrypt"]
-	if hasKcrypt {
-		log.Debugf("ExtractKcryptConfig: found kcrypt key at top level, type=%T", kcryptVal)
-		if kcryptMap, ok := kcryptVal.(collector.ConfigValues); ok {
-			result := extractChallengerConfig(kcryptMap)
-			if result != nil {
-				log.Debugf("ExtractKcryptConfig: successfully extracted challenger config from top-level kcrypt")
+	// Fallback: check for kcrypt directly (from config files with kcrypt at top level)
+	if kcryptMap == nil {
+		kcryptVal, hasKcrypt := collectorConfig.Values["kcrypt"]
+		if hasKcrypt {
+			log.Debugf("ExtractKcryptConfig: found kcrypt key at top level, type=%T", kcryptVal)
+			if km, ok := kcryptVal.(collector.ConfigValues); ok {
+				kcryptMap = km
+				foundLocation = "top-level kcrypt"
 			}
-			return result
 		}
+	}
+
+	// If we found a kcrypt map anywhere, extract the challenger config from it
+	if kcryptMap != nil {
+		result := extractChallengerConfig(kcryptMap)
+		if result != nil {
+			log.Debugf("ExtractKcryptConfig: successfully extracted challenger config from %s", foundLocation)
+		}
+		return result
 	}
 
 	log.Debugf("ExtractKcryptConfig: no kcrypt config found anywhere")
