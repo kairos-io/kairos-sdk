@@ -13,8 +13,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/jaypipes/ghw"
-	"github.com/jaypipes/ghw/pkg/block"
 	"github.com/kairos-io/kairos-sdk/kcrypt/bus"
 	"github.com/kairos-io/kairos-sdk/types"
 	"github.com/kairos-io/kairos-sdk/utils"
@@ -29,7 +27,7 @@ func encryptWithLocalTPMPassphrase(label string, nvIndex, cIndex, tpmDevice stri
 	logger.Logger.Info().Str("partition", label).Msg("Encrypting with local TPM NV passphrase")
 
 	// Get or create passphrase from TPM NV memory
-	passphrase, err := GetOrCreateLocalTPMPassphrase(nvIndex, cIndex, tpmDevice)
+	passphrase, err := getOrCreateLocalTPMPassphrase(nvIndex, cIndex, tpmDevice)
 	if err != nil {
 		return "", fmt.Errorf("failed to get/create local TPM passphrase: %w", err)
 	}
@@ -51,14 +49,14 @@ func luksifyWithPassphrase(label string, passphrase string, logger types.KairosL
 	}
 
 	logger.Logger.Info().Str("label", label).Msg("Finding partition")
-	part, b, err := findPartition(label)
+	info, err := findPartitionByLabel(label, logger)
 	if err != nil {
 		logger.Err(err).Msg("find partition")
 		return "", err
 	}
 
-	mapper := fmt.Sprintf("/dev/mapper/%s", b.Name)
-	device := fmt.Sprintf("/dev/%s", part)
+	mapper := info.MapperPath()
+	device := info.DevicePath
 
 	extraArgs := []string{"--uuid", uuid.NewV5(uuid.NamespaceURL, label).String()}
 	extraArgs = append(extraArgs, "--label", label)
@@ -78,14 +76,14 @@ func luksifyWithPassphrase(label string, passphrase string, logger types.KairosL
 	}
 
 	logger.Logger.Info().Str("device", device).Str("label", label).Msg("Formatting LUKS container")
-	err = formatLuks(device, b.Name, mapper, label, passphrase, logger)
+	err = formatLuks(device, info.Partition.Name, mapper, label, passphrase, logger)
 	if err != nil {
 		logger.Err(err).Msg("format luks")
 		return "", err
 	}
 
 	logger.Logger.Info().Str("label", label).Msg("Partition encryption completed")
-	return fmt.Sprintf("%s:%s:%s", b.FilesystemLabel, b.Name, b.UUID), nil
+	return fmt.Sprintf("%s:%s:%s", info.Partition.FilesystemLabel, info.Partition.Name, info.Partition.UUID), nil
 }
 
 // unmountIfMounted checks if a device is mounted and unmounts it if needed
@@ -171,7 +169,7 @@ func luksify(label string, logger types.KairosLogger, kcryptConfig *bus.KcryptCo
 	}
 
 	logger.Logger.Info().Str("label", label).Msg("Finding partition")
-	part, b, err := findPartition(label)
+	info, err := findPartitionByLabel(label, logger)
 	if err != nil {
 		logger.Err(err).Msg("find partition")
 		return "", err
@@ -183,7 +181,7 @@ func luksify(label string, logger types.KairosLogger, kcryptConfig *bus.KcryptCo
 	}
 
 	logger.Logger.Info().Str("partition", label).Msg("Getting password from kcrypt-challenger")
-	pass, err = getPassword(b, kcryptConfig)
+	pass, err = getPassword(info.Partition, kcryptConfig)
 	if err != nil {
 		logger.Err(err).Msg("get password")
 		return "", err
@@ -195,8 +193,8 @@ func luksify(label string, logger types.KairosLogger, kcryptConfig *bus.KcryptCo
 		Int("passphrase_length", len(pass)).
 		Msg("ENCRYPTION: Received passphrase from kcrypt-challenger")
 
-	mapper := fmt.Sprintf("/dev/mapper/%s", b.Name)
-	device := fmt.Sprintf("/dev/%s", part)
+	mapper := info.MapperPath()
+	device := info.DevicePath
 
 	extraArgs := []string{"--uuid", uuid.NewV5(uuid.NamespaceURL, label).String()}
 	extraArgs = append(extraArgs, "--label", label)
@@ -216,14 +214,14 @@ func luksify(label string, logger types.KairosLogger, kcryptConfig *bus.KcryptCo
 	}
 
 	logger.Logger.Info().Str("device", device).Str("label", label).Msg("Formatting LUKS container")
-	err = formatLuks(device, b.Name, mapper, label, pass, logger)
+	err = formatLuks(device, info.Partition.Name, mapper, label, pass, logger)
 	if err != nil {
 		logger.Err(err).Msg("format luks")
 		return "", err
 	}
 
 	logger.Logger.Info().Str("label", label).Msg("Partition encryption completed")
-	return fmt.Sprintf("%s:%s:%s", b.FilesystemLabel, b.Name, b.UUID), nil
+	return fmt.Sprintf("%s:%s:%s", info.Partition.FilesystemLabel, info.Partition.Name, info.Partition.UUID), nil
 }
 
 // luksifyMeasurements takes a label and a list if public-keys and pcrs to bind and uses the measurements.
@@ -245,7 +243,7 @@ func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, lo
 		return err
 	}
 
-	part, b, err := findPartition(label)
+	info, err := findPartitionByLabel(label, logger)
 	if err != nil {
 		return err
 	}
@@ -253,8 +251,8 @@ func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, lo
 	// On TPM locking we generate a random password that will only be used here then discarded.
 	// only unlocking method will be PCR values
 	pass := getRandomString(32)
-	mapper := fmt.Sprintf("/dev/mapper/%s", b.Name)
-	device := fmt.Sprintf("/dev/%s", part)
+	mapper := info.MapperPath()
+	device := info.DevicePath
 
 	extraArgs := []string{"--uuid", uuid.NewV5(uuid.NamespaceURL, label).String()}
 	extraArgs = append(extraArgs, "--label", label)
@@ -306,7 +304,7 @@ func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, lo
 
 	logger.Logger.Debug().Str("output", stdOut.String()).Msg("debug from cryptenroll")
 
-	err = formatLuks(device, b.Name, mapper, label, pass, logger)
+	err = formatLuks(device, info.Partition.Name, mapper, label, pass, logger)
 	if err != nil {
 		logger.Err(err).Msg("format luks")
 		return err
@@ -363,24 +361,6 @@ func formatLuks(device, name, mapper, label, pass string, logger types.KairosLog
 	}
 
 	return nil
-}
-
-func findPartition(label string) (string, *block.Partition, error) {
-	b, err := ghw.Block()
-	if err == nil {
-		for _, disk := range b.Disks {
-			for _, p := range disk.Partitions {
-				if p.FilesystemLabel == label {
-					return p.Name, p, nil
-				}
-
-			}
-		}
-	} else {
-		return "", nil, err
-	}
-
-	return "", nil, fmt.Errorf("not found label %s", label)
 }
 
 func waitDevice(device string, attempts int) error {

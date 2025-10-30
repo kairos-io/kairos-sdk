@@ -93,8 +93,8 @@ func (e *RemoteKMSEncryptor) unlockPartition(partitionLabel string) error {
 			continue
 		}
 
-		// If info is nil, partition is already unlocked
-		if info == nil {
+		// If partition is already unlocked, we're done
+		if !info.Locked() {
 			return nil
 		}
 
@@ -214,8 +214,8 @@ func (e *TPMWithPCREncryptor) unlockPartition(partitionLabel string) error {
 			continue
 		}
 
-		// If info is nil, partition is already unlocked
-		if info == nil {
+		// If partition is already unlocked, we're done
+		if !info.Locked() {
 			return nil
 		}
 
@@ -336,8 +336,8 @@ func (e *LocalTPMNVEncryptor) unlockPartition(partitionLabel string) error {
 			continue
 		}
 
-		// If info is nil, partition is already unlocked
-		if info == nil {
+		// If partition is already unlocked, we're done
+		if !info.Locked() {
 			return nil
 		}
 
@@ -354,7 +354,7 @@ func (e *LocalTPMNVEncryptor) unlockPartition(partitionLabel string) error {
 		}
 
 		// Get passphrase from local TPM NV memory (not from remote)
-		passphrase, err := GetOrCreateLocalTPMPassphrase(nvIndex, cIndex, tpmDevice)
+		passphrase, err := getOrCreateLocalTPMPassphrase(nvIndex, cIndex, tpmDevice)
 		if err != nil {
 			lastErr = fmt.Errorf("failed to get passphrase from local TPM: %w", err)
 			e.logger.Logger.Warn().
@@ -512,9 +512,25 @@ type partitionInfo struct {
 	Partition     *block.Partition
 }
 
+// Locked returns true if the partition is currently locked (encrypted and not unlocked)
+func (p *partitionInfo) Locked() bool {
+	if p == nil {
+		return false
+	}
+	return !utils.Exists(p.MapperPath())
+}
+
+// MapperPath returns the device mapper path for the partition (e.g., /dev/mapper/sda1)
+func (p *partitionInfo) MapperPath() string {
+	if p == nil {
+		return ""
+	}
+	return filepath.Join("/dev", "mapper", p.PartitionName)
+}
+
 // findPartitionByLabel finds a partition by its filesystem label and returns its information.
 // It performs all the common logic needed before attempting to unlock a partition.
-// Returns nil if the partition is not found or if it's already unlocked.
+// Returns an error if the partition is not found. Use Locked() to check if the partition is locked.
 func findPartitionByLabel(partitionLabel string, logger types.KairosLogger) (*partitionInfo, error) {
 	// Find the partition device by label
 	devicePath, err := utils.SH(fmt.Sprintf("blkid -L %s", partitionLabel))
@@ -526,16 +542,6 @@ func findPartitionByLabel(partitionLabel string, logger types.KairosLogger) (*pa
 
 	// Get partition name from device path (e.g., /dev/sda1 -> sda1)
 	partitionName := filepath.Base(devicePath)
-	mapperPath := filepath.Join("/dev", "mapper", partitionName)
-
-	// Check if already unlocked
-	if utils.Exists(mapperPath) {
-		logger.Logger.Info().
-			Str("partition", partitionLabel).
-			Str("mapper", mapperPath).
-			Msg("Partition already unlocked")
-		return nil, nil
-	}
 
 	// Find the block.Partition for this device
 	blk, err := ghw.Block()

@@ -10,10 +10,10 @@ const (
 	DefaultLocalPassphraseNVIndex = "0x1500000"
 )
 
-// GetOrCreateLocalTPMPassphrase retrieves a passphrase from TPM NV memory, or generates and stores one if it doesn't exist.
+// getOrCreateLocalTPMPassphrase retrieves a passphrase from TPM NV memory, or generates and stores one if it doesn't exist.
 // This is used for local encryption (non-UKI mode without remote KMS).
 // Logic moved from kcrypt-challenger/cmd/discovery/client/enc.go
-func GetOrCreateLocalTPMPassphrase(nvIndex, cIndex, tpmDevice string) (string, error) {
+func getOrCreateLocalTPMPassphrase(nvIndex, cIndex, tpmDevice string) (string, error) {
 	// Use default NV index if not specified
 	if nvIndex == "" {
 		nvIndex = DefaultLocalPassphraseNVIndex
