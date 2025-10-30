@@ -36,7 +36,7 @@ type PartitionEncryptor interface {
 // RemoteKMSEncryptor encrypts partitions using a remote KMS (kcrypt-challenger)
 type RemoteKMSEncryptor struct {
 	logger       types.KairosLogger
-	kcryptConfig *bus.DiscoveryPasswordPayload
+	kcryptConfig *bus.KcryptConfig
 }
 
 func (e *RemoteKMSEncryptor) Encrypt(partitions []string) error {
@@ -300,7 +300,7 @@ func (e *TPMWithPCREncryptor) Validate() error {
 // LocalTPMNVEncryptor encrypts partitions using local TPM NV passphrase storage
 type LocalTPMNVEncryptor struct {
 	logger       types.KairosLogger
-	kcryptConfig *bus.DiscoveryPasswordPayload
+	kcryptConfig *bus.KcryptConfig
 }
 
 func (e *LocalTPMNVEncryptor) Encrypt(partitions []string) error {
