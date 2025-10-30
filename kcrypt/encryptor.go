@@ -158,7 +158,7 @@ func (e *RemoteKMSEncryptor) luksify(label string, argsCreate ...string) (string
 	var pass string
 
 	e.logger.Logger.Info().Msg("Running udevadm settle")
-	if err := UdevAdmSettle(&e.logger, udevTimeout); err != nil {
+	if err := udevAdmSettle(&e.logger, udevTimeout); err != nil {
 		return "", err
 	}
 
