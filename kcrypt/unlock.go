@@ -12,7 +12,6 @@ import (
 	"github.com/kairos-io/kairos-sdk/utils"
 )
 
-
 func luksUnlock(device, mapper, password string, logger *types.KairosLogger) error {
 	// Check if device exists and is accessible
 	if _, err := os.Stat(device); err != nil {
@@ -38,6 +37,17 @@ func luksUnlock(device, mapper, password string, logger *types.KairosLogger) err
 	maxRetries := 3
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			time.Sleep(time.Duration(attempt) * time.Second)
+			if err := UdevAdmSettle(logger, 10*time.Second); err != nil {
+				if logger != nil {
+					logger.Logger.Warn().
+						Int("attempt", attempt+1).
+						Err(err).Msg("Failed to settle")
+				}
+			}
+		}
+
 		dev, unlockErr = luks.Open(device)
 		if unlockErr != nil {
 			if logger != nil {
@@ -49,15 +59,13 @@ func luksUnlock(device, mapper, password string, logger *types.KairosLogger) err
 					Msg("Failed to open device")
 			}
 
-			time.Sleep(time.Duration(attempt) * time.Second)
-			UdevAdmSettle(logger, 10*time.Second)
 			continue
 		}
 
 		// Try to unlock
 		unlockErr = dev.Unlock(0, []byte(password), mapper)
 		if unlockErr != nil {
-			dev.Close() // Close on error
+			_ = dev.Close() // Close on error
 			if logger != nil {
 				logger.Logger.Warn().
 					Int("attempt", attempt+1).
@@ -67,13 +75,11 @@ func luksUnlock(device, mapper, password string, logger *types.KairosLogger) err
 					Msg("Failed to unlock device")
 			}
 
-			time.Sleep(time.Duration(attempt) * time.Second)
-			UdevAdmSettle(logger, 10*time.Second)
 			continue
 		}
 
 		// Success! Close the device handle immediately to release the file descriptor
-		dev.Close()
+		_ = dev.Close()
 		if logger != nil {
 			logger.Logger.Debug().Str("device", device).Msg("Successfully unlocked")
 		}
