@@ -19,23 +19,15 @@ import (
 	"github.com/mudler/go-pluggable"
 )
 
-// PartitionEncryptor defines the interface for encrypting and decrypting partitions
+// PartitionEncryptor defines the interface for encrypting and decrypting partitions.
 type PartitionEncryptor interface {
-	// Encrypt encrypts the specified partitions
 	Encrypt(partitions []string) error
-
-	// Unlock unlocks the specified partitions and waits for them to be ready
-	// The method should only return when all partitions are unlocked and visible
 	Unlock(partitions []string) error
-
-	// Name returns the name of the encryption method (for logging)
 	Name() string
-
-	// Validate checks if prerequisites for this encryption method are met
 	Validate() error
 }
 
-// RemoteKMSEncryptor encrypts partitions using a remote KMS (kcrypt-challenger)
+// RemoteKMSEncryptor encrypts partitions using a remote KMS (kcrypt-challenger).
 type RemoteKMSEncryptor struct {
 	logger       types.KairosLogger
 	kcryptConfig *bus.KcryptConfig
@@ -85,7 +77,7 @@ func (e *RemoteKMSEncryptor) unlockPartition(partitionLabel string) error {
 		}
 
 		// Find partition information
-		info, err := findPartitionByLabel(partitionLabel, e.logger)
+		info, err := findPartitionByLabel(partitionLabel)
 		if err != nil {
 			lastErr = err
 			e.logger.Logger.Debug().
@@ -163,7 +155,7 @@ func (e *RemoteKMSEncryptor) luksify(label string, argsCreate ...string) (string
 	}
 
 	e.logger.Logger.Info().Str("label", label).Msg("Finding partition")
-	info, err := findPartitionByLabel(label, e.logger)
+	info, err := findPartitionByLabel(label)
 	if err != nil {
 		e.logger.Err(err).Msg("find partition")
 		return "", err
@@ -276,7 +268,7 @@ func (e *RemoteKMSEncryptor) getPasswordFromChallenger(b *block.Partition) (pass
 	return
 }
 
-// TPMWithPCREncryptor encrypts partitions using TPM with PCR policy (UKI mode)
+// TPMWithPCREncryptor encrypts partitions using TPM with PCR policy (UKI mode).
 type TPMWithPCREncryptor struct {
 	logger         types.KairosLogger
 	bindPublicPCRs []string
@@ -334,7 +326,7 @@ func (e *TPMWithPCREncryptor) unlockPartition(partitionLabel string) error {
 		}
 
 		// Find partition information
-		info, err := findPartitionByLabel(partitionLabel, e.logger)
+		info, err := findPartitionByLabel(partitionLabel)
 		if err != nil {
 			lastErr = err
 			e.logger.Logger.Debug().
@@ -393,7 +385,7 @@ func (e *TPMWithPCREncryptor) Validate() error {
 	return nil
 }
 
-// LocalTPMNVEncryptor encrypts partitions using local TPM NV passphrase storage
+// LocalTPMNVEncryptor encrypts partitions using local TPM NV passphrase storage.
 type LocalTPMNVEncryptor struct {
 	logger       types.KairosLogger
 	kcryptConfig *bus.KcryptConfig
@@ -456,7 +448,7 @@ func (e *LocalTPMNVEncryptor) unlockPartition(partitionLabel string) error {
 		}
 
 		// Find partition information
-		info, err := findPartitionByLabel(partitionLabel, e.logger)
+		info, err := findPartitionByLabel(partitionLabel)
 		if err != nil {
 			lastErr = err
 			e.logger.Logger.Debug().
@@ -539,25 +531,20 @@ func (e *LocalTPMNVEncryptor) Validate() error {
 // Decision logic:
 // 1. If challenger_server configured OR mdns enabled -> Remote KMS
 // 2. Else if UKI mode -> TPM + PCR policy (requires systemd >= 252 and TPM 2.0)
-// 3. Else (non-UKI, no remote) -> Local TPM NV passphrase
+// 3. Else (non-UKI, no remote) -> Local TPM NV passphrase.
 func GetEncryptor(logger types.KairosLogger) (PartitionEncryptor, error) {
-	// 1. Scan for kcrypt configuration
 	kcryptConfig := ScanKcryptConfig(logger)
 
-	// 2. Detect UKI mode by checking if we're running from a UKI boot
 	isUKI := detectUKIMode(logger)
 
-	// 3. Extract PCR bindings from config (only used in UKI mode)
 	var bindPCRs, bindPublicPCRs []string
 	if isUKI {
-		// Scan config again to get PCR bindings
 		collectorConfig := scanCollectorConfig(logger)
 		if collectorConfig != nil {
 			bindPCRs, bindPublicPCRs = extractPCRBindingsFromCollector(*collectorConfig, logger)
 		}
 	}
 
-	// 4. Determine which encryptor to use
 	useRemoteKMS := kcryptConfig != nil && (kcryptConfig.ChallengerServer != "" || kcryptConfig.MDNS)
 
 	var encryptor PartitionEncryptor
@@ -579,7 +566,6 @@ func GetEncryptor(logger types.KairosLogger) (PartitionEncryptor, error) {
 			bindPCRs:       bindPCRs,
 		}
 	} else {
-		// Non-UKI local mode
 		logger.Logger.Info().Msg("Using local TPM NV passphrase for encryption")
 		encryptor = &LocalTPMNVEncryptor{
 			logger:       logger,
@@ -587,7 +573,6 @@ func GetEncryptor(logger types.KairosLogger) (PartitionEncryptor, error) {
 		}
 	}
 
-	// Validate the encryptor
 	if err := encryptor.Validate(); err != nil {
 		return nil, fmt.Errorf("encryptor validation failed: %w", err)
 	}
@@ -595,7 +580,7 @@ func GetEncryptor(logger types.KairosLogger) (PartitionEncryptor, error) {
 	return encryptor, nil
 }
 
-// scanCollectorConfig scans for configuration and returns the collector config
+// scanCollectorConfig scans for configuration and returns the collector config.
 func scanCollectorConfig(logger types.KairosLogger) *collector.Config {
 	o := &collector.Options{NoLogs: true, MergeBootCMDLine: true}
 	if err := o.Apply(collector.Directories(DefaultConfigDirs...)); err != nil {
@@ -615,7 +600,7 @@ func scanCollectorConfig(logger types.KairosLogger) *collector.Config {
 }
 
 // detectUKIMode detects if the system is running in UKI mode
-// This checks for the presence of UKI-specific indicators
+// This checks for the presence of UKI-specific indicators.
 func detectUKIMode(logger types.KairosLogger) bool {
 	// Check if we're booted from a UKI by looking for systemd UKI indicators
 	// The most reliable way is to check if /run/systemd/tpm2-pcr-signature.json exists
@@ -635,14 +620,14 @@ func detectUKIMode(logger types.KairosLogger) bool {
 	return false
 }
 
-// partitionInfo holds information about a partition for unlocking
+// partitionInfo holds information about a partition for unlocking.
 type partitionInfo struct {
 	DevicePath    string
 	PartitionName string
 	Partition     *block.Partition
 }
 
-// Locked returns true if the partition is currently locked (encrypted and not unlocked)
+// Locked returns true if the partition is currently locked (encrypted and not unlocked).
 func (p *partitionInfo) Locked() bool {
 	if p == nil {
 		return false
@@ -650,7 +635,7 @@ func (p *partitionInfo) Locked() bool {
 	return !utils.Exists(p.MapperPath())
 }
 
-// MapperPath returns the device mapper path for the partition (e.g., /dev/mapper/sda1)
+// MapperPath returns the device mapper path for the partition (e.g., /dev/mapper/sda1).
 func (p *partitionInfo) MapperPath() string {
 	if p == nil {
 		return ""
@@ -661,7 +646,7 @@ func (p *partitionInfo) MapperPath() string {
 // findPartitionByLabel finds a partition by its filesystem label and returns its information.
 // It performs all the common logic needed before attempting to unlock a partition.
 // Returns an error if the partition is not found. Use Locked() to check if the partition is locked.
-func findPartitionByLabel(partitionLabel string, logger types.KairosLogger) (*partitionInfo, error) {
+func findPartitionByLabel(partitionLabel string) (*partitionInfo, error) {
 	// Find the partition device by label
 	devicePath, err := utils.SH(fmt.Sprintf("blkid -L %s", partitionLabel))
 	devicePath = strings.TrimSpace(devicePath)
@@ -670,10 +655,9 @@ func findPartitionByLabel(partitionLabel string, logger types.KairosLogger) (*pa
 		return nil, fmt.Errorf("partition not found")
 	}
 
-	// Get partition name from device path (e.g., /dev/sda1 -> sda1)
+	// Get partition name from device path (e.g., /dev/sda1 -> sda1).
 	partitionName := filepath.Base(devicePath)
 
-	// Find the block.Partition for this device
 	blk, err := ghw.Block()
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan block devices: %w", err)
@@ -703,7 +687,7 @@ func findPartitionByLabel(partitionLabel string, logger types.KairosLogger) (*pa
 	}, nil
 }
 
-// validateSystemdVersion checks if systemd version is >= required version
+// validateSystemdVersion checks if systemd version is >= required version.
 func validateSystemdVersion(logger types.KairosLogger, minVersion int) error {
 	run, err := utils.SH("systemctl --version | head -1 | awk '{ print $2}'")
 	systemdVersion := strings.TrimSpace(string(run))
@@ -715,20 +699,18 @@ func validateSystemdVersion(logger types.KairosLogger, minVersion int) error {
 		return fmt.Errorf("could not get systemd version: empty output")
 	}
 
-	// Extract the numeric portion of the version string using a regular expression
+	// Extract the numeric portion of the version string using a regular expression.
 	re := regexp.MustCompile(`\d+`)
 	matches := re.FindString(systemdVersion)
 	if matches == "" {
 		return fmt.Errorf("could not extract numeric part from systemd version: %s", systemdVersion)
 	}
 
-	// Convert to int
 	systemdVersionInt, err := strconv.Atoi(matches)
 	if err != nil {
 		return fmt.Errorf("could not convert systemd version to int: %w", err)
 	}
 
-	// Check minimum version
 	if systemdVersionInt < minVersion {
 		return fmt.Errorf("systemd version is %d, we need %d or higher for encrypting partitions with PCR policy", systemdVersionInt, minVersion)
 	}
@@ -737,7 +719,7 @@ func validateSystemdVersion(logger types.KairosLogger, minVersion int) error {
 	return nil
 }
 
-// validateTPMDevice checks if TPM 2.0 device exists
+// validateTPMDevice checks if TPM 2.0 device exists.
 func validateTPMDevice(logger types.KairosLogger) error {
 	// Check for a TPM 2.0 device as it's needed to encrypt
 	// Exposed by the kernel to userspace as /dev/tpmrm0 since kernel 4.12

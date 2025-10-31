@@ -36,11 +36,10 @@ func encryptWithLocalTPMPassphrase(label string, nvIndex, cIndex, tpmDevice stri
 		Int("passphrase_length", len(passphrase)).
 		Msg("Retrieved passphrase from local TPM NV memory")
 
-	// Now encrypt using the passphrase (same logic as luksifyWithConfig but without plugin)
 	return luksifyWithPassphrase(label, passphrase, logger, argsCreate...)
 }
 
-// luksifyWithPassphrase encrypts a partition with an explicit passphrase (no plugin involved)
+// luksifyWithPassphrase encrypts a partition with an explicit passphrase (no plugin involved).
 func luksifyWithPassphrase(label string, passphrase string, logger types.KairosLogger, argsCreate ...string) (string, error) {
 	logger.Logger.Info().Msg("Running udevadm settle")
 	if err := udevAdmSettle(&logger, udevTimeout); err != nil {
@@ -48,7 +47,7 @@ func luksifyWithPassphrase(label string, passphrase string, logger types.KairosL
 	}
 
 	logger.Logger.Info().Str("label", label).Msg("Finding partition")
-	info, err := findPartitionByLabel(label, logger)
+	info, err := findPartitionByLabel(label)
 	if err != nil {
 		logger.Err(err).Msg("find partition")
 		return "", err
@@ -61,7 +60,6 @@ func luksifyWithPassphrase(label string, passphrase string, logger types.KairosL
 	extraArgs = append(extraArgs, "--label", label)
 	extraArgs = append(extraArgs, argsCreate...)
 
-	// Unmount the device if it's mounted before attempting to encrypt it
 	logger.Logger.Info().Str("device", device).Msg("Checking if device is mounted")
 	if err := unmountIfMounted(device, logger); err != nil {
 		logger.Err(err).Msg("unmount device")
@@ -85,11 +83,11 @@ func luksifyWithPassphrase(label string, passphrase string, logger types.KairosL
 	return fmt.Sprintf("%s:%s:%s", info.Partition.FilesystemLabel, info.Partition.Name, info.Partition.UUID), nil
 }
 
-// unmountIfMounted checks if a device is mounted and unmounts it if needed
-// This is necessary because cryptsetup cannot format a mounted partition
+// unmountIfMounted checks if a device is mounted and unmounts it if needed.
+// This is necessary because cryptsetup cannot format a mounted partition.
 func unmountIfMounted(device string, logger types.KairosLogger) error {
 	// Read /proc/mounts to check if the device is mounted
-	// mount entries look like: /dev/sda6 / ext4 rw,relatime 0 0
+	// mount entries look like: /dev/sda6 / ext4 rw,relatime 0 0.
 	f, err := os.Open("/proc/mounts")
 	if err != nil {
 		return fmt.Errorf("failed to open /proc/mounts: %w", err)
@@ -172,7 +170,7 @@ func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, lo
 		return err
 	}
 
-	info, err := findPartitionByLabel(label, logger)
+	info, err := findPartitionByLabel(label)
 	if err != nil {
 		return err
 	}

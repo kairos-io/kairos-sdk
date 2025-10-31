@@ -24,7 +24,7 @@ type KcryptConfig struct {
 //
 // This struct is constructed ONLY by:
 // 1. The remote KMS Encryptor implementation when calling the kcrypt-challenger
-// 2. The kcrypt-challenger when unmarshalling received data through stdin
+// 2. The kcrypt-challenger when unmarshalling received data through stdin.
 type DiscoveryPasswordPayload struct {
 	Partition        *block.Partition `json:"partition"`
 	ChallengerServer string           `json:"challenger_server,omitempty"`
