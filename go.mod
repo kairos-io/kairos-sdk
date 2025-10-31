@@ -18,7 +18,7 @@ require (
 	github.com/itchyny/gojq v0.12.17
 	github.com/jaypipes/ghw v0.19.1
 	github.com/joho/godotenv v1.5.1
-	github.com/kairos-io/tpm-helpers v0.0.0-20250917111550-e914e08a09c2
+	github.com/kairos-io/tpm-helpers v0.0.0-20251031091328-e6e1a809bc0f
 	github.com/mudler/go-pluggable v0.0.0-20230126220627-7710299a0ae5
 	github.com/mudler/yip v1.18.0
 	github.com/onsi/ginkgo/v2 v2.27.2
@@ -150,5 +150,3 @@ require (
 	gotest.tools/v3 v3.5.0 // indirect
 	howett.net/plist v1.0.2-0.20250314012144-ee69052608d9 // indirect
 )
-
-replace github.com/kairos-io/tpm-helpers => /home/dimitris/workspace/kairos/tpm-helpers
