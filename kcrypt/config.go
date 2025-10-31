@@ -6,7 +6,7 @@ import (
 	"github.com/kairos-io/kairos-sdk/types"
 )
 
-// DefaultConfigDirs are the default directories to scan for Kairos configuration
+// DefaultConfigDirs are the default directories to scan for Kairos configuration.
 var DefaultConfigDirs = []string{"/oem", "/sysroot/oem", "/run/cos/oem"}
 
 // ScanKcryptConfig scans for Kairos configuration in the given directories (or defaults),
@@ -59,7 +59,7 @@ func ScanKcryptConfig(logger types.KairosLogger, dirs ...string) *bus.KcryptConf
 	return result
 }
 
-// extractKcryptConfigFromCollector extracts kcrypt configuration from a collector.Config
+// extractKcryptConfigFromCollector extracts kcrypt configuration from a collector.Config.
 func extractKcryptConfigFromCollector(collectorConfig collector.Config, log types.KairosLogger) *bus.KcryptConfig {
 	if collectorConfig.Values == nil {
 		return nil
@@ -124,7 +124,7 @@ func extractKcryptConfigFromCollector(collectorConfig collector.Config, log type
 	return nil
 }
 
-// extractChallengerConfig extracts kcrypt configuration from a kcrypt config map
+// extractChallengerConfig extracts kcrypt configuration from a kcrypt config map.
 func extractChallengerConfig(kcryptMap collector.ConfigValues) *bus.KcryptConfig {
 	challengerVal, hasChallengerKey := kcryptMap["challenger"]
 	if !hasChallengerKey {
@@ -161,17 +161,16 @@ func extractChallengerConfig(kcryptMap collector.ConfigValues) *bus.KcryptConfig
 }
 
 // extractPCRBindingsFromCollector extracts bind-pcrs and bind-public-pcrs from collector config
-// Returns the PCR bindings, with defaults if not found
+// Returns the PCR bindings, with defaults if not found.
 func extractPCRBindingsFromCollector(collectorConfig collector.Config, log types.KairosLogger) (bindPCRs []string, bindPublicPCRs []string) {
 	if collectorConfig.Values == nil {
 		log.Debugf("ExtractPCRBindings: no config values")
 		return nil, nil
 	}
 
-	// Try to extract bind-pcrs
 	if bindPCRsVal, ok := collectorConfig.Values["bind-pcrs"]; ok {
 		log.Debugf("ExtractPCRBindings: found bind-pcrs, type=%T", bindPCRsVal)
-		// Handle both []string and []interface{} (from YAML unmarshaling)
+		// Handle both []string and []interface{} (from YAML unmarshaling).
 		switch v := bindPCRsVal.(type) {
 		case []string:
 			bindPCRs = v
@@ -185,10 +184,9 @@ func extractPCRBindingsFromCollector(collectorConfig collector.Config, log types
 		log.Debugf("ExtractPCRBindings: extracted bind-pcrs=%v", bindPCRs)
 	}
 
-	// Try to extract bind-public-pcrs
 	if bindPublicPCRsVal, ok := collectorConfig.Values["bind-public-pcrs"]; ok {
 		log.Debugf("ExtractPCRBindings: found bind-public-pcrs, type=%T", bindPublicPCRsVal)
-		// Handle both []string and []interface{} (from YAML unmarshaling)
+		// Handle both []string and []interface{} (from YAML unmarshaling).
 		switch v := bindPublicPCRsVal.(type) {
 		case []string:
 			bindPublicPCRs = v
