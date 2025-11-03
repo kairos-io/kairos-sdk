@@ -67,7 +67,7 @@ func ExtractOCIImage(img v1.Image, targetDestination string, excludes ...string)
 
 	var options archive.ApplyOpt
 	if len(excludes) > 0 {
-		//Create a Filter option to exclude files during extraction
+		// Create a Filter option to exclude files during extraction
 		options = archive.WithFilter(func(hdr *tar.Header) (bool, error) {
 			for _, exclude := range excludes {
 				matched, matchErr := filepath.Match(exclude, hdr.Name)
@@ -78,6 +78,11 @@ func ExtractOCIImage(img v1.Image, targetDestination string, excludes ...string)
 					return false, nil
 				}
 			}
+			return true, nil
+		})
+	} else {
+		// Return all files
+		options = archive.WithFilter(func(hdr *tar.Header) (bool, error) {
 			return true, nil
 		})
 	}
