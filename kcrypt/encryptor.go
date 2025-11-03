@@ -14,6 +14,7 @@ import (
 	"github.com/jaypipes/ghw/pkg/block"
 	"github.com/kairos-io/kairos-sdk/collector"
 	"github.com/kairos-io/kairos-sdk/kcrypt/bus"
+	"github.com/kairos-io/kairos-sdk/state"
 	"github.com/kairos-io/kairos-sdk/types"
 	"github.com/kairos-io/kairos-sdk/utils"
 	"github.com/mudler/go-pluggable"
@@ -599,22 +600,13 @@ func scanCollectorConfig(logger types.KairosLogger) *collector.Config {
 // detectUKIMode detects if the system is running in UKI mode
 // This checks for the presence of UKI-specific indicators.
 func detectUKIMode(logger types.KairosLogger) bool {
-	// Check if we're booted from a UKI by looking for systemd UKI indicators
-	// The most reliable way is to check if /run/systemd/tpm2-pcr-signature.json exists
-	// This file is created by systemd when booting from a UKI with PCR signatures
-	if _, err := os.Stat("/run/systemd/tpm2-pcr-signature.json"); err == nil {
-		logger.Logger.Debug().Msg("Detected UKI mode: found /run/systemd/tpm2-pcr-signature.json")
-		return true
+	cmdline, err := os.ReadFile("/proc/cmdline")
+	if err != nil {
+		logger.Logger.Debug().Err(err).Msg("Error reading /proc/cmdline file " + err.Error())
+		return false
 	}
 
-	// Alternative: check for /run/systemd/tpm2-pcr-public-key.pem
-	if _, err := os.Stat("/run/systemd/tpm2-pcr-public-key.pem"); err == nil {
-		logger.Logger.Debug().Msg("Detected UKI mode: found /run/systemd/tpm2-pcr-public-key.pem")
-		return true
-	}
-
-	logger.Logger.Debug().Msg("Not running in UKI mode")
-	return false
+	return state.DetectUKIboot(string(cmdline))
 }
 
 // partitionInfo holds information about a partition for unlocking.
