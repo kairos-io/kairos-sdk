@@ -50,110 +50,54 @@ func ScanKcryptConfig(logger types.KairosLogger, dirs ...string) *bus.KcryptConf
 	logger.Debugf("ScanKcryptConfig: struct is: %#v", collectorConfig.Values)
 
 	result := extractKcryptConfigFromCollector(*collectorConfig, logger)
-	if result != nil {
-		logger.Debugf("ScanKcryptConfig: extracted kcrypt config - challenger_server=%s", result.ChallengerServer)
-	} else {
-		logger.Debugf("ScanKcryptConfig: no kcrypt config found in collector results")
-	}
+	logger.Debugf("ScanKcryptConfig: extracted kcrypt config =%s", result)
 
 	return result
 }
 
 // extractKcryptConfigFromCollector extracts kcrypt configuration from a collector.Config.
 func extractKcryptConfigFromCollector(collectorConfig collector.Config, log types.KairosLogger) *bus.KcryptConfig {
-	if collectorConfig.Values == nil {
-		return nil
-	}
-
-	var kcryptMap collector.ConfigValues
-	var foundLocation string
-
-	// First check for kairos.kcrypt (from cmdline like kairos.kcrypt.challenger.challenger_server=...)
-	kairosVal, hasKairos := collectorConfig.Values["kairos"]
-	if hasKairos {
-		log.Debugf("ExtractKcryptConfig: found kairos key, type=%T", kairosVal)
-
-		if kairosMap, ok := kairosVal.(collector.ConfigValues); ok {
-			// Log the keys inside kairos to see what's there
-			keys := make([]string, 0, len(kairosMap))
-			for k, v := range kairosMap {
-				keys = append(keys, k)
-				log.Debugf("ExtractKcryptConfig: kairos.%s = %v (type=%T)", k, v, v)
-			}
-			log.Debugf("ExtractKcryptConfig: found kairos key with subkeys: %v", keys)
-
-			kcryptVal, hasKcrypt := kairosMap["kcrypt"]
-			if hasKcrypt {
-				log.Debugf("ExtractKcryptConfig: found kcrypt key, type=%T", kcryptVal)
-				if km, ok := kcryptVal.(collector.ConfigValues); ok {
-					kcryptMap = km
-					foundLocation = "kairos.kcrypt"
-				} else {
-					log.Debugf("ExtractKcryptConfig: kcrypt value is not ConfigValues, it's %T", kcryptVal)
-				}
-			} else {
-				log.Debugf("ExtractKcryptConfig: no kcrypt key found under kairos")
-			}
-		} else {
-			log.Debugf("ExtractKcryptConfig: kairos value is not ConfigValues, it's %T", kairosVal)
-		}
-	}
-
-	// Fallback: check for kcrypt directly (from config files with kcrypt at top level)
-	if kcryptMap == nil {
-		kcryptVal, hasKcrypt := collectorConfig.Values["kcrypt"]
-		if hasKcrypt {
-			log.Debugf("ExtractKcryptConfig: found kcrypt key at top level, type=%T", kcryptVal)
-			if km, ok := kcryptVal.(collector.ConfigValues); ok {
-				kcryptMap = km
-				foundLocation = "top-level kcrypt"
-			}
-		}
-	}
-
-	// If we found a kcrypt map anywhere, extract the challenger config from it
-	if kcryptMap != nil {
-		result := extractChallengerConfig(kcryptMap)
-		if result != nil {
-			log.Debugf("ExtractKcryptConfig: successfully extracted challenger config from %s", foundLocation)
-		}
-		return result
-	}
-
-	log.Debugf("ExtractKcryptConfig: no kcrypt config found anywhere")
-	return nil
-}
-
-// extractChallengerConfig extracts kcrypt configuration from a kcrypt config map.
-func extractChallengerConfig(kcryptMap collector.ConfigValues) *bus.KcryptConfig {
-	challengerVal, hasChallengerKey := kcryptMap["challenger"]
-	if !hasChallengerKey {
-		return nil
-	}
-
-	challengerMap, ok := challengerVal.(collector.ConfigValues)
-	if !ok {
-		return nil
-	}
-
 	config := &bus.KcryptConfig{}
 
-	if server, ok := challengerMap["challenger_server"].(string); ok {
-		config.ChallengerServer = server
+	if collectorConfig.Values == nil {
+		log.Debugf("extractKcryptConfigFromCollector: no values found")
+		return config
 	}
-	if mdns, ok := challengerMap["mdns"].(bool); ok {
-		config.MDNS = mdns
+
+	kcryptVal, hasKcrypt := collectorConfig.Values["kcrypt"]
+	if !hasKcrypt {
+		log.Debugf("extractKcryptConfigFromCollector: no kcrypt key found")
+		return config
 	}
-	if cert, ok := challengerMap["certificate"].(string); ok {
-		config.Certificate = cert
+
+	kcryptMap, ok := kcryptVal.(collector.ConfigValues)
+	if !ok {
+		log.Debugf("extractKcryptConfigFromCollector: kcrypt value is not ConfigValues, it's %T", kcryptVal)
+		return config
 	}
-	if nvIndex, ok := challengerMap["nv_index"].(string); ok {
+
+	// Extract from challenger block if present (for remote KMS)
+	challengerVal, _ := kcryptMap["challenger"]
+	if challengerMap, ok := challengerVal.(collector.ConfigValues); ok {
+		if server, ok := challengerMap["challenger_server"].(string); ok {
+			config.ChallengerServer = server
+		}
+		if mdns, ok := challengerMap["mdns"].(bool); ok {
+			config.MDNS = mdns
+		}
+		if cert, ok := challengerMap["certificate"].(string); ok {
+			config.Certificate = cert
+		}
+	}
+
+	// Extract TPM fields from top-level kcrypt block (for local encryption)
+	if nvIndex, ok := kcryptMap["nv_index"].(string); ok {
 		config.NVIndex = nvIndex
 	}
-	if cIndex, ok := challengerMap["c_index"].(string); ok {
+	if cIndex, ok := kcryptMap["c_index"].(string); ok {
 		config.CIndex = cIndex
 	}
-	if tpmDevice, ok := challengerMap["tpm_device"].(string); ok {
+	if tpmDevice, ok := kcryptMap["tpm_device"].(string); ok {
 		config.TPMDevice = tpmDevice
 	}
 
