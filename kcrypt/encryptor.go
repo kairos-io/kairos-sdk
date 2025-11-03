@@ -88,14 +88,14 @@ func (e *RemoteKMSEncryptor) unlockPartition(partitionLabel string) error {
 		}
 
 		// If partition is already unlocked, we're done
-		if !info.Locked() {
+		if !partitionLocked(info) {
 			return nil
 		}
 
-		e.logger.Logger.Debug().Msg("partition name: " + info.Partition.Name)
+		e.logger.Logger.Debug().Msg("partition name: " + info.Name)
 
 		// Get passphrase from remote KMS
-		pass, err := e.getPasswordFromChallenger(info.Partition)
+		pass, err := e.getPasswordFromChallenger(info)
 		if err != nil {
 			lastErr = fmt.Errorf("failed to get password: %w", err)
 			e.logger.Logger.Warn().
@@ -105,7 +105,7 @@ func (e *RemoteKMSEncryptor) unlockPartition(partitionLabel string) error {
 			continue
 		}
 
-		err = luksUnlock(info.DevicePath, info.PartitionName, pass, &e.logger)
+		err = luksUnlock(info.Path, info.Name, pass, &e.logger)
 		if err != nil {
 			lastErr = fmt.Errorf("unlock failed: %w", err)
 			e.logger.Logger.Warn().
@@ -162,7 +162,7 @@ func (e *RemoteKMSEncryptor) luksify(label string, argsCreate ...string) (string
 	}
 
 	e.logger.Logger.Info().Str("partition", label).Msg("Getting password from kcrypt-challenger")
-	pass, err = e.getPasswordFromChallenger(info.Partition)
+	pass, err = e.getPasswordFromChallenger(info)
 	if err != nil {
 		e.logger.Err(err).Msg("get password")
 		return "", err
@@ -174,8 +174,8 @@ func (e *RemoteKMSEncryptor) luksify(label string, argsCreate ...string) (string
 		Int("passphrase_length", len(pass)).
 		Msg("ENCRYPTION: Received passphrase from kcrypt-challenger")
 
-	mapper := info.MapperPath()
-	device := info.DevicePath
+	mapper := partitionMapperPath(info)
+	device := info.Path
 
 	extraArgs := []string{"--uuid", uuid.NewV5(uuid.NamespaceURL, label).String()}
 	extraArgs = append(extraArgs, "--label", label)
@@ -195,14 +195,14 @@ func (e *RemoteKMSEncryptor) luksify(label string, argsCreate ...string) (string
 	}
 
 	e.logger.Logger.Info().Str("device", device).Str("label", label).Msg("Formatting LUKS container")
-	err = formatLuks(device, info.Partition.Name, mapper, label, pass, e.logger)
+	err = formatLuks(device, info.Name, mapper, label, pass, e.logger)
 	if err != nil {
 		e.logger.Err(err).Msg("format luks")
 		return "", err
 	}
 
 	e.logger.Logger.Info().Str("label", label).Msg("Partition encryption completed")
-	return fmt.Sprintf("%s:%s:%s", info.Partition.FilesystemLabel, info.Partition.Name, info.Partition.UUID), nil
+	return fmt.Sprintf("%s:%s:%s", info.FilesystemLabel, info.Name, info.UUID), nil
 }
 
 // getPasswordFromChallenger gets the password for a types.Partition using KcryptConfig.
@@ -334,12 +334,12 @@ func (e *TPMWithPCREncryptor) unlockPartition(partitionLabel string) error {
 		}
 
 		// If partition is already unlocked, we're done
-		if !info.Locked() {
+		if !partitionLocked(info) {
 			return nil
 		}
 
 		// Attempt to unlock with TPM
-		out, err := utils.SH(fmt.Sprintf("/usr/lib/systemd/systemd-cryptsetup attach %s %s - tpm2-device=auto", info.PartitionName, info.DevicePath))
+		out, err := utils.SH(fmt.Sprintf("/usr/lib/systemd/systemd-cryptsetup attach %s %s - tpm2-device=auto", info.Name, info.Path))
 		if err != nil {
 			lastErr = fmt.Errorf("TPM unlock failed: %w (output: %s)", err, out)
 			e.logger.Logger.Warn().
@@ -456,7 +456,7 @@ func (e *LocalTPMNVEncryptor) unlockPartition(partitionLabel string) error {
 		}
 
 		// If partition is already unlocked, we're done
-		if !info.Locked() {
+		if !partitionLocked(info) {
 			return nil
 		}
 
@@ -484,7 +484,7 @@ func (e *LocalTPMNVEncryptor) unlockPartition(partitionLabel string) error {
 		}
 
 		// Unlock directly with the local passphrase
-		err = luksUnlock(info.DevicePath, info.PartitionName, passphrase, &e.logger)
+		err = luksUnlock(info.Path, info.Name, passphrase, &e.logger)
 		if err != nil {
 			lastErr = fmt.Errorf("unlock failed: %w", err)
 			e.logger.Logger.Warn().
@@ -608,33 +608,26 @@ func detectUKIMode(logger types.KairosLogger) bool {
 	return state.DetectUKIboot(string(cmdline))
 }
 
-// partitionInfo holds information about a partition for unlocking.
-type partitionInfo struct {
-	DevicePath    string
-	PartitionName string
-	Partition     *types.Partition
-}
-
-// Locked returns true if the partition is currently locked (encrypted and not unlocked).
-func (p *partitionInfo) Locked() bool {
+// partitionLocked returns true if the partition is currently locked (encrypted and not unlocked).
+func partitionLocked(p *types.Partition) bool {
 	if p == nil {
 		return false
 	}
-	return !utils.Exists(p.MapperPath())
+	return !utils.Exists(partitionMapperPath(p))
 }
 
-// MapperPath returns the device mapper path for the partition (e.g., /dev/mapper/sda1).
-func (p *partitionInfo) MapperPath() string {
+// partitionMapperPath returns the device mapper path for the partition (e.g., /dev/mapper/sda1).
+func partitionMapperPath(p *types.Partition) string {
 	if p == nil {
 		return ""
 	}
-	return filepath.Join("/dev", "mapper", p.PartitionName)
+	return filepath.Join("/dev", "mapper", p.Name)
 }
 
 // findPartitionByLabel finds a partition by its filesystem label and returns its information.
 // It performs all the common logic needed before attempting to unlock a partition.
-// Returns an error if the partition is not found. Use Locked() to check if the partition is locked.
-func findPartitionByLabel(partitionLabel string) (*partitionInfo, error) {
+// Returns an error if the partition is not found. Use partitionLocked() to check if the partition is locked.
+func findPartitionByLabel(partitionLabel string) (*types.Partition, error) {
 	// Find the partition device by label
 	devicePath, err := utils.SH(fmt.Sprintf("blkid -L %s", partitionLabel))
 	devicePath = strings.TrimSpace(devicePath)
@@ -642,9 +635,6 @@ func findPartitionByLabel(partitionLabel string) (*partitionInfo, error) {
 	if err != nil || devicePath == "" {
 		return nil, fmt.Errorf("partition not found")
 	}
-
-	// Get partition name from device path (e.g., /dev/sda1 -> sda1).
-	partitionName := filepath.Base(devicePath)
 
 	disks := ghw.GetDisks(ghw.NewPaths(""), nil)
 	if disks == nil {
@@ -668,11 +658,17 @@ func findPartitionByLabel(partitionLabel string) (*partitionInfo, error) {
 		return nil, fmt.Errorf("partition not found in block devices")
 	}
 
-	return &partitionInfo{
-		DevicePath:    devicePath,
-		PartitionName: partitionName,
-		Partition:     partition,
-	}, nil
+	// Ensure Path is set to the device path found by blkid
+	// This ensures we use the actual device path even if Partition.Path wasn't set
+	if partition.Path == "" {
+		partition.Path = devicePath
+	}
+	// Ensure Name is set if it wasn't populated
+	if partition.Name == "" {
+		partition.Name = filepath.Base(devicePath)
+	}
+
+	return partition, nil
 }
 
 // validateSystemdVersion checks if systemd version is >= required version.

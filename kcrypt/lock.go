@@ -53,8 +53,8 @@ func luksifyWithPassphrase(label string, passphrase string, logger types.KairosL
 		return "", err
 	}
 
-	mapper := info.MapperPath()
-	device := info.DevicePath
+	mapper := partitionMapperPath(info)
+	device := info.Path
 
 	extraArgs := []string{"--uuid", uuid.NewV5(uuid.NamespaceURL, label).String()}
 	extraArgs = append(extraArgs, "--label", label)
@@ -73,14 +73,14 @@ func luksifyWithPassphrase(label string, passphrase string, logger types.KairosL
 	}
 
 	logger.Logger.Info().Str("device", device).Str("label", label).Msg("Formatting LUKS container")
-	err = formatLuks(device, info.Partition.Name, mapper, label, passphrase, logger)
+	err = formatLuks(device, info.Name, mapper, label, passphrase, logger)
 	if err != nil {
 		logger.Err(err).Msg("format luks")
 		return "", err
 	}
 
 	logger.Logger.Info().Str("label", label).Msg("Partition encryption completed")
-	return fmt.Sprintf("%s:%s:%s", info.Partition.FilesystemLabel, info.Partition.Name, info.Partition.UUID), nil
+	return fmt.Sprintf("%s:%s:%s", info.FilesystemLabel, info.Name, info.UUID), nil
 }
 
 // unmountIfMounted checks if a device is mounted and unmounts it if needed.
@@ -178,8 +178,8 @@ func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, lo
 	// On TPM locking we generate a random password that will only be used here then discarded.
 	// only unlocking method will be PCR values
 	pass := getRandomString(32)
-	mapper := info.MapperPath()
-	device := info.DevicePath
+	mapper := partitionMapperPath(info)
+	device := info.Path
 
 	extraArgs := []string{"--uuid", uuid.NewV5(uuid.NamespaceURL, label).String()}
 	extraArgs = append(extraArgs, "--label", label)
@@ -234,7 +234,7 @@ func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, lo
 
 	logger.Logger.Debug().Str("output", stdOut.String()).Msg("debug from cryptenroll")
 
-	err = formatLuks(device, info.Partition.Name, mapper, label, pass, logger)
+	err = formatLuks(device, info.Name, mapper, label, pass, logger)
 	if err != nil {
 		logger.Err(err).Msg("format luks")
 		return err
