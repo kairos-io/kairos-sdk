@@ -1,11 +1,13 @@
 package utils
 
 import (
+	"archive/tar"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
@@ -60,11 +62,32 @@ var defaultRetryPredicate = func(err error) bool {
 	return false
 }
 
-// ExtractOCIImage will extract a given targetImage into a given targetDestination
-func ExtractOCIImage(img v1.Image, targetDestination string) error {
+func ExtractOCIImage(img v1.Image, targetDestination string, excludes ...string) error {
 	reader := mutate.Extract(img)
 
-	_, err := archive.Apply(context.Background(), targetDestination, reader)
+	var options archive.ApplyOpt
+	if len(excludes) > 0 {
+		// Create a Filter option to exclude files during extraction
+		options = archive.WithFilter(func(hdr *tar.Header) (bool, error) {
+			for _, exclude := range excludes {
+				matched, matchErr := filepath.Match(exclude, hdr.Name)
+				if matchErr != nil {
+					return false, matchErr
+				}
+				if matched {
+					return false, nil
+				}
+			}
+			return true, nil
+		})
+	} else {
+		// Return all files
+		options = archive.WithFilter(func(_ *tar.Header) (bool, error) {
+			return true, nil
+		})
+	}
+
+	_, err := archive.Apply(context.Background(), targetDestination, reader, options)
 
 	return err
 }
