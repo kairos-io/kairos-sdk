@@ -201,6 +201,9 @@ func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, lo
 
 	syscall.Sync()
 
+	_ = os.Setenv("SYSTEMD_LOG_LEVEL", "debug")
+	defer os.Unsetenv("SYSTEMD_LOG_LEVEL")
+
 	// Enroll PCR policy as a keyslot
 	// We pass the current signature of the booted system to confirm that we would be able to unlock with the current booted system
 	// That checks the policy against the signatures and fails if a UKI with those signatures wont be able to unlock the device
