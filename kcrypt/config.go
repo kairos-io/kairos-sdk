@@ -77,7 +77,7 @@ func extractKcryptConfigFromCollector(collectorConfig collector.Config, log type
 	}
 
 	// Extract from challenger block if present (for remote KMS)
-	challengerVal, _ := kcryptMap["challenger"]
+	challengerVal := kcryptMap["challenger"]
 	if challengerMap, ok := challengerVal.(collector.ConfigValues); ok {
 		if server, ok := challengerMap["challenger_server"].(string); ok {
 			config.ChallengerServer = server
