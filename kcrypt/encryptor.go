@@ -10,9 +10,8 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/jaypipes/ghw"
-	"github.com/jaypipes/ghw/pkg/block"
 	"github.com/kairos-io/kairos-sdk/collector"
+	"github.com/kairos-io/kairos-sdk/ghw"
 	"github.com/kairos-io/kairos-sdk/kcrypt/bus"
 	"github.com/kairos-io/kairos-sdk/state"
 	"github.com/kairos-io/kairos-sdk/types"
@@ -206,9 +205,9 @@ func (e *RemoteKMSEncryptor) luksify(label string, argsCreate ...string) (string
 	return fmt.Sprintf("%s:%s:%s", info.Partition.FilesystemLabel, info.Partition.Name, info.Partition.UUID), nil
 }
 
-// getPasswordFromChallenger gets the password for a block.Partition using KcryptConfig.
+// getPasswordFromChallenger gets the password for a types.Partition using KcryptConfig.
 // It constructs the DiscoveryPasswordPayload internally for communication with the plugin.
-func (e *RemoteKMSEncryptor) getPasswordFromChallenger(b *block.Partition) (password string, err error) {
+func (e *RemoteKMSEncryptor) getPasswordFromChallenger(b *types.Partition) (password string, err error) {
 	// Get a logger for debugging
 	log := types.NewKairosLogger("kcrypt-getPassword", "info", false)
 	defer log.Close()
@@ -613,7 +612,7 @@ func detectUKIMode(logger types.KairosLogger) bool {
 type partitionInfo struct {
 	DevicePath    string
 	PartitionName string
-	Partition     *block.Partition
+	Partition     *types.Partition
 }
 
 // Locked returns true if the partition is currently locked (encrypted and not unlocked).
@@ -647,13 +646,13 @@ func findPartitionByLabel(partitionLabel string) (*partitionInfo, error) {
 	// Get partition name from device path (e.g., /dev/sda1 -> sda1).
 	partitionName := filepath.Base(devicePath)
 
-	blk, err := ghw.Block()
-	if err != nil {
-		return nil, fmt.Errorf("failed to scan block devices: %w", err)
+	disks := ghw.GetDisks(ghw.NewPaths(""), nil)
+	if disks == nil {
+		return nil, fmt.Errorf("failed to scan block devices")
 	}
 
-	var partition *block.Partition
-	for _, disk := range blk.Disks {
+	var partition *types.Partition
+	for _, disk := range disks {
 		for _, p := range disk.Partitions {
 			if p.FilesystemLabel == partitionLabel {
 				partition = p
