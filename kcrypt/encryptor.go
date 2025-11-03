@@ -278,9 +278,6 @@ type TPMWithPCREncryptor struct {
 func (e *TPMWithPCREncryptor) Encrypt(partitions []string) error {
 	e.logger.Logger.Info().Str("method", e.Name()).Strs("partitions", partitions).Msg("Encrypting partitions")
 
-	_ = os.Setenv("SYSTEMD_LOG_LEVEL", "debug")
-	defer os.Unsetenv("SYSTEMD_LOG_LEVEL")
-
 	for _, partition := range partitions {
 		e.logger.Logger.Info().Str("partition", partition).Msg("Encrypting partition")
 
