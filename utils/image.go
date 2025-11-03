@@ -82,7 +82,7 @@ func ExtractOCIImage(img v1.Image, targetDestination string, excludes ...string)
 		})
 	} else {
 		// Return all files
-		options = archive.WithFilter(func(hdr *tar.Header) (bool, error) {
+		options = archive.WithFilter(func(_ *tar.Header) (bool, error) {
 			return true, nil
 		})
 	}
