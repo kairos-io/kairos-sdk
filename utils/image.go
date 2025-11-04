@@ -63,6 +63,7 @@ var defaultRetryPredicate = func(err error) bool {
 
 func ExtractOCIImage(img v1.Image, targetDestination string, excludes ...string) error {
 	reader := mutate.Extract(img)
+	var err error
 
 	var options archive.ApplyOpt
 	if len(excludes) > 0 {
@@ -78,14 +79,11 @@ func ExtractOCIImage(img v1.Image, targetDestination string, excludes ...string)
 			}
 			return true, nil
 		})
-	} else {
-		// Return all files
-		options = archive.WithFilter(func(_ *tar.Header) (bool, error) {
-			return true, nil
-		})
-	}
+		_, err = archive.Apply(context.Background(), targetDestination, reader, options)
 
-	_, err := archive.Apply(context.Background(), targetDestination, reader, options)
+	} else {
+		_, err = archive.Apply(context.Background(), targetDestination, reader)
+	}
 
 	return err
 }
