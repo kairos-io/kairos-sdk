@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
@@ -67,16 +66,15 @@ func ExtractOCIImage(img v1.Image, targetDestination string, excludes ...string)
 
 	var options archive.ApplyOpt
 	if len(excludes) > 0 {
+		// Create a map to hold exclude patterns for faster lookup
+		excludeMap := make(map[string]struct{})
+		for _, exclude := range excludes {
+			excludeMap[exclude] = struct{}{}
+		}
 		// Create a Filter option to exclude files during extraction
 		options = archive.WithFilter(func(hdr *tar.Header) (bool, error) {
-			for _, exclude := range excludes {
-				matched, matchErr := filepath.Match(exclude, hdr.Name)
-				if matchErr != nil {
-					return false, matchErr
-				}
-				if matched {
-					return false, nil
-				}
+			if _, found := excludeMap[hdr.Name]; found {
+				return false, nil
 			}
 			return true, nil
 		})
