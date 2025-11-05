@@ -36,6 +36,12 @@ func luksUnlock(device, mapper, password string, logger *types.KairosLogger) err
 	var unlockErr error
 	maxRetries := 3
 
+	defer func() {
+		if dev != nil {
+			_ = dev.Close() // might be already closed. Just to be sure.
+		}
+	}()
+
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		if attempt > 0 {
 			time.Sleep(time.Duration(attempt) * time.Second)
@@ -65,7 +71,7 @@ func luksUnlock(device, mapper, password string, logger *types.KairosLogger) err
 		// Try to unlock
 		unlockErr = dev.Unlock(0, []byte(password), mapper)
 		if unlockErr != nil {
-			_ = dev.Close() // Close on error
+			_ = dev.Close() // Close on error so that the next retry opens it again
 			if logger != nil {
 				logger.Logger.Warn().
 					Int("attempt", attempt+1).
