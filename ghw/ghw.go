@@ -87,6 +87,7 @@ func GetDisks(paths *Paths, logger *types.KairosLogger) []*types.Disk {
 	if logger == nil {
 		newLogger := types.NewKairosLogger("ghw", "info", true)
 		logger = &newLogger
+		defer newLogger.Close()
 	}
 	disks := make([]*types.Disk, 0)
 	logger.Logger.Debug().Str("path", paths.SysBlock).Msg("Scanning for disks")
