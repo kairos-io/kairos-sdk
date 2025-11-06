@@ -636,7 +636,8 @@ func findPartitionByLabel(partitionLabel string) (*types.Partition, error) {
 		return nil, fmt.Errorf("partition not found")
 	}
 
-	disks := ghw.GetDisks(ghw.NewPaths(""), nil)
+	logger := types.NewNullLogger()
+	disks := ghw.GetDisks(ghw.NewPaths(""), &logger)
 	if disks == nil {
 		return nil, fmt.Errorf("failed to scan block devices")
 	}
