@@ -9,7 +9,7 @@ import (
 	"github.com/kairos-io/kairos-sdk/types/images"
 	"github.com/kairos-io/kairos-sdk/types/install"
 	"github.com/kairos-io/kairos-sdk/types/logger"
-	"github.com/kairos-io/kairos-sdk/types/logs"
+	log "github.com/kairos-io/kairos-sdk/types/logs"
 	"github.com/kairos-io/kairos-sdk/types/platform"
 	"github.com/kairos-io/kairos-sdk/types/runner"
 	"github.com/kairos-io/kairos-sdk/types/syscall"
@@ -53,5 +53,5 @@ type Config struct {
 	UkiMaxEntries             int                             `yaml:"uki-max-entries,omitempty" mapstructure:"uki-max-entries"`
 	BindPCRs                  []string                        `yaml:"bind-pcrs,omitempty" mapstructure:"bind-pcrs"`
 	BindPublicPCRs            []string                        `yaml:"bind-public-pcrs,omitempty" mapstructure:"bind-public-pcrs"`
-	Logs                      *loggather.LogsConfig           `yaml:"logs,omitempty"`
+	Logs                      *log.LogsConfig                 `yaml:"logs,omitempty"`
 }
