@@ -13,7 +13,7 @@ import (
 	"github.com/kairos-io/kairos-sdk/types/platform"
 	"github.com/kairos-io/kairos-sdk/types/runner"
 	"github.com/kairos-io/kairos-sdk/types/syscall"
-	"k8s.io/utils/mount"
+	mountUtils "k8s.io/mount-utils"
 )
 
 // You would probably be thinking, why is the Config struct in here? Well, the types
@@ -23,8 +23,8 @@ import (
 // so its nice that its in a central place for providers to consume and be able to alter install behavior easily.
 
 type Config struct {
-	Install                   *install.Install `yaml:"install,omitempty"`
-	collector.Config          `yaml:"-"`
+	Install                   *install.Install                `yaml:"install,omitempty"`
+	Collector                 collector.Config                `yaml:"-"`
 	ConfigURL                 string                          `yaml:"config_url,omitempty"`
 	Options                   map[string]string               `yaml:"options,omitempty"`
 	FailOnBundleErrors        bool                            `yaml:"fail_on_bundles_errors,omitempty"`
@@ -37,7 +37,7 @@ type Config struct {
 	EjectCD                   bool                            `yaml:"eject-cd,omitempty" mapstructure:"eject-cd"`
 	Logger                    logger.KairosLogger             `yaml:"-"`
 	Fs                        fs.KairosFS                     `yaml:"-"`
-	Mounter                   mount.Interface                 `yaml:"-"`
+	Mounter                   mountUtils.Interface            `yaml:"-"`
 	Runner                    runner.Runner                   `yaml:"-"`
 	Syscall                   syscall.SyscallInterface        `yaml:"-"`
 	CloudInitRunner           cloudinitrunner.CloudInitRunner `yaml:"-"`
