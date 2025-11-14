@@ -42,7 +42,7 @@ type Config struct {
 	Syscall                   syscall.Interface               `yaml:"-"`
 	CloudInitRunner           cloudinitrunner.CloudInitRunner `yaml:"-"`
 	ImageExtractor            images.ImageExtractor           `yaml:"-"`
-	Client                    http.HTTPClient                 `yaml:"-"`
+	Client                    http.Client                     `yaml:"-"`
 	Platform                  *platform.Platform              `yaml:"-"`
 	Cosign                    bool                            `yaml:"cosign,omitempty" mapstructure:"cosign"`
 	Verify                    bool                            `yaml:"verify,omitempty" mapstructure:"verify"`
@@ -53,5 +53,5 @@ type Config struct {
 	UkiMaxEntries             int                             `yaml:"uki-max-entries,omitempty" mapstructure:"uki-max-entries"`
 	BindPCRs                  []string                        `yaml:"bind-pcrs,omitempty" mapstructure:"bind-pcrs"`
 	BindPublicPCRs            []string                        `yaml:"bind-public-pcrs,omitempty" mapstructure:"bind-public-pcrs"`
-	Logs                      *logs.LogsConfig                `yaml:"logs,omitempty"`
+	Logs                      *logGather.LogsConfig           `yaml:"logs,omitempty"`
 }
