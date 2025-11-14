@@ -17,7 +17,7 @@ const (
 	ocifile = "ocifile"
 )
 
-// Image struct represents a file system image with its commonly configurable values, size in MiB
+// Image struct represents a file system image with its commonly configurable values, size in MiB.
 type Image struct {
 	File       string       `yaml:"-" json:"-"` // File is not serialized
 	Label      string       `yaml:"label,omitempty" mapstructure:"label" json:"label,omitempty"`
@@ -28,13 +28,13 @@ type Image struct {
 	MountPoint string       `yaml:"-" json:"-"` // MountPoint is not serialized
 	LoopDevice string       `yaml:"-" json:"-"` // LoopDevice is not serialized
 }
-
 type ImageSource struct {
-	source  string `yaml:"source" json:"source"`
-	srcType string `yaml:"type" json:"type"`
+	source  string `yaml:"source" json:"source"` //nolint:govet
+	srcType string `yaml:"type" json:"type"`     //nolint:govet
 }
 
-// Implement the Imagesource methods here so everything can conwsume it
+// Implement the Imagesource methods here so everything can consume it.
+
 func (i ImageSource) Value() string {
 	return i.source
 }
