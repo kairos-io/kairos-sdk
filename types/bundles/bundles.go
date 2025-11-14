@@ -1,4 +1,4 @@
-package types
+package bundles
 
 type Bundles []Bundle
 

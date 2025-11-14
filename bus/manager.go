@@ -3,7 +3,7 @@ package bus
 import (
 	"os"
 
-	"github.com/kairos-io/kairos-sdk/types"
+	"github.com/kairos-io/kairos-sdk/types/logger"
 	"github.com/mudler/go-pluggable"
 )
 
@@ -26,11 +26,11 @@ func NewBus(withEvents ...pluggable.EventType) *Bus {
 type Bus struct {
 	*pluggable.Manager
 	registered     bool
-	logger         *types.KairosLogger // Fully override the logger
-	logLevel       string              // Log level for the logger, defaults to "info" unless BUS_DEBUG is set to "true". This only valid if logger is not set.
-	logName        string              // Name of the logger, defaults to "bus". This only valid if logger is not set.
-	providerPrefix string              // Prefix for provider plugins, defaults to "agent-provider". This is used to autoload providers.
-	providerPaths  []string            // Paths to search for provider plugins, defaults to system and current working directory.
+	logger         *logger.KairosLogger // Fully override the logger
+	logLevel       string               // Log level for the logger, defaults to "info" unless BUS_DEBUG is set to "true". This only valid if logger is not set.
+	logName        string               // Name of the logger, defaults to "bus". This only valid if logger is not set.
+	providerPrefix string               // Prefix for provider plugins, defaults to "agent-provider". This is used to autoload providers.
+	providerPaths  []string             // Paths to search for provider plugins, defaults to system and current working directory.
 }
 
 func (b *Bus) LoadProviders() *pluggable.Manager {
@@ -69,7 +69,7 @@ func (b *Bus) Initialize(o ...Options) {
 		if b.logName == "" {
 			b.logName = DefaultLogName
 		}
-		l := types.NewKairosLogger(b.logName, b.logLevel, false)
+		l := logger.NewKairosLogger(b.logName, b.logLevel, false)
 		b.logger = &l
 	}
 
@@ -81,7 +81,7 @@ func (b *Bus) Initialize(o ...Options) {
 type Options func(d *Bus)
 
 // WithLogger allows to set a custom logger for the bus. If set, it will override the default logger.
-func WithLogger(logger *types.KairosLogger) Options {
+func WithLogger(logger *logger.KairosLogger) Options {
 	return func(d *Bus) {
 		d.logger = logger
 	}

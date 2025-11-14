@@ -15,7 +15,9 @@ import (
 	"github.com/foxboron/go-uefi/efi/signature"
 	"github.com/foxboron/go-uefi/efi/util"
 	"github.com/foxboron/go-uefi/pkcs7"
-	"github.com/kairos-io/kairos-sdk/types"
+	"github.com/kairos-io/kairos-sdk/types/certs"
+	"github.com/kairos-io/kairos-sdk/types/fs"
+	"github.com/kairos-io/kairos-sdk/types/logger"
 	peparser "github.com/saferwall/pe"
 )
 
@@ -39,8 +41,8 @@ func GetKeyDatabase(sigType string) (*signature.SignatureDatabase, error) {
 }
 
 // GetAllFullCerts returns a list of certs in the system. Full cert, including raw data of the cert
-func GetAllFullCerts() (types.CertListFull, error) {
-	var certList types.CertListFull
+func GetAllFullCerts() (certs.CertListFull, error) {
+	var certList certs.CertListFull
 	pk, err := GetKeyDatabase("PK")
 	if err != nil {
 		return certList, err
@@ -80,8 +82,8 @@ func ExtractCertsFromSignatureDatabase(database *signature.SignatureDatabase) []
 }
 
 // GetAllCerts returns a list of certs in the system
-func GetAllCerts() (types.CertList, error) {
-	var certList types.CertList
+func GetAllCerts() (certs.CertList, error) {
+	var certList certs.CertList
 	pk, err := GetKeyDatabase("PK")
 	if err != nil {
 		return certList, err
@@ -104,7 +106,7 @@ func GetAllCerts() (types.CertList, error) {
 					continue
 				}
 				for _, cert := range certificates {
-					certList.PK = append(certList.PK, types.CertDetail{Owner: cert.Subject, Issuer: cert.Issuer})
+					certList.PK = append(certList.PK, certs.CertDetail{Owner: cert.Subject, Issuer: cert.Issuer})
 				}
 			}
 		}
@@ -119,7 +121,7 @@ func GetAllCerts() (types.CertList, error) {
 					continue
 				}
 				for _, cert := range certificates {
-					certList.KEK = append(certList.KEK, types.CertDetail{Owner: cert.Subject, Issuer: cert.Issuer})
+					certList.KEK = append(certList.KEK, certs.CertDetail{Owner: cert.Subject, Issuer: cert.Issuer})
 				}
 			}
 		}
@@ -134,7 +136,7 @@ func GetAllCerts() (types.CertList, error) {
 					continue
 				}
 				for _, cert := range certificates {
-					certList.DB = append(certList.DB, types.CertDetail{Owner: cert.Subject, Issuer: cert.Issuer})
+					certList.DB = append(certList.DB, certs.CertDetail{Owner: cert.Subject, Issuer: cert.Issuer})
 				}
 			}
 		}
@@ -150,7 +152,7 @@ func isValidSignature(sign util.EFIGUID) bool {
 
 // CheckArtifactSignatureIsValid checks that a given efi artifact is signed properly with a signature that would allow it to
 // boot correctly in the current node if secureboot is enabled
-func CheckArtifactSignatureIsValid(fs types.KairosFS, artifact string, logger types.KairosLogger) error {
+func CheckArtifactSignatureIsValid(fs fs.KairosFS, artifact string, logger logger.KairosLogger) error {
 	var err error
 	logger.Logger.Info().Str("what", artifact).Msg("Checking artifact for valid signature")
 	info, err := fs.Stat(artifact)

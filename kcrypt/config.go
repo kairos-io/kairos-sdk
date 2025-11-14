@@ -3,7 +3,7 @@ package kcrypt
 import (
 	"github.com/kairos-io/kairos-sdk/collector"
 	"github.com/kairos-io/kairos-sdk/kcrypt/bus"
-	"github.com/kairos-io/kairos-sdk/types"
+	"github.com/kairos-io/kairos-sdk/types/logger"
 )
 
 // DefaultConfigDirs are the default directories to scan for Kairos configuration.
@@ -12,7 +12,7 @@ var DefaultConfigDirs = []string{"/oem", "/sysroot/oem", "/run/cos/oem"}
 // ScanKcryptConfig scans for Kairos configuration in the given directories (or defaults),
 // merges with cmdline, and extracts the kcrypt configuration.
 // Returns nil if no kcrypt config is found.
-func ScanKcryptConfig(logger types.KairosLogger, dirs ...string) *bus.KcryptConfig {
+func ScanKcryptConfig(logger logger.KairosLogger, dirs ...string) *bus.KcryptConfig {
 	if len(dirs) == 0 {
 		dirs = DefaultConfigDirs
 	}
@@ -56,7 +56,7 @@ func ScanKcryptConfig(logger types.KairosLogger, dirs ...string) *bus.KcryptConf
 }
 
 // extractKcryptConfigFromCollector extracts kcrypt configuration from a collector.Config.
-func extractKcryptConfigFromCollector(collectorConfig collector.Config, log types.KairosLogger) *bus.KcryptConfig {
+func extractKcryptConfigFromCollector(collectorConfig collector.Config, log logger.KairosLogger) *bus.KcryptConfig {
 	config := &bus.KcryptConfig{}
 
 	if collectorConfig.Values == nil {
@@ -106,7 +106,7 @@ func extractKcryptConfigFromCollector(collectorConfig collector.Config, log type
 
 // extractPCRBindingsFromCollector extracts bind-pcrs and bind-public-pcrs from collector config
 // Returns the PCR bindings, with defaults if not found.
-func extractPCRBindingsFromCollector(collectorConfig collector.Config, log types.KairosLogger) (bindPCRs []string, bindPublicPCRs []string) {
+func extractPCRBindingsFromCollector(collectorConfig collector.Config, log logger.KairosLogger) (bindPCRs []string, bindPublicPCRs []string) {
 	if collectorConfig.Values == nil {
 		log.Debugf("ExtractPCRBindings: no config values")
 		return nil, nil

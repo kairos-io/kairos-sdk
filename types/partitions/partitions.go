@@ -1,4 +1,4 @@
-package types
+package partitions
 
 type Partition struct {
 	Name            string   `yaml:"name,omitempty" mapstructure:"name" json:"name,omitempty"`

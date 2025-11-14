@@ -7,7 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kairos-io/kairos-sdk/types"
+	"github.com/kairos-io/kairos-sdk/types/logger"
+	"github.com/kairos-io/kairos-sdk/types/partitions"
 )
 
 const (
@@ -47,7 +48,7 @@ func NewPaths(withOptionalPrefix string) *Paths {
 	return p
 }
 
-func isMultipathDevice(paths *Paths, entry os.DirEntry, logger *types.KairosLogger) bool {
+func isMultipathDevice(paths *Paths, entry os.DirEntry, logger *logger.KairosLogger) bool {
 	hasPrefix := strings.HasPrefix(entry.Name(), "dm-")
 	if !hasPrefix {
 		return false
@@ -83,13 +84,13 @@ func isMultipathDevice(paths *Paths, entry os.DirEntry, logger *types.KairosLogg
 	return true
 }
 
-func GetDisks(paths *Paths, logger *types.KairosLogger) []*types.Disk {
+func GetDisks(paths *Paths, logger *logger.KairosLogger) []*partitions.Disk {
 	if logger == nil {
-		newLogger := types.NewKairosLogger("ghw", "info", true)
+		newLogger := logger.NewKairosLogger("ghw", "info", true)
 		logger = &newLogger
 		defer newLogger.Close()
 	}
-	disks := make([]*types.Disk, 0)
+	disks := make([]*partitions.Disk, 0)
 	logger.Logger.Debug().Str("path", paths.SysBlock).Msg("Scanning for disks")
 	files, err := os.ReadDir(paths.SysBlock)
 	if err != nil {
@@ -112,7 +113,7 @@ func GetDisks(paths *Paths, logger *types.KairosLogger) []*types.Disk {
 			// We don't care about unused loop devices...
 			continue
 		}
-		d := &types.Disk{
+		d := &partitions.Disk{
 			Name:      dname,
 			SizeBytes: size,
 			UUID:      diskUUID(paths, dname, logger),
@@ -133,7 +134,7 @@ func GetDisks(paths *Paths, logger *types.KairosLogger) []*types.Disk {
 	return disks
 }
 
-func isMultipathPartition(entry os.DirEntry, paths *Paths, logger *types.KairosLogger) bool {
+func isMultipathPartition(entry os.DirEntry, paths *Paths, logger *logger.KairosLogger) bool {
 	// Must be a dm device to be a multipath partition
 	if !isMultipathDevice(paths, entry, logger) {
 		return false
@@ -152,7 +153,7 @@ func isMultipathPartition(entry os.DirEntry, paths *Paths, logger *types.KairosL
 	return ok
 }
 
-func diskSizeBytes(paths *Paths, disk string, logger *types.KairosLogger) uint64 {
+func diskSizeBytes(paths *Paths, disk string, logger *logger.KairosLogger) uint64 {
 	// We can find the number of 512-byte sectors by examining the contents of
 	// /sys/block/$DEVICE/size and calculate the physical bytes accordingly.
 	path := filepath.Join(paths.SysBlock, disk, "size")

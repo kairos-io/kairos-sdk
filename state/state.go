@@ -12,7 +12,8 @@ import (
 	"github.com/jaypipes/ghw"
 	"github.com/jaypipes/ghw/pkg/block"
 	"github.com/kairos-io/kairos-sdk/signatures"
-	"github.com/kairos-io/kairos-sdk/types"
+	"github.com/kairos-io/kairos-sdk/types/certs"
+	"github.com/kairos-io/kairos-sdk/types/fs"
 	"github.com/kairos-io/kairos-sdk/utils"
 	"github.com/rs/zerolog"
 	"github.com/zcalusic/sysinfo"
@@ -52,7 +53,7 @@ type Kairos struct {
 	Version    string         `yaml:"version" json:"version"`
 	Init       string         `yaml:"init" json:"init"`
 	SecureBoot bool           `yaml:"secureboot" json:"secureboot"`
-	EfiCerts   types.EfiCerts `yaml:"eficerts,omitempty" json:"eficerts,omitempty"`
+	EfiCerts   certs.EfiCerts `yaml:"eficerts,omitempty" json:"eficerts,omitempty"`
 }
 
 type EncryptedParts struct {
@@ -226,7 +227,7 @@ func EfiBootFromInstall(logger zerolog.Logger) bool {
 }
 
 // DetectBootWithVFS will detect the boot state using a vfs so it can be used for tests as well
-func DetectBootWithVFS(fs types.KairosFS) (Boot, error) {
+func DetectBootWithVFS(fs fs.KairosFS) (Boot, error) {
 	cmdline, err := fs.ReadFile("/proc/cmdline")
 	if err != nil {
 		return Unknown, err
@@ -359,8 +360,8 @@ func detectEncryptedPartitions(runtime *Runtime) {
 }
 
 // getEfiCertsCommonNames returns a simple list of the Common names of the certs
-func getEfiCertsCommonNames() types.EfiCerts {
-	var data types.EfiCerts
+func getEfiCertsCommonNames() certs.EfiCerts {
+	var data certs.EfiCerts
 	certs, _ := signatures.GetAllCerts() // Ignore errors here, we dont care about them, we only want the presentation of the names
 	for _, c := range certs.PK {
 		data.PK = append(data.PK, c.Issuer.CommonName)

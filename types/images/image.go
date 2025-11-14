@@ -1,4 +1,4 @@
-package types
+package images
 
 import (
 	"fmt"
@@ -153,4 +153,9 @@ func NewDirSrc(src string) *ImageSource {
 
 func NewOCIFileSrc(src string) *ImageSource {
 	return &ImageSource{source: src, srcType: ocifile}
+}
+
+type ImageExtractor interface {
+	ExtractImage(imageRef, destination, platformRef string, excludes ...string) error
+	GetOCIImageSize(imageRef, platformRef string) (int64, error)
 }
