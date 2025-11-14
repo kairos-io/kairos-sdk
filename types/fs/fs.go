@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-// KairosFS is our interface for methods that need an FS
+// KairosFS is our interface for methods that need an FS.
 type KairosFS interface {
 	Open(name string) (fs.File, error)
 	Chmod(name string, mode os.FileMode) error

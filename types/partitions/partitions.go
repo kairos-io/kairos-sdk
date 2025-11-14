@@ -100,7 +100,7 @@ func (ep *ElementalPartitions) PartitionsByInstallOrder(extraPartitions Partitio
 }
 
 // PartitionsByMountPoint sorts partitions according to its mountpoint, ignores nil.
-// partitions or partitions with an empty mountpoint
+// partitions or partitions with an empty mountpoint.
 func (ep *ElementalPartitions) PartitionsByMountPoint(descending bool, excludes ...*Partition) PartitionList {
 	mountPointKeys := map[string]*Partition{}
 	mountPoints := []string{}

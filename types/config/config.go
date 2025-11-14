@@ -53,5 +53,5 @@ type Config struct {
 	UkiMaxEntries             int                             `yaml:"uki-max-entries,omitempty" mapstructure:"uki-max-entries"`
 	BindPCRs                  []string                        `yaml:"bind-pcrs,omitempty" mapstructure:"bind-pcrs"`
 	BindPublicPCRs            []string                        `yaml:"bind-public-pcrs,omitempty" mapstructure:"bind-public-pcrs"`
-	Logs                      *logGather.LogsConfig           `yaml:"logs,omitempty"`
+	Logs                      *loggather.LogsConfig           `yaml:"logs,omitempty"`
 }
