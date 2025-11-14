@@ -39,7 +39,7 @@ type Config struct {
 	Fs                        fs.KairosFS                     `yaml:"-"`
 	Mounter                   mountUtils.Interface            `yaml:"-"`
 	Runner                    runner.Runner                   `yaml:"-"`
-	Syscall                   syscall.SyscallInterface        `yaml:"-"`
+	Syscall                   syscall.Interface               `yaml:"-"`
 	CloudInitRunner           cloudinitrunner.CloudInitRunner `yaml:"-"`
 	ImageExtractor            images.ImageExtractor           `yaml:"-"`
 	Client                    http.HTTPClient                 `yaml:"-"`

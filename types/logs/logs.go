@@ -1,4 +1,4 @@
-package logs
+package logGather
 
 // LogsConfig represents the configuration for log collection
 type LogsConfig struct {

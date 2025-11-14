@@ -20,7 +20,7 @@ import (
 	"syscall"
 )
 
-type SyscallInterface interface {
+type Interface interface {
 	Chroot(string) error
 	Chdir(string) error
 	Mount(string, string, string, uintptr, string) error

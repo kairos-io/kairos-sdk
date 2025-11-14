@@ -39,8 +39,7 @@ type ElementalPartitions struct {
 }
 
 // PartitionsByInstallOrder sorts partitions according to the default layout
-// nil partitions are ignored
-// partition with 0 size is set last
+// nil partitions are ignored and partition with 0 size is set last.
 func (ep *ElementalPartitions) PartitionsByInstallOrder(extraPartitions PartitionList, excludes ...*Partition) PartitionList {
 	partitions := PartitionList{}
 	var lastPartition *Partition
@@ -100,7 +99,7 @@ func (ep *ElementalPartitions) PartitionsByInstallOrder(extraPartitions Partitio
 	return partitions
 }
 
-// PartitionsByMountPoint sorts partitions according to its mountpoint, ignores nil
+// PartitionsByMountPoint sorts partitions according to its mountpoint, ignores nil.
 // partitions or partitions with an empty mountpoint
 func (ep *ElementalPartitions) PartitionsByMountPoint(descending bool, excludes ...*Partition) PartitionList {
 	mountPointKeys := map[string]*Partition{}
@@ -126,7 +125,7 @@ func (ep *ElementalPartitions) PartitionsByMountPoint(descending bool, excludes 
 	return partitions
 }
 
-// SetFirmwarePartitions sets firmware partitions for a given firmware and partition table type
+// SetFirmwarePartitions sets firmware partitions for a given firmware and partition table type.
 func (ep *ElementalPartitions) SetFirmwarePartitions(firmware string, partTable string) error {
 	if firmware == constants.EFI && partTable == constants.GPT {
 		ep.EFI = &Partition{
