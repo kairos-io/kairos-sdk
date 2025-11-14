@@ -13,7 +13,7 @@ import (
 	"github.com/kairos-io/kairos-sdk/types/platform"
 	"github.com/kairos-io/kairos-sdk/types/runner"
 	"github.com/kairos-io/kairos-sdk/types/syscall"
-	mountUtils "k8s.io/mount-utils"
+	"k8s.io/mount-utils"
 )
 
 // You would probably be thinking, why is the Config struct in here? Well, the types
@@ -37,7 +37,7 @@ type Config struct {
 	EjectCD                   bool                            `yaml:"eject-cd,omitempty" mapstructure:"eject-cd"`
 	Logger                    logger.KairosLogger             `yaml:"-"`
 	Fs                        fs.KairosFS                     `yaml:"-"`
-	Mounter                   mountUtils.Interface            `yaml:"-"`
+	Mounter                   mount.Interface                 `yaml:"-"`
 	Runner                    runner.Runner                   `yaml:"-"`
 	Syscall                   syscall.Interface               `yaml:"-"`
 	CloudInitRunner           cloudinitrunner.CloudInitRunner `yaml:"-"`
