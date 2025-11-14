@@ -26,20 +26,3 @@ type SyscallInterface interface {
 	Mount(string, string, string, uintptr, string) error
 	Syscall(uintptr, uintptr, uintptr, uintptr) (uintptr, uintptr, syscall.Errno)
 }
-
-type RealSyscall struct{}
-
-func (r *RealSyscall) Chroot(path string) error {
-	return syscall.Chroot(path)
-}
-
-func (r *RealSyscall) Chdir(path string) error {
-	return syscall.Chdir(path)
-}
-func (r *RealSyscall) Mount(source string, target string, fstype string, flags uintptr, data string) error {
-	return syscall.Mount(source, target, fstype, flags, data)
-}
-
-func (r *RealSyscall) Syscall(trap, a1, a2, a3 uintptr) (r1, r2 uintptr, err syscall.Errno) {
-	return syscall.Syscall(trap, a1, a2, a3)
-}
