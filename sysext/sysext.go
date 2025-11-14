@@ -4,9 +4,6 @@ import (
 	"archive/tar"
 	"errors"
 	"fmt"
-
-	"github.com/kairos-io/kairos-sdk/types/logger"
-
 	"io"
 	"os"
 	"path/filepath"
@@ -14,6 +11,7 @@ import (
 	"strings"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	sdkLogger "github.com/kairos-io/kairos-sdk/types/logger"
 )
 
 var ErrorImageNoLayers = errors.New("image")
@@ -26,7 +24,7 @@ var DefaultAllowListRegex = regexp.MustCompile(`^usr/*|^/usr/*|^etc/*|^/etc/*`)
 // It will skip anything that doesn't start with /usr or /etc as its purpose is to get the files for creating a
 // sysextension or a confextension
 // Accepts an allowList in form of regexp.Regexp that will match the files and allow copying
-func ExtractFilesFromLastLayer(image v1.Image, dst string, log logger.KairosLogger, allowList *regexp.Regexp) error {
+func ExtractFilesFromLastLayer(image v1.Image, dst string, log sdkLogger.KairosLogger, allowList *regexp.Regexp) error {
 	layers, _ := image.Layers()
 	numLayers := len(layers)
 	if len(layers) <= 0 {
@@ -35,7 +33,7 @@ func ExtractFilesFromLastLayer(image v1.Image, dst string, log logger.KairosLogg
 	return extractFilesFromLayer(image, dst, log, allowList, numLayers-1)
 }
 
-func extractFilesFromLayer(image v1.Image, dst string, log logger.KairosLogger, allowList *regexp.Regexp, layerNumber int) error {
+func extractFilesFromLayer(image v1.Image, dst string, log sdkLogger.KairosLogger, allowList *regexp.Regexp, layerNumber int) error {
 	layers, _ := image.Layers()
 	layerToExtract := layers[layerNumber]
 	layerReader, _ := layerToExtract.Uncompressed()

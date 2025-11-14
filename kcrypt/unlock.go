@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/anatol/luks.go"
-	"github.com/kairos-io/kairos-sdk/types/logger"
+	sdkLogger "github.com/kairos-io/kairos-sdk/types/logger"
 	"github.com/kairos-io/kairos-sdk/utils"
 )
 
-func luksUnlock(device, mapper, password string, logger *logger.KairosLogger) error {
+func luksUnlock(device, mapper, password string, logger *sdkLogger.KairosLogger) error {
 	// Check if device exists and is accessible
 	if _, err := os.Stat(device); err != nil {
 		return fmt.Errorf("device not accessible: %v", err)

@@ -17,7 +17,7 @@ import (
 	"github.com/foxboron/go-uefi/pkcs7"
 	"github.com/kairos-io/kairos-sdk/types/certs"
 	"github.com/kairos-io/kairos-sdk/types/fs"
-	"github.com/kairos-io/kairos-sdk/types/logger"
+	sdkLogger "github.com/kairos-io/kairos-sdk/types/logger"
 	peparser "github.com/saferwall/pe"
 )
 
@@ -152,7 +152,7 @@ func isValidSignature(sign util.EFIGUID) bool {
 
 // CheckArtifactSignatureIsValid checks that a given efi artifact is signed properly with a signature that would allow it to
 // boot correctly in the current node if secureboot is enabled
-func CheckArtifactSignatureIsValid(fs fs.KairosFS, artifact string, logger logger.KairosLogger) error {
+func CheckArtifactSignatureIsValid(fs fs.KairosFS, artifact string, logger sdkLogger.KairosLogger) error {
 	var err error
 	logger.Logger.Info().Str("what", artifact).Msg("Checking artifact for valid signature")
 	info, err := fs.Stat(artifact)

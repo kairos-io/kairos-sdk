@@ -19,7 +19,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
-	"github.com/kairos-io/kairos-sdk/types/logger"
+	sdkLogger "github.com/kairos-io/kairos-sdk/types/logger"
 	"github.com/kairos-io/kairos-sdk/utils"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -35,12 +35,12 @@ var _ = Describe("sysext", Label("sysext"), Ordered, func() {
 	var image v1.Image
 	var imageTag string
 	var buf bytes.Buffer
-	var log logger.KairosLogger
+	var log sdkLogger.KairosLogger
 	var err error
 
 	BeforeEach(func() {
 		buf = bytes.Buffer{}
-		log = logger.NewBufferLogger(&buf)
+		log = sdkLogger.NewBufferLogger(&buf)
 		dest, err = os.MkdirTemp("", "")
 		Expect(err).ToNot(HaveOccurred())
 	})

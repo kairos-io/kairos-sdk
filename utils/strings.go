@@ -2,9 +2,10 @@ package utils
 
 import (
 	"encoding/json"
-	"gopkg.in/yaml.v3"
 	"math/rand"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")

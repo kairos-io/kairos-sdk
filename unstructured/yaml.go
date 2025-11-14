@@ -3,10 +3,11 @@ package unstructured
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/hashicorp/go-multierror"
 	"github.com/itchyny/gojq"
 	"gopkg.in/yaml.v3"
-	"strings"
 )
 
 func YAMLHasKey(query string, content []byte) (bool, error) {
@@ -113,7 +114,7 @@ func ToYAML(v map[string]interface{}) ([]byte, error) {
 		equal := "="
 		tmplKey := "%s"
 		tmplValue := "\"%s\""
-		
+
 		// If key has a dash we need to add quotes to it to avoid failure parsing ut
 		if strings.Contains(k, "-") {
 			tmplKey = "\"%s\""

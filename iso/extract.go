@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/diskfs/go-diskfs"
-	"github.com/kairos-io/kairos-sdk/types/logger"
+	sdkLogger "github.com/kairos-io/kairos-sdk/types/logger"
 
 	"io"
 	"os"
@@ -13,9 +13,9 @@ import (
 )
 
 // ExtractFileFromIso will extract a given file from a given iso to a given destination
-func ExtractFileFromIso(file, iso, destination string, logger *logger.KairosLogger) (err error) {
+func ExtractFileFromIso(file, iso, destination string, logger *sdkLogger.KairosLogger) (err error) {
 	if logger == nil {
-		l := logger.NewNullLogger()
+		l := sdkLogger.NewNullLogger()
 		logger = &l
 	}
 	// set a sublogger with the args

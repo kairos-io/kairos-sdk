@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kairos-io/kairos-sdk/types/logger"
+	sdkLogger "github.com/kairos-io/kairos-sdk/types/logger"
 	"github.com/kairos-io/kairos-sdk/types/partitions"
 )
 
@@ -48,7 +48,7 @@ func NewPaths(withOptionalPrefix string) *Paths {
 	return p
 }
 
-func isMultipathDevice(paths *Paths, entry os.DirEntry, logger *logger.KairosLogger) bool {
+func isMultipathDevice(paths *Paths, entry os.DirEntry, logger *sdkLogger.KairosLogger) bool {
 	hasPrefix := strings.HasPrefix(entry.Name(), "dm-")
 	if !hasPrefix {
 		return false
@@ -84,9 +84,9 @@ func isMultipathDevice(paths *Paths, entry os.DirEntry, logger *logger.KairosLog
 	return true
 }
 
-func GetDisks(paths *Paths, logger *logger.KairosLogger) []*partitions.Disk {
+func GetDisks(paths *Paths, logger *sdkLogger.KairosLogger) []*partitions.Disk {
 	if logger == nil {
-		newLogger := logger.NewKairosLogger("ghw", "info", true)
+		newLogger := sdkLogger.NewKairosLogger("ghw", "info", true)
 		logger = &newLogger
 		defer newLogger.Close()
 	}
@@ -134,7 +134,7 @@ func GetDisks(paths *Paths, logger *logger.KairosLogger) []*partitions.Disk {
 	return disks
 }
 
-func isMultipathPartition(entry os.DirEntry, paths *Paths, logger *logger.KairosLogger) bool {
+func isMultipathPartition(entry os.DirEntry, paths *Paths, logger *sdkLogger.KairosLogger) bool {
 	// Must be a dm device to be a multipath partition
 	if !isMultipathDevice(paths, entry, logger) {
 		return false
@@ -153,7 +153,7 @@ func isMultipathPartition(entry os.DirEntry, paths *Paths, logger *logger.Kairos
 	return ok
 }
 
-func diskSizeBytes(paths *Paths, disk string, logger *logger.KairosLogger) uint64 {
+func diskSizeBytes(paths *Paths, disk string, logger *sdkLogger.KairosLogger) uint64 {
 	// We can find the number of 512-byte sectors by examining the contents of
 	// /sys/block/$DEVICE/size and calculate the physical bytes accordingly.
 	path := filepath.Join(paths.SysBlock, disk, "size")
