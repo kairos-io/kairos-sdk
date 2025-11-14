@@ -8,7 +8,8 @@ import (
 	"testing"
 
 	"github.com/foxboron/go-uefi/efi/attributes"
-	sdkTypes "github.com/kairos-io/kairos-sdk/types"
+	sdkTypes "github.com/kairos-io/kairos-sdk/types/fs"
+	sdkLogger "github.com/kairos-io/kairos-sdk/types/logger"
 	"github.com/kairos-io/kairos-sdk/utils"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -35,7 +36,7 @@ func TestSuite(t *testing.T) {
 
 var _ = Describe("Uki utils", Label("uki", "utils"), func() {
 	var fs sdkTypes.KairosFS
-	var logger sdkTypes.KairosLogger
+	var logger sdkLogger.KairosLogger
 	var memLog *bytes.Buffer
 	var cleanup func()
 
@@ -55,7 +56,7 @@ var _ = Describe("Uki utils", Label("uki", "utils"), func() {
 		err = fs.WriteFile("/efitest.signed.efi", file, os.ModePerm)
 		Expect(err).ToNot(HaveOccurred())
 		memLog = &bytes.Buffer{}
-		logger = sdkTypes.NewBufferLogger(memLog)
+		logger = sdkLogger.NewBufferLogger(memLog)
 		// Override the Efivars location to point to our fake ones
 		// so the go-uefi lib looks in there
 		fakeEfivars, err := fs.RawPath("/sys/firmware/efi/efivars")

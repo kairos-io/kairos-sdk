@@ -8,15 +8,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kairos-io/kairos-sdk/types"
+	"github.com/kairos-io/kairos-sdk/types/logger"
+	"github.com/kairos-io/kairos-sdk/types/partitions"
 )
 
 type PartitionHandler interface {
 	// GetPartitions returns a list of partitions on the system.
-	GetPartitions(paths *Paths, logger *types.KairosLogger) types.PartitionList
+	GetPartitions(paths *Paths, logger *logger.KairosLogger) partitions.PartitionList
 }
 
-func partitionSizeBytes(paths *Paths, partitionPath string, logger *types.KairosLogger) uint64 {
+func partitionSizeBytes(paths *Paths, partitionPath string, logger *logger.KairosLogger) uint64 {
 	path := filepath.Join(paths.SysBlock, partitionPath, "size")
 	logger.Logger.Debug().Str("file", path).Msg("Reading size file")
 	contents, err := os.ReadFile(path)
@@ -33,7 +34,7 @@ func partitionSizeBytes(paths *Paths, partitionPath string, logger *types.Kairos
 	return size * sectorSize
 }
 
-func partitionInfo(paths *Paths, part string, logger *types.KairosLogger) (string, string) {
+func partitionInfo(paths *Paths, part string, logger *logger.KairosLogger) (string, string) {
 	// Allow calling PartitionInfo with either the full partition name
 	// "/dev/sda1" or just "sda1"
 	if !strings.HasPrefix(part, "/dev") {
@@ -71,7 +72,7 @@ type mountEntry struct {
 	FilesystemType string
 }
 
-func parseMountEntry(line string, logger *types.KairosLogger) *mountEntry {
+func parseMountEntry(line string, logger *logger.KairosLogger) *mountEntry {
 	// mount entries for mounted partitions look like this:
 	// /dev/sda6 / ext4 rw,relatime,errors=remount-ro,data=ordered 0 0
 	if line[0] != '/' {
@@ -107,7 +108,7 @@ func parseMountEntry(line string, logger *types.KairosLogger) *mountEntry {
 	return res
 }
 
-func diskUUID(paths *Paths, partitionPath string, logger *types.KairosLogger) string {
+func diskUUID(paths *Paths, partitionPath string, logger *logger.KairosLogger) string {
 	info, err := udevInfoPartition(paths, partitionPath, logger)
 	logger.Logger.Trace().Interface("info", info).Msg("Disk UUID")
 	if err != nil {
@@ -123,7 +124,7 @@ func diskUUID(paths *Paths, partitionPath string, logger *types.KairosLogger) st
 	return UNKNOWN
 }
 
-func diskPartUUID(paths *Paths, partitionPath string, logger *types.KairosLogger) string {
+func diskPartUUID(paths *Paths, partitionPath string, logger *logger.KairosLogger) string {
 	info, err := udevInfoPartition(paths, partitionPath, logger)
 	logger.Logger.Trace().Interface("info", info).Msg("Disk Part UUID")
 	if err != nil {
@@ -140,7 +141,7 @@ func diskPartUUID(paths *Paths, partitionPath string, logger *types.KairosLogger
 
 // diskPartTypeUdev gets the partition type from the udev database directly and its only used as fallback when
 // the partition is not mounted, so we cannot get the type from paths.ProcMounts from the partitionInfo function.
-func diskPartTypeUdev(paths *Paths, partitionPath string, logger *types.KairosLogger) string {
+func diskPartTypeUdev(paths *Paths, partitionPath string, logger *logger.KairosLogger) string {
 	info, err := udevInfoPartition(paths, partitionPath, logger)
 	logger.Logger.Trace().Interface("info", info).Msg("Disk Part Type")
 	if err != nil {
@@ -155,7 +156,7 @@ func diskPartTypeUdev(paths *Paths, partitionPath string, logger *types.KairosLo
 	return UNKNOWN
 }
 
-func diskFSLabel(paths *Paths, partitionPath string, logger *types.KairosLogger) string {
+func diskFSLabel(paths *Paths, partitionPath string, logger *logger.KairosLogger) string {
 	info, err := udevInfoPartition(paths, partitionPath, logger)
 	logger.Logger.Trace().Interface("info", info).Msg("Disk FS label")
 	if err != nil {
@@ -170,7 +171,7 @@ func diskFSLabel(paths *Paths, partitionPath string, logger *types.KairosLogger)
 	return UNKNOWN
 }
 
-func udevInfoPartition(paths *Paths, partitionPath string, logger *types.KairosLogger) (map[string]string, error) {
+func udevInfoPartition(paths *Paths, partitionPath string, logger *logger.KairosLogger) (map[string]string, error) {
 	// Get device major:minor numbers
 	devNo, err := os.ReadFile(filepath.Join(paths.SysBlock, partitionPath, "dev"))
 	if err != nil {
@@ -181,7 +182,7 @@ func udevInfoPartition(paths *Paths, partitionPath string, logger *types.KairosL
 }
 
 // UdevInfo will return information on udev database about a device number.
-func UdevInfo(paths *Paths, devNo string, logger *types.KairosLogger) (map[string]string, error) {
+func UdevInfo(paths *Paths, devNo string, logger *logger.KairosLogger) (map[string]string, error) {
 	// Look up block device in udev runtime database
 	udevID := "b" + strings.TrimSpace(devNo)
 	udevBytes, err := os.ReadFile(filepath.Join(paths.RunUdevData, udevID))

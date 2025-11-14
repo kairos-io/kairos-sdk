@@ -5,7 +5,7 @@ import (
 
 	"github.com/kairos-io/kairos-sdk/ghw"
 	"github.com/kairos-io/kairos-sdk/ghw/mocks"
-	"github.com/kairos-io/kairos-sdk/types"
+	"github.com/kairos-io/kairos-sdk/types/partitions"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -26,11 +26,11 @@ var _ = Describe("GHW functions tests", func() {
 	})
 	Describe("With a disk", func() {
 		BeforeEach(func() {
-			mainDisk := types.Disk{
+			mainDisk := partitions.Disk{
 				Name:      "disk",
 				UUID:      "555",
 				SizeBytes: 1 * 1024,
-				Partitions: []*types.Partition{
+				Partitions: []*partitions.Partition{
 					{
 						Name:            "disk1",
 						FilesystemLabel: "COS_GRUB",
@@ -72,11 +72,11 @@ var _ = Describe("GHW functions tests", func() {
 	Describe("With multipath devices", func() {
 		BeforeEach(func() {
 			// Create a multipath device dm-0 with two partitions dm-1 and dm-2
-			multipathDisk := types.Disk{
+			multipathDisk := partitions.Disk{
 				Name:      "dm-0",
 				UUID:      "mpath-uuid-123",
 				SizeBytes: 10 * 1024 * 1024, // 10MB
-				Partitions: []*types.Partition{
+				Partitions: []*partitions.Partition{
 					{
 						Name:            "dm-1",
 						FilesystemLabel: "MPATH_BOOT",
@@ -162,11 +162,11 @@ var _ = Describe("GHW functions tests", func() {
 	Describe("With multipath devices using /dev/dm-<n> mount format", func() {
 		BeforeEach(func() {
 			// Create a multipath device dm-3 with partitions mounted as /dev/dm-<n> instead of /dev/mapper/<name>
-			multipathDisk := types.Disk{
+			multipathDisk := partitions.Disk{
 				Name:      "dm-3",
 				UUID:      "mpath-dm-mount-uuid",
 				SizeBytes: 8 * 1024 * 1024,
-				Partitions: []*types.Partition{
+				Partitions: []*partitions.Partition{
 					{
 						Name:            "dm-4",
 						FilesystemLabel: "DM_BOOT",
@@ -200,7 +200,7 @@ var _ = Describe("GHW functions tests", func() {
 			Expect(len(disk.Partitions)).To(Equal(2))
 
 			// Verify partitions can be found regardless of mount format
-			var bootPartition, dataPartition *types.Partition
+			var bootPartition, dataPartition *partitions.Partition
 			for _, part := range disk.Partitions {
 				if part.MountPoint == "/boot" {
 					bootPartition = part
@@ -227,7 +227,7 @@ var _ = Describe("GHW functions tests", func() {
 
 	Describe("With standalone multipath device (no partitions)", func() {
 		It("Handles multipath device with no partitions", func() {
-			multipathDisk := types.Disk{
+			multipathDisk := partitions.Disk{
 				Name:      "dm-5",
 				UUID:      "mpath-empty-uuid",
 				SizeBytes: 5 * 1024 * 1024,
@@ -248,11 +248,11 @@ var _ = Describe("GHW functions tests", func() {
 	Describe("With mixed regular and multipath disks", func() {
 		It("Handles mixed regular and multipath disks", func() {
 			// Create multipath device
-			multipathDeviceDef := types.Disk{
+			multipathDeviceDef := partitions.Disk{
 				Name:      "dm-0",
 				UUID:      "mpath-uuid-123",
 				SizeBytes: 10 * 1024 * 1024,
-				Partitions: []*types.Partition{
+				Partitions: []*partitions.Partition{
 					{
 						Name:            "dm-1",
 						FilesystemLabel: "MPATH_BOOT",
@@ -265,11 +265,11 @@ var _ = Describe("GHW functions tests", func() {
 			}
 
 			// Create regular disk
-			regularDisk := types.Disk{
+			regularDisk := partitions.Disk{
 				Name:      "sda",
 				UUID:      "regular-uuid-999",
 				SizeBytes: 8 * 1024 * 1024,
-				Partitions: []*types.Partition{
+				Partitions: []*partitions.Partition{
 					{
 						Name:            "sda1",
 						FilesystemLabel: "REGULAR_ROOT",
@@ -293,7 +293,7 @@ var _ = Describe("GHW functions tests", func() {
 			// Should find both the regular disk and multipath device
 			Expect(len(disks)).To(Equal(2))
 
-			var foundMultipathDisk, foundRegularDisk *types.Disk
+			var foundMultipathDisk, foundRegularDisk *partitions.Disk
 			for _, disk := range disks {
 				if disk.Name == "dm-0" {
 					foundMultipathDisk = disk
@@ -318,11 +318,11 @@ var _ = Describe("GHW functions tests", func() {
 	Describe("It can differentiate between multipath-disks and other device-mapper devices", func() {
 		It("Identifies only multipath devices", func() {
 			// Create multipath device
-			multipathDeviceDef := types.Disk{
+			multipathDeviceDef := partitions.Disk{
 				Name:      "dm-0",
 				UUID:      "mpath-uuid-123",
 				SizeBytes: 10 * 1024 * 1024,
-				Partitions: []*types.Partition{
+				Partitions: []*partitions.Partition{
 					{
 						Name:            "dm-1",
 						FilesystemLabel: "MPATH_BOOT",
@@ -335,11 +335,11 @@ var _ = Describe("GHW functions tests", func() {
 			}
 
 			// Create a device-mapper device that is not multipath
-			cryptsDisk := types.Disk{
+			cryptsDisk := partitions.Disk{
 				Name:      "dm-2",
 				UUID:      "CRYPT-LUKS1-fdsfsdfsdgxv-luks-34214546534dfd",
 				SizeBytes: 8 * 1024 * 1024,
-				Partitions: []*types.Partition{
+				Partitions: []*partitions.Partition{
 					{
 						Name:            "dm-3",
 						FilesystemLabel: "REGULAR_ROOT",
@@ -366,7 +366,7 @@ var _ = Describe("GHW functions tests", func() {
 			Expect(len(disks)).To(Equal(3))
 
 			// Make sure we can identify the multipath device
-			var foundMultipathDisk *types.Disk
+			var foundMultipathDisk *partitions.Disk
 			for _, disk := range disks {
 				if disk.Name == "dm-0" {
 					foundMultipathDisk = disk

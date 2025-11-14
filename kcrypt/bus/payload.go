@@ -1,6 +1,8 @@
 package bus
 
-import "github.com/kairos-io/kairos-sdk/types"
+import (
+	"github.com/kairos-io/kairos-sdk/types/partitions"
+)
 
 // KcryptConfig represents the kcrypt configuration from Kairos config merged with cmdline options.
 // This is the general configuration struct used by local encryptors and throughout the SDK.
@@ -26,7 +28,7 @@ type KcryptConfig struct {
 // 1. The remote KMS Encryptor implementation when calling the kcrypt-challenger
 // 2. The kcrypt-challenger when unmarshalling received data through stdin.
 type DiscoveryPasswordPayload struct {
-	Partition        *types.Partition `json:"partition"`
-	ChallengerServer string           `json:"challenger_server,omitempty"`
-	MDNS             bool             `json:"mdns,omitempty"`
+	Partition        *partitions.Partition `json:"partition"`
+	ChallengerServer string                `json:"challenger_server,omitempty"`
+	MDNS             bool                  `json:"mdns,omitempty"`
 }

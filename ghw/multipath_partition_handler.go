@@ -4,7 +4,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kairos-io/kairos-sdk/types"
+	"github.com/kairos-io/kairos-sdk/types/logger"
+	"github.com/kairos-io/kairos-sdk/types/partitions"
 )
 
 type MultipathPartitionHandler struct {
@@ -17,8 +18,8 @@ func NewMultipathPartitionHandler(diskName string) *MultipathPartitionHandler {
 
 var _ PartitionHandler = &MultipathPartitionHandler{}
 
-func (m *MultipathPartitionHandler) GetPartitions(paths *Paths, logger *types.KairosLogger) types.PartitionList {
-	out := make(types.PartitionList, 0)
+func (m *MultipathPartitionHandler) GetPartitions(paths *Paths, logger *logger.KairosLogger) partitions.PartitionList {
+	out := make(partitions.PartitionList, 0)
 
 	// For multipath devices, partitions appear as holders of the parent device
 	// in /sys/block/<disk>/holders/<holder>
@@ -90,7 +91,7 @@ func (m *MultipathPartitionHandler) GetPartitions(paths *Paths, logger *types.Ka
 		}
 		fsLabel := diskFSLabel(paths, partName, logger)
 
-		p := &types.Partition{
+		p := &partitions.Partition{
 			Name:            partName,
 			Size:            uint(size / (1024 * 1024)),
 			MountPoint:      mp,

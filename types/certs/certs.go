@@ -1,4 +1,4 @@
-package types
+package certs
 
 import (
 	"crypto/x509"
