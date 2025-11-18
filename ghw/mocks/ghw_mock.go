@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/kairos-io/kairos-sdk/ghw"
-	"github.com/kairos-io/kairos-sdk/types"
+	"github.com/kairos-io/kairos-sdk/types/partitions"
 )
 
 const ext4 = "ext4"
@@ -24,18 +24,18 @@ const ext4 = "ext4"
 type GhwMock struct {
 	Chroot string
 	paths  *ghw.Paths
-	disks  []types.Disk
+	disks  []partitions.Disk
 	mounts []string
 }
 
 // AddDisk adds a disk to GhwMock
-func (g *GhwMock) AddDisk(disk types.Disk) {
+func (g *GhwMock) AddDisk(disk partitions.Disk) {
 	g.disks = append(g.disks, disk)
 }
 
 // AddPartitionToDisk will add a partition to the given disk and call Clean+CreateDevices, so we recreate all files
 // It makes no effort checking if the disk exists
-func (g *GhwMock) AddPartitionToDisk(diskName string, partition *types.Partition) {
+func (g *GhwMock) AddPartitionToDisk(diskName string, partition *partitions.Partition) {
 	for _, disk := range g.disks {
 		if disk.Name == diskName {
 			disk.Partitions = append(disk.Partitions, partition)
@@ -159,7 +159,7 @@ func (g *GhwMock) RemovePartitionFromDisk(diskName string, partitionName string)
 	// Remove it from the partitions list
 	for index, disk := range g.disks {
 		if disk.Name == diskName {
-			var newPartitions types.PartitionList
+			var newPartitions partitions.PartitionList
 			for _, partition := range disk.Partitions {
 				if partition.Name != partitionName {
 					newPartitions = append(newPartitions, partition)
@@ -193,7 +193,7 @@ func (g *GhwMock) CreateMultipathDevices() {
 // useDmMount determines whether to use /dev/dm-<n> (true) or /dev/mapper/<name> (false) for mounts.
 func (g *GhwMock) createMultipathDevicesWithMountFormat(useDmMount bool) {
 	// Store multipath partitions before clearing them
-	multipathPartitions := make(map[string][]*types.Partition)
+	multipathPartitions := make(map[string][]*partitions.Partition)
 
 	// Clear partitions from multipath devices before creating basic structure
 	// We'll recreate them as multipath partitions after
@@ -241,7 +241,7 @@ func (g *GhwMock) createMultipathDevicesWithMountFormat(useDmMount bool) {
 
 // createMultipathPartitionWithMountFormat creates a multipath partition structure
 // useDmMount determines the mount format: true for /dev/dm-<n>, false for /dev/mapper/<name>.
-func (g *GhwMock) createMultipathPartitionWithMountFormat(parentDiskName string, partition *types.Partition, partNum int, useDmMount bool) {
+func (g *GhwMock) createMultipathPartitionWithMountFormat(parentDiskName string, partition *partitions.Partition, partNum int, useDmMount bool) {
 	parentDiskPath := filepath.Join(g.paths.SysBlock, parentDiskName)
 	holdersDir := filepath.Join(parentDiskPath, "holders")
 	partitionSuffix := fmt.Sprintf("p%d", partNum)
@@ -317,7 +317,7 @@ func (g *GhwMock) createMultipathPartitionWithMountFormat(parentDiskName string,
 // AddMultipathPartition adds a multipath partition to a multipath device
 // This creates the partition as a holder of the parent device and sets up
 // the necessary dm structure for the partition.
-func (g *GhwMock) AddMultipathPartition(parentDiskName string, partition *types.Partition) {
+func (g *GhwMock) AddMultipathPartition(parentDiskName string, partition *partitions.Partition) {
 	if g.paths == nil {
 		return // Must call CreateMultipathDevices first
 	}

@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/kairos-io/kairos-sdk/types"
+	sdkLogger "github.com/kairos-io/kairos-sdk/types/logger"
 	"github.com/kairos-io/kairos-sdk/utils"
 )
 
@@ -22,7 +22,7 @@ const udevTimeout = 30 * time.Second
 // encryptWithLocalTPMPassphrase encrypts a partition using a passphrase stored in TPM NV memory.
 // This bypasses the plugin bus and directly uses kairos-sdk TPM functions.
 // Used for non-UKI local encryption (without remote KMS).
-func encryptWithLocalTPMPassphrase(label string, nvIndex, cIndex, tpmDevice string, logger types.KairosLogger, argsCreate ...string) (string, error) {
+func encryptWithLocalTPMPassphrase(label string, nvIndex, cIndex, tpmDevice string, logger sdkLogger.KairosLogger, argsCreate ...string) (string, error) {
 	logger.Logger.Info().Str("partition", label).Msg("Encrypting with local TPM NV passphrase")
 
 	// Get or create passphrase from TPM NV memory
@@ -40,7 +40,7 @@ func encryptWithLocalTPMPassphrase(label string, nvIndex, cIndex, tpmDevice stri
 }
 
 // luksifyWithPassphrase encrypts a partition with an explicit passphrase (no plugin involved).
-func luksifyWithPassphrase(label string, passphrase string, logger types.KairosLogger, argsCreate ...string) (string, error) {
+func luksifyWithPassphrase(label string, passphrase string, logger sdkLogger.KairosLogger, argsCreate ...string) (string, error) {
 	logger.Logger.Info().Msg("Running udevadm settle")
 	if err := udevAdmSettle(&logger, udevTimeout); err != nil {
 		return "", err
@@ -85,7 +85,7 @@ func luksifyWithPassphrase(label string, passphrase string, logger types.KairosL
 
 // unmountIfMounted checks if a device is mounted and unmounts it if needed.
 // This is necessary because cryptsetup cannot format a mounted partition.
-func unmountIfMounted(device string, logger types.KairosLogger) error {
+func unmountIfMounted(device string, logger sdkLogger.KairosLogger) error {
 	// Read /proc/mounts to check if the device is mounted
 	// mount entries look like: /dev/sda6 / ext4 rw,relatime 0 0.
 	f, err := os.Open("/proc/mounts")
@@ -165,7 +165,7 @@ func getRandomString(length int) string {
 // It can also be used to bind to things like the firmware code or efi drivers that we dont expect to change
 // default for publicKeyPcrs is 11
 // default for pcrs is nothing, so it doesn't bind as we want to expand things like DBX and be able to blacklist certs and such.
-func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, logger types.KairosLogger, argsCreate ...string) error {
+func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, logger sdkLogger.KairosLogger, argsCreate ...string) error {
 	if err := udevAdmSettle(&logger, udevTimeout); err != nil {
 		return err
 	}
@@ -253,7 +253,7 @@ func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, lo
 // device is the actual /dev/X luks device
 // label is the label we will set to the formatted partition
 // password is the pass to unlock the device to be able to format the underlying mapper.
-func formatLuks(device, name, mapper, label, pass string, logger types.KairosLogger) error {
+func formatLuks(device, name, mapper, label, pass string, logger sdkLogger.KairosLogger) error {
 	l := logger.Logger.With().Str("device", device).Str("name", name).Str("mapper", mapper).Logger()
 	l.Debug().Msg("unlock")
 	if err := luksUnlock(device, name, pass, &logger); err != nil {
@@ -313,7 +313,7 @@ func waitDevice(device string, attempts int) error {
 // and adds basic debugging / diagnostics around the device state.
 // This is a comprehensive device settling function that should be used instead of manual sync/trigger/settle calls.
 // The logger parameter can be nil for silent operation.
-func udevAdmSettle(logger *types.KairosLogger, timeout time.Duration) error {
+func udevAdmSettle(logger *sdkLogger.KairosLogger, timeout time.Duration) error {
 	if logger != nil {
 		logger.Logger.Info().Msg("Triggering udev events")
 	}

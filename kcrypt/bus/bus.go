@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/kairos-io/kairos-sdk/types"
+	"github.com/kairos-io/kairos-sdk/types/logger"
 	"github.com/mudler/go-pluggable"
 )
 
@@ -54,7 +54,7 @@ func (b *Bus) Initialize() {
 		level = "debug"
 	}
 
-	log := types.NewKairosLogger("kcrypt", level, false)
+	log := logger.NewKairosLogger("kcrypt", level, false)
 	defer log.Close()
 
 	b.LoadProviders()

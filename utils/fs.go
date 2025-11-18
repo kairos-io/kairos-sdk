@@ -1,10 +1,11 @@
 package utils
 
 import (
-	sdkTypes "github.com/kairos-io/kairos-sdk/types"
-	"github.com/twpayne/go-vfs/v4"
 	"os"
 	"syscall"
+
+	sdkTypes "github.com/kairos-io/kairos-sdk/types/fs"
+	"github.com/twpayne/go-vfs/v4"
 )
 
 // permError returns an *os.PathError with Err syscall.EPERM.

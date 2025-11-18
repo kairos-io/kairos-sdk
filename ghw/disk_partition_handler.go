@@ -5,7 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kairos-io/kairos-sdk/types"
+	"github.com/kairos-io/kairos-sdk/types/logger"
+	"github.com/kairos-io/kairos-sdk/types/partitions"
 )
 
 type DiskPartitionHandler struct {
@@ -19,8 +20,8 @@ func NewDiskPartitionHandler(diskName string) *DiskPartitionHandler {
 	return &DiskPartitionHandler{DiskName: diskName}
 }
 
-func (d *DiskPartitionHandler) GetPartitions(paths *Paths, logger *types.KairosLogger) types.PartitionList {
-	out := make(types.PartitionList, 0)
+func (d *DiskPartitionHandler) GetPartitions(paths *Paths, logger *logger.KairosLogger) partitions.PartitionList {
+	out := make(partitions.PartitionList, 0)
 	path := filepath.Join(paths.SysBlock, d.DiskName)
 	logger.Logger.Debug().Str("file", path).Msg("Reading disk file")
 	files, err := os.ReadDir(path)
@@ -42,7 +43,7 @@ func (d *DiskPartitionHandler) GetPartitions(paths *Paths, logger *types.KairosL
 			pt = diskPartTypeUdev(paths, partitionPath, logger)
 		}
 		fsLabel := diskFSLabel(paths, partitionPath, logger)
-		p := &types.Partition{
+		p := &partitions.Partition{
 			Name:            fname,
 			Size:            uint(size / (1024 * 1024)),
 			MountPoint:      mp,

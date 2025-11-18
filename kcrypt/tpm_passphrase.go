@@ -1,7 +1,7 @@
 package kcrypt
 
 import (
-	tpm "github.com/kairos-io/tpm-helpers"
+	"github.com/kairos-io/tpm-helpers"
 	"github.com/mudler/yip/pkg/utils"
 )
 

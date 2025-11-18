@@ -14,7 +14,8 @@ import (
 	"github.com/kairos-io/kairos-sdk/ghw"
 	"github.com/kairos-io/kairos-sdk/kcrypt/bus"
 	"github.com/kairos-io/kairos-sdk/state"
-	"github.com/kairos-io/kairos-sdk/types"
+	sdkLogger "github.com/kairos-io/kairos-sdk/types/logger"
+	"github.com/kairos-io/kairos-sdk/types/partitions"
 	"github.com/kairos-io/kairos-sdk/utils"
 	"github.com/mudler/go-pluggable"
 )
@@ -29,7 +30,7 @@ type PartitionEncryptor interface {
 
 // RemoteKMSEncryptor encrypts partitions using a remote KMS (kcrypt-challenger).
 type RemoteKMSEncryptor struct {
-	logger       types.KairosLogger
+	logger       sdkLogger.KairosLogger
 	kcryptConfig *bus.KcryptConfig
 }
 
@@ -207,9 +208,9 @@ func (e *RemoteKMSEncryptor) luksify(label string, argsCreate ...string) (string
 
 // getPasswordFromChallenger gets the password for a types.Partition using KcryptConfig.
 // It constructs the DiscoveryPasswordPayload internally for communication with the plugin.
-func (e *RemoteKMSEncryptor) getPasswordFromChallenger(b *types.Partition) (password string, err error) {
+func (e *RemoteKMSEncryptor) getPasswordFromChallenger(b *partitions.Partition) (password string, err error) {
 	// Get a logger for debugging
-	log := types.NewKairosLogger("kcrypt-getPassword", "info", false)
+	log := sdkLogger.NewKairosLogger("kcrypt-getPassword", "info", false)
 	defer log.Close()
 
 	log.Logger.Info().
@@ -270,7 +271,7 @@ func (e *RemoteKMSEncryptor) getPasswordFromChallenger(b *types.Partition) (pass
 
 // TPMWithPCREncryptor encrypts partitions using TPM with PCR policy (UKI mode).
 type TPMWithPCREncryptor struct {
-	logger         types.KairosLogger
+	logger         sdkLogger.KairosLogger
 	bindPublicPCRs []string
 	bindPCRs       []string
 }
@@ -384,7 +385,7 @@ func (e *TPMWithPCREncryptor) Validate() error {
 
 // LocalTPMNVEncryptor encrypts partitions using local TPM NV passphrase storage.
 type LocalTPMNVEncryptor struct {
-	logger       types.KairosLogger
+	logger       sdkLogger.KairosLogger
 	kcryptConfig *bus.KcryptConfig
 }
 
@@ -529,7 +530,7 @@ func (e *LocalTPMNVEncryptor) Validate() error {
 // 1. If challenger_server configured OR mdns enabled -> Remote KMS
 // 2. Else if UKI mode -> TPM + PCR policy (requires systemd >= 252 and TPM 2.0)
 // 3. Else (non-UKI, no remote) -> Local TPM NV passphrase.
-func GetEncryptor(logger types.KairosLogger) (PartitionEncryptor, error) {
+func GetEncryptor(logger sdkLogger.KairosLogger) (PartitionEncryptor, error) {
 	kcryptConfig := ScanKcryptConfig(logger)
 
 	isUKI := detectUKIMode(logger)
@@ -578,7 +579,7 @@ func GetEncryptor(logger types.KairosLogger) (PartitionEncryptor, error) {
 }
 
 // scanCollectorConfig scans for configuration and returns the collector config.
-func scanCollectorConfig(logger types.KairosLogger) *collector.Config {
+func scanCollectorConfig(logger sdkLogger.KairosLogger) *collector.Config {
 	o := &collector.Options{NoLogs: true, MergeBootCMDLine: true}
 	if err := o.Apply(collector.Directories(DefaultConfigDirs...)); err != nil {
 		logger.Debugf("scanCollectorConfig: error applying collector options: %v", err)
@@ -598,7 +599,7 @@ func scanCollectorConfig(logger types.KairosLogger) *collector.Config {
 
 // detectUKIMode detects if the system is running in UKI mode
 // This checks for the presence of UKI-specific indicators.
-func detectUKIMode(logger types.KairosLogger) bool {
+func detectUKIMode(logger sdkLogger.KairosLogger) bool {
 	cmdline, err := os.ReadFile("/proc/cmdline")
 	if err != nil {
 		logger.Logger.Debug().Err(err).Msg("Error reading /proc/cmdline file " + err.Error())
@@ -609,7 +610,7 @@ func detectUKIMode(logger types.KairosLogger) bool {
 }
 
 // partitionLocked returns true if the partition is currently locked (encrypted and not unlocked).
-func partitionLocked(p *types.Partition) bool {
+func partitionLocked(p *partitions.Partition) bool {
 	if p == nil {
 		return false
 	}
@@ -617,7 +618,7 @@ func partitionLocked(p *types.Partition) bool {
 }
 
 // partitionMapperPath returns the device mapper path for the partition (e.g., /dev/mapper/sda1).
-func partitionMapperPath(p *types.Partition) string {
+func partitionMapperPath(p *partitions.Partition) string {
 	if p == nil {
 		return ""
 	}
@@ -627,7 +628,7 @@ func partitionMapperPath(p *types.Partition) string {
 // findPartitionByLabel finds a partition by its filesystem label and returns its information.
 // It performs all the common logic needed before attempting to unlock a partition.
 // Returns an error if the partition is not found. Use partitionLocked() to check if the partition is locked.
-func findPartitionByLabel(partitionLabel string) (*types.Partition, error) {
+func findPartitionByLabel(partitionLabel string) (*partitions.Partition, error) {
 	// Find the partition device by label
 	devicePath, err := utils.SH(fmt.Sprintf("blkid -L %s", partitionLabel))
 	devicePath = strings.TrimSpace(devicePath)
@@ -636,13 +637,13 @@ func findPartitionByLabel(partitionLabel string) (*types.Partition, error) {
 		return nil, fmt.Errorf("partition not found")
 	}
 
-	logger := types.NewNullLogger()
+	logger := sdkLogger.NewNullLogger()
 	disks := ghw.GetDisks(ghw.NewPaths(""), &logger)
 	if disks == nil {
 		return nil, fmt.Errorf("failed to scan block devices")
 	}
 
-	var partition *types.Partition
+	var partition *partitions.Partition
 	for _, disk := range disks {
 		for _, p := range disk.Partitions {
 			if p.FilesystemLabel == partitionLabel {
@@ -673,7 +674,7 @@ func findPartitionByLabel(partitionLabel string) (*types.Partition, error) {
 }
 
 // validateSystemdVersion checks if systemd version is >= required version.
-func validateSystemdVersion(logger types.KairosLogger, minVersion int) error {
+func validateSystemdVersion(logger sdkLogger.KairosLogger, minVersion int) error {
 	run, err := utils.SH("systemctl --version | head -1 | awk '{ print $2}'")
 	systemdVersion := strings.TrimSpace(string(run))
 	if err != nil {
@@ -705,7 +706,7 @@ func validateSystemdVersion(logger types.KairosLogger, minVersion int) error {
 }
 
 // validateTPMDevice checks if TPM 2.0 device exists.
-func validateTPMDevice(logger types.KairosLogger) error {
+func validateTPMDevice(logger sdkLogger.KairosLogger) error {
 	// Check for a TPM 2.0 device as it's needed to encrypt
 	// Exposed by the kernel to userspace as /dev/tpmrm0 since kernel 4.12
 	// https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=fdc915f7f71939ad5a3dda3389b8d2d7a7c5ee66

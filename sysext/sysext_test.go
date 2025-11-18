@@ -4,6 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math/rand"
+	"os"
+	"path/filepath"
+	"regexp"
+	"testing"
+
 	dockerImage "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/google/go-containerregistry/pkg/crane"
@@ -13,15 +19,10 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
-	"github.com/kairos-io/kairos-sdk/types"
+	sdkLogger "github.com/kairos-io/kairos-sdk/types/logger"
 	"github.com/kairos-io/kairos-sdk/utils"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"math/rand"
-	"os"
-	"path/filepath"
-	"regexp"
-	"testing"
 )
 
 func TestSuite(t *testing.T) {
@@ -34,12 +35,12 @@ var _ = Describe("sysext", Label("sysext"), Ordered, func() {
 	var image v1.Image
 	var imageTag string
 	var buf bytes.Buffer
-	var log types.KairosLogger
+	var log sdkLogger.KairosLogger
 	var err error
 
 	BeforeEach(func() {
 		buf = bytes.Buffer{}
-		log = types.NewBufferLogger(&buf)
+		log = sdkLogger.NewBufferLogger(&buf)
 		dest, err = os.MkdirTemp("", "")
 		Expect(err).ToNot(HaveOccurred())
 	})
