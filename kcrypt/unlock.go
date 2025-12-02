@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/anatol/luks.go"
+	"github.com/kairos-io/kairos-sdk/ghw"
 	sdkLogger "github.com/kairos-io/kairos-sdk/types/logger"
 	"github.com/kairos-io/kairos-sdk/utils"
 )
@@ -119,5 +120,92 @@ func luksUnlock(device, mapper, password string, logger *sdkLogger.KairosLogger)
 		return fmt.Errorf("mapper device %s not created after unlock: %w", mapperPath, err)
 	}
 
+	return nil
+}
+
+// findEncryptedPartitions scans the system for LUKS encrypted partitions
+// and returns their filesystem labels. It uses the kairos-sdk ghw wrapper
+// to scan for partitions and checks if they are LUKS encrypted by examining
+// the filesystem type.
+func findEncryptedPartitions(logger sdkLogger.KairosLogger) ([]string, error) {
+	logger.Logger.Debug().Msg("Scanning for encrypted partitions")
+
+	disks := ghw.GetDisks(ghw.NewPaths(""), &logger)
+	if disks == nil {
+		logger.Logger.Warn().Msg("Failed to scan block devices")
+		return nil, fmt.Errorf("failed to scan block devices")
+	}
+
+	var partitionLabels []string
+	for _, disk := range disks {
+		for _, p := range disk.Partitions {
+			// Check if partition is LUKS encrypted by examining the filesystem type
+			// LUKS partitions have FS type "crypto_LUKS"
+			if p.FS == "crypto_LUKS" {
+				// Check if device is already unlocked
+				// We mount it under /dev/mapper/DEVICE, so it's pretty easy to check
+				mapperPath := filepath.Join("/dev", "mapper", p.Name)
+				if !utils.Exists(mapperPath) {
+					logger.Logger.Info().
+						Str("device", p.Path).
+						Str("label", p.FilesystemLabel).
+						Msg("Found unmounted LUKS partition")
+					if p.FilesystemLabel != "" {
+						partitionLabels = append(partitionLabels, p.FilesystemLabel)
+					}
+				} else {
+					logger.Logger.Info().
+						Str("device", p.Path).
+						Str("mapper", mapperPath).
+						Msg("Device already unlocked, skipping")
+				}
+			}
+		}
+	}
+
+	return partitionLabels, nil
+}
+
+// UnlockAllEncryptedPartitions finds all encrypted partitions and unlocks them
+// using the appropriate encryptor based on system configuration.
+// This is the unified logic for unlocking encrypted partitions that works for
+// both UKI and non-UKI modes by using GetEncryptor() which automatically
+// detects the appropriate encryption method.
+func UnlockAllEncryptedPartitions(logger sdkLogger.KairosLogger) error {
+	logger.Logger.Debug().Msg("Getting encryptor for unlocking")
+
+	// Get the appropriate encryptor based on system configuration
+	// This automatically detects UKI mode, kcrypt config, etc.
+	encryptor, err := GetEncryptor(logger)
+	if err != nil {
+		logger.Logger.Err(err).Msg("Failed to get encryptor")
+		return err
+	}
+
+	logger.Logger.Info().Str("method", encryptor.Name()).Msg("Using encryption method for unlock")
+
+	// Scan for all LUKS partitions and unlock them
+	partitions, err := findEncryptedPartitions(logger)
+	if err != nil {
+		logger.Logger.Err(err).Msg("Failed to find encrypted partitions")
+		return err
+	}
+
+	if len(partitions) == 0 {
+		logger.Logger.Debug().Msg("No encrypted partitions found")
+		return nil
+	}
+
+	logger.Logger.Info().Strs("partitions", partitions).Msg("Found encrypted partitions to unlock")
+
+	// Unlock all encrypted partitions using the encryptor
+	// The encryptor knows how to unlock based on its type (TPM+PCR, Remote KMS, Local TPM)
+	err = encryptor.Unlock(partitions)
+	if err != nil {
+		logger.Logger.Err(err).Msg("Failed to unlock partitions")
+		return err
+	}
+
+	logger.Logger.Info().Msg("Successfully unlocked all encrypted partitions")
 	return nil
 }
