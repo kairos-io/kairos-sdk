@@ -132,7 +132,7 @@ func detectPartitionByFindmnt(b *block.Partition) PartitionState {
 }
 
 func detectBoot(logger zerolog.Logger) Boot {
-	logger.Info().Msg("detecting boot state")
+	logger.Debug().Msg("detecting boot state")
 	cmdline, err := os.ReadFile("/proc/cmdline")
 	if err != nil {
 		logger.Debug().Err(err).Msg("Error reading /proc/cmdline file " + err.Error())
@@ -376,7 +376,6 @@ func getEfiCertsCommonNames() certs.EfiCerts {
 }
 
 func NewRuntimeWithLogger(logger zerolog.Logger) (Runtime, error) {
-	logger.Info().Msg("creating a runtime")
 	runtime := &Runtime{
 		BootState: detectBoot(logger),
 		UUID:      utils.UUID(),
