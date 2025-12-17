@@ -19,7 +19,7 @@ type PartitionHandler interface {
 
 func partitionSizeBytes(paths *Paths, partitionPath string, logger *logger.KairosLogger) uint64 {
 	path := filepath.Join(paths.SysBlock, partitionPath, "size")
-	logger.Logger.Debug().Str("file", path).Msg("Reading size file")
+	logger.Logger.Trace().Str("file", path).Msg("Reading size file")
 	contents, err := os.ReadFile(path)
 	if err != nil {
 		logger.Logger.Error().Str("file", path).Err(err).Msg("failed to read disk partition size")
@@ -44,7 +44,7 @@ func partitionInfo(paths *Paths, part string, logger *logger.KairosLogger) (stri
 	// mount entries for mounted partitions look like this:
 	// /dev/sda6 / ext4 rw,relatime,errors=remount-ro,data=ordered 0 0
 	var r io.ReadCloser
-	logger.Logger.Debug().Str("file", paths.ProcMounts).Msg("Reading mounts file")
+	logger.Logger.Trace().Str("file", paths.ProcMounts).Msg("Reading mounts file")
 	r, err := os.Open(paths.ProcMounts)
 	if err != nil {
 		logger.Logger.Error().Str("file", paths.ProcMounts).Err(err).Msg("failed to open mounts")
@@ -81,7 +81,7 @@ func parseMountEntry(line string, logger *logger.KairosLogger) *mountEntry {
 	fields := strings.Fields(line)
 
 	if len(fields) < 4 {
-		logger.Logger.Debug().Interface("fields", fields).Msg("Mount line has less than 4 fields")
+		logger.Logger.Trace().Interface("fields", fields).Msg("Mount line has less than 4 fields")
 		return nil
 	}
 

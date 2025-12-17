@@ -215,8 +215,8 @@ func DetectUKIboot(cmdline string) bool {
 func EfiBootFromInstall(logger zerolog.Logger) bool {
 	file := "/sys/firmware/efi/efivars/LoaderDevicePartUUID-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"
 	readFile, err := os.ReadFile(file)
-	if err != nil {
-		logger.Debug().Err(err).Msg("Error reading LoaderDevicePartUUID file")
+	if err != nil && os.IsNotExist(err) {
+		logger.Trace().Err(err).Msg("File LoaderDevicePartUUID does not exist")
 		return false
 	}
 	if len(readFile) == 0 || string(readFile) == "" {
