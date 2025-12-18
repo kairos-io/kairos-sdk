@@ -132,7 +132,7 @@ func detectPartitionByFindmnt(b *block.Partition) PartitionState {
 }
 
 func detectBoot(logger zerolog.Logger) Boot {
-	logger.Info().Msg("detecting boot state")
+	logger.Debug().Msg("detecting boot state")
 	cmdline, err := os.ReadFile("/proc/cmdline")
 	if err != nil {
 		logger.Debug().Err(err).Msg("Error reading /proc/cmdline file " + err.Error())
@@ -215,8 +215,8 @@ func DetectUKIboot(cmdline string) bool {
 func EfiBootFromInstall(logger zerolog.Logger) bool {
 	file := "/sys/firmware/efi/efivars/LoaderDevicePartUUID-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"
 	readFile, err := os.ReadFile(file)
-	if err != nil {
-		logger.Debug().Err(err).Msg("Error reading LoaderDevicePartUUID file")
+	if err != nil && os.IsNotExist(err) {
+		logger.Trace().Err(err).Msg("File LoaderDevicePartUUID does not exist")
 		return false
 	}
 	if len(readFile) == 0 || string(readFile) == "" {
@@ -376,7 +376,6 @@ func getEfiCertsCommonNames() certs.EfiCerts {
 }
 
 func NewRuntimeWithLogger(logger zerolog.Logger) (Runtime, error) {
-	logger.Info().Msg("creating a runtime")
 	runtime := &Runtime{
 		BootState: detectBoot(logger),
 		UUID:      utils.UUID(),

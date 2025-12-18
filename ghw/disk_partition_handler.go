@@ -23,7 +23,7 @@ func NewDiskPartitionHandler(diskName string) *DiskPartitionHandler {
 func (d *DiskPartitionHandler) GetPartitions(paths *Paths, logger *logger.KairosLogger) partitions.PartitionList {
 	out := make(partitions.PartitionList, 0)
 	path := filepath.Join(paths.SysBlock, d.DiskName)
-	logger.Logger.Debug().Str("file", path).Msg("Reading disk file")
+	logger.Logger.Trace().Str("file", path).Msg("Reading disk file")
 	files, err := os.ReadDir(path)
 	if err != nil {
 		logger.Logger.Error().Err(err).Msg("failed to read disk partitions")
@@ -34,7 +34,7 @@ func (d *DiskPartitionHandler) GetPartitions(paths *Paths, logger *logger.Kairos
 		if !strings.HasPrefix(fname, d.DiskName) {
 			continue
 		}
-		logger.Logger.Debug().Str("file", fname).Msg("Reading partition file")
+		logger.Logger.Trace().Str("file", fname).Msg("Reading partition file")
 		partitionPath := filepath.Join(d.DiskName, fname)
 		size := partitionSizeBytes(paths, partitionPath, logger)
 		mp, pt := partitionInfo(paths, fname, logger)

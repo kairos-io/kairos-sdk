@@ -24,7 +24,7 @@ func (m *MultipathPartitionHandler) GetPartitions(paths *Paths, logger *logger.K
 	// For multipath devices, partitions appear as holders of the parent device
 	// in /sys/block/<disk>/holders/<holder>
 	holdersPath := filepath.Join(paths.SysBlock, m.DiskName, "holders")
-	logger.Logger.Debug().Str("path", holdersPath).Msg("Reading multipath holders")
+	logger.Logger.Trace().Str("path", holdersPath).Msg("Reading multipath holders")
 
 	holders, err := os.ReadDir(holdersPath)
 	if err != nil {
@@ -38,18 +38,18 @@ func (m *MultipathPartitionHandler) GetPartitions(paths *Paths, logger *logger.K
 
 		// Only consider dm- devices as potential multipath partitions
 		if !isMultipathDevice(paths, holder, logger) {
-			logger.Logger.Debug().Str("path", holder.Name()).Msg("Is not a multipath device")
+			logger.Logger.Trace().Str("path", holder.Name()).Msg("Is not a multipath device")
 			continue
 		}
 
 		// Verify this holder is actually a multipath partition
 		// We can use the holder DirEntry directly - no need to search for it!
 		if !isMultipathPartition(holder, paths, logger) {
-			logger.Logger.Debug().Str("partition", partName).Msg("Holder is not a multipath partition")
+			logger.Logger.Trace().Str("partition", partName).Msg("Holder is not a multipath partition")
 			continue
 		}
 
-		logger.Logger.Debug().Str("partition", partName).Msg("Found multipath partition")
+		logger.Logger.Trace().Str("partition", partName).Msg("Found multipath partition")
 
 		udevInfo, err := udevInfoPartition(paths, partName, logger)
 		if err != nil {
@@ -81,7 +81,7 @@ func (m *MultipathPartitionHandler) GetPartitions(paths *Paths, logger *logger.K
 		for _, mountName := range potentialMountNames {
 			mp, pt = partitionInfo(paths, mountName, logger)
 			if mp != "" {
-				logger.Logger.Debug().Str("mountPoint", mp).Msg("Found mount point for partition")
+				logger.Logger.Trace().Str("mountPoint", mp).Msg("Found mount point for partition")
 				break
 			}
 		}

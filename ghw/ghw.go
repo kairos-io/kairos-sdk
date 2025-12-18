@@ -65,7 +65,7 @@ func isMultipathDevice(paths *Paths, entry os.DirEntry, logger *sdkLogger.Kairos
 	// Check if the udev info contains DM_UUID indicating it's a device mapper device
 	uuid, ok := udevInfo["DM_UUID"]
 	if !ok {
-		logger.Logger.Debug().Str("devNo", entry.Name()).Msg("Not a multipath device. DM_UUID not found")
+		logger.Logger.Trace().Str("devNo", entry.Name()).Msg("Not a multipath device. DM_UUID not found")
 		return false
 	}
 
@@ -74,11 +74,11 @@ func isMultipathDevice(paths *Paths, entry os.DirEntry, logger *sdkLogger.Kairos
 	// for partitions they are normally named part<number>-mpath-<uuid>
 	// for disks they are normally named mpath-<uuid>
 	if !strings.Contains(uuid, "mpath") {
-		logger.Logger.Debug().Str("devNo", entry.Name()).Msg("Not a multipath device. DM_UUID does not contain 'mpath'")
+		logger.Logger.Trace().Str("devNo", entry.Name()).Msg("Not a multipath device. DM_UUID does not contain 'mpath'")
 		return false
 	}
 
-	logger.Logger.Debug().Str("devNo", entry.Name()).Msg("Is a multipath device")
+	logger.Logger.Trace().Str("devNo", entry.Name()).Msg("Is a multipath device")
 
 	// If we have a DM_UUID, prefixed with "mpath", it's a multipath device
 	return true
@@ -91,21 +91,21 @@ func GetDisks(paths *Paths, logger *sdkLogger.KairosLogger) []*partitions.Disk {
 		defer newLogger.Close()
 	}
 	disks := make([]*partitions.Disk, 0)
-	logger.Logger.Debug().Str("path", paths.SysBlock).Msg("Scanning for disks")
+	logger.Logger.Trace().Str("path", paths.SysBlock).Msg("Scanning for disks")
 	files, err := os.ReadDir(paths.SysBlock)
 	if err != nil {
 		return nil
 	}
 	for _, file := range files {
 		var partitionHandler PartitionHandler
-		logger.Logger.Debug().Str("file", file.Name()).Msg("Reading file")
+		logger.Logger.Trace().Str("file", file.Name()).Msg("Reading file")
 		dname := file.Name()
 		size := diskSizeBytes(paths, dname, logger)
 
 		// Skip entries that are multipath partitions
 		// we will handle them when we parse this disks partitions
 		if isMultipathPartition(file, paths, logger) {
-			logger.Logger.Debug().Str("file", dname).Msg("Skipping multipath partition")
+			logger.Logger.Trace().Str("file", dname).Msg("Skipping multipath partition")
 			continue
 		}
 
@@ -157,7 +157,7 @@ func diskSizeBytes(paths *Paths, disk string, logger *sdkLogger.KairosLogger) ui
 	// We can find the number of 512-byte sectors by examining the contents of
 	// /sys/block/$DEVICE/size and calculate the physical bytes accordingly.
 	path := filepath.Join(paths.SysBlock, disk, "size")
-	logger.Logger.Debug().Str("path", path).Msg("Reading disk size")
+	logger.Logger.Trace().Str("path", path).Msg("Reading disk size")
 	contents, err := os.ReadFile(path)
 	if err != nil {
 		logger.Logger.Error().Str("path", path).Err(err).Msg("Failed to read file")
