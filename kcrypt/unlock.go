@@ -174,16 +174,6 @@ func findEncryptedPartitions(logger sdkLogger.KairosLogger) ([]string, error) {
 func UnlockAllEncryptedPartitions(logger sdkLogger.KairosLogger) error {
 	logger.Logger.Debug().Msg("Getting encryptor for unlocking")
 
-	// Get the appropriate encryptor based on system configuration
-	// This automatically detects UKI mode, kcrypt config, etc.
-	encryptor, err := GetEncryptor(logger)
-	if err != nil {
-		logger.Logger.Err(err).Msg("Failed to get encryptor")
-		return err
-	}
-
-	logger.Logger.Info().Str("method", encryptor.Name()).Msg("Using encryption method for unlock")
-
 	// Scan for all LUKS partitions and unlock them
 	partitions, err := findEncryptedPartitions(logger)
 	if err != nil {
@@ -195,6 +185,16 @@ func UnlockAllEncryptedPartitions(logger sdkLogger.KairosLogger) error {
 		logger.Logger.Debug().Msg("No encrypted partitions found")
 		return nil
 	}
+
+	// Get the appropriate encryptor based on system configuration
+	// This automatically detects UKI mode, kcrypt config, etc.
+	encryptor, err := GetEncryptor(logger)
+	if err != nil {
+		logger.Logger.Err(err).Msg("Failed to get encryptor")
+		return err
+	}
+
+	logger.Logger.Info().Str("method", encryptor.Name()).Msg("Using encryption method for unlock")
 
 	logger.Logger.Info().Strs("partitions", partitions).Msg("Found encrypted partitions to unlock")
 
