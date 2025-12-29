@@ -19,7 +19,7 @@ require (
 	github.com/itchyny/gojq v0.12.17
 	github.com/jaypipes/ghw v0.19.1
 	github.com/joho/godotenv v1.5.1
-	github.com/kairos-io/tpm-helpers v0.0.0-20251103104631-9d4298b86881
+	github.com/kairos-io/tpm-helpers v0.0.0-20251107132133-df566ad2d185
 	github.com/mudler/go-pluggable v0.0.0-20230126220627-7710299a0ae5
 	github.com/mudler/yip v1.18.0
 	github.com/onsi/ginkgo/v2 v2.27.2
