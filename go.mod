@@ -9,7 +9,7 @@ require (
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/diskfs/go-diskfs v1.7.0
 	github.com/distribution/reference v0.6.0
-	github.com/docker/docker v28.3.3+incompatible
+	github.com/docker/docker v28.5.2+incompatible
 	github.com/edsrzf/mmap-go v1.2.0
 	github.com/foxboron/go-uefi v0.0.0-20251010190908-d29549a44f29
 	github.com/gofrs/uuid v4.4.0+incompatible
