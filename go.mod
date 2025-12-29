@@ -17,7 +17,7 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/itchyny/gojq v0.12.17
-	github.com/jaypipes/ghw v0.19.1
+	github.com/jaypipes/ghw v0.21.2
 	github.com/joho/godotenv v1.5.1
 	github.com/kairos-io/tpm-helpers v0.0.0-20251103104631-9d4298b86881
 	github.com/mudler/go-pluggable v0.0.0-20230126220627-7710299a0ae5
