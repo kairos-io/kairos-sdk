@@ -1,6 +1,6 @@
 module github.com/kairos-io/kairos-sdk
 
-go 1.25
+go 1.25.0
 
 require (
 	github.com/anatol/luks.go v0.0.0-20250316021219-8cd744c3576f
@@ -35,7 +35,7 @@ require (
 	github.com/zcalusic/sysinfo v1.1.3
 	golang.org/x/mod v0.30.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/mount-utils v0.34.2
+	k8s.io/mount-utils v0.35.0
 )
 
 require (
@@ -153,5 +153,5 @@ require (
 	gotest.tools/v3 v3.5.0 // indirect
 	howett.net/plist v1.0.2-0.20250314012144-ee69052608d9 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
+	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect
 )
