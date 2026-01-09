@@ -21,6 +21,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	sdkLogger "github.com/kairos-io/kairos-sdk/types/logger"
 	"github.com/kairos-io/kairos-sdk/utils"
+	imageUtils "github.com/kairos-io/kairos-sdk/utils/image"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -56,7 +57,7 @@ var _ = Describe("sysext", Label("sysext"), Ordered, func() {
 		BeforeEach(func() {
 			imageTag = createTestDockerImage()
 			By(fmt.Sprintf("Created image %s", imageTag))
-			image, err = utils.GetImage(imageTag, utils.GetCurrentPlatform(), nil, nil)
+			image, err = imageUtils.GetImage(imageTag, utils.GetCurrentPlatform(), nil, nil)
 			Expect(err).ToNot(HaveOccurred())
 		})
 		AfterEach(func() {
@@ -95,7 +96,7 @@ var _ = Describe("sysext", Label("sysext"), Ordered, func() {
 		BeforeEach(func() {
 			imageTag = createEmptyDockerImage()
 			By(fmt.Sprintf("Created image %s", imageTag))
-			image, err = utils.GetImage(imageTag, utils.GetCurrentPlatform(), nil, nil)
+			image, err = imageUtils.GetImage(imageTag, utils.GetCurrentPlatform(), nil, nil)
 			Expect(err).ToNot(HaveOccurred())
 		})
 		AfterEach(func() {

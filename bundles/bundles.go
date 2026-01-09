@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	"github.com/hashicorp/go-multierror"
 	"github.com/kairos-io/kairos-sdk/utils"
+	"github.com/kairos-io/kairos-sdk/utils/image"
 )
 
 const (
@@ -216,13 +217,13 @@ func (e OCIImageExtractor) Install(config *BundleConfig) error {
 	if e.Local {
 		img, err = tarball.ImageFromPath(target, nil)
 	} else {
-		img, err = utils.GetImage(target, config.Platform, config.Auth, config.Transport)
+		img, err = image.GetImage(target, config.Platform, config.Auth, config.Transport)
 	}
 	if err != nil {
 		return err
 	}
 
-	return utils.ExtractOCIImage(img, config.RootPath)
+	return image.ExtractOCIImage(img, config.RootPath)
 }
 
 // OCIImageRunner will extract an OCI image and then run its run.sh
@@ -246,13 +247,13 @@ func (e OCIImageRunner) Install(config *BundleConfig) error {
 	if e.Local {
 		img, err = tarball.ImageFromPath(target, nil)
 	} else {
-		img, err = utils.GetImage(target, config.Platform, config.Auth, config.Transport)
+		img, err = image.GetImage(target, config.Platform, config.Auth, config.Transport)
 	}
 	if err != nil {
 		return err
 	}
 
-	err = utils.ExtractOCIImage(img, tempDir)
+	err = image.ExtractOCIImage(img, tempDir)
 	if err != nil {
 		return err
 	}

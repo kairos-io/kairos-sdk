@@ -10,7 +10,7 @@ import (
 	"github.com/foxboron/go-uefi/efi/attributes"
 	sdkTypes "github.com/kairos-io/kairos-sdk/types/fs"
 	sdkLogger "github.com/kairos-io/kairos-sdk/types/logger"
-	"github.com/kairos-io/kairos-sdk/utils"
+	fsUtils "github.com/kairos-io/kairos-sdk/utils/fs"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/twpayne/go-vfs/v4/vfst"
@@ -45,7 +45,7 @@ var _ = Describe("Uki utils", Label("uki", "utils"), func() {
 		fs, cleanup, err = vfst.NewTestFS(map[string]interface{}{})
 		Expect(err).Should(BeNil())
 		// create fs with proper setup
-		err = utils.MkdirAll(fs, "/sys/firmware/efi/efivars", os.ModeDir|os.ModePerm)
+		err = fsUtils.MkdirAll(fs, "/sys/firmware/efi/efivars", os.ModeDir|os.ModePerm)
 		Expect(err).ToNot(HaveOccurred())
 		file, err := os.ReadFile("tests/fbx64.efi")
 		Expect(err).ToNot(HaveOccurred())
