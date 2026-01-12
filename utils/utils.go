@@ -329,6 +329,7 @@ func GetEfiGrubFiles(arch string) []string {
 		modNames = append(modNames, "/boot/efi/EFI/rocky/grubaa64.efi")                   // rocky
 		modNames = append(modNames, "/boot/efi/EFI/redhat/grubaa64.efi")                  // redhat
 		modNames = append(modNames, "/boot/efi/EFI/almalinux/grubaa64.efi")               // almalinux
+		modNames = append(modNames, "/usr/lib/grub/arm64-efi/grubaa64.efi")               // hadron
 
 	default:
 		modNames = append(modNames, "/usr/share/efi/x86_64/grub.efi")                     // suse
@@ -337,6 +338,7 @@ func GetEfiGrubFiles(arch string) []string {
 		modNames = append(modNames, "/boot/efi/EFI/rocky/grubx64.efi")                    // rocky
 		modNames = append(modNames, "/boot/efi/EFI/redhat/grubx64.efi")                   // redhat
 		modNames = append(modNames, "/boot/efi/EFI/almalinux/grubx64.efi")                // almalinux
+		modNames = append(modNames, "/usr/lib/grub/x86_64-efi/grubx64.efi")               // hadron
 	}
 	return modNames
 }
