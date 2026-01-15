@@ -150,8 +150,9 @@ func (e *RemoteKMSEncryptor) Validate() error {
 func (e *RemoteKMSEncryptor) luksify(label string, argsCreate ...string) (string, error) {
 	var pass string
 
-	e.logger.Logger.Info().Msg("Running udevadm settle")
-	if err := udevAdmSettle(&e.logger, udevTimeout); err != nil {
+	// Only settle (no trigger) - we haven't made device changes yet, just need pending events to complete
+	e.logger.Logger.Info().Msg("Waiting for udevadm to settle before finding partition")
+	if err := UdevAdmSettle(&e.logger, udevTimeout); err != nil {
 		return "", err
 	}
 
