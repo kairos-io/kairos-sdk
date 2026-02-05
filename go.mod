@@ -27,7 +27,7 @@ require (
 	github.com/pterm/pterm v0.12.82
 	github.com/qeesung/image2ascii v1.0.1
 	github.com/rs/zerolog v1.34.0
-	github.com/saferwall/pe v1.5.8
+	github.com/saferwall/pe v1.5.9
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/swaggest/jsonschema-go v0.3.62
 	github.com/twpayne/go-vfs/v4 v4.3.0
@@ -51,6 +51,7 @@ require (
 	github.com/anatol/devmapper.go v0.0.0-20230829043248-59ac2b9706ba // indirect
 	github.com/anchore/go-lzo v0.1.0 // indirect
 	github.com/aybabtme/rgbterm v0.0.0-20170906152045-cc83f3b3ce59 // indirect
+	github.com/ayoubfaouzi/pkcs7 v0.2.2 // indirect
 	github.com/chuckpreslar/emission v0.0.0-20170206194824-a7ddd980baf9 // indirect
 	github.com/clipperhouse/stringish v0.1.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
