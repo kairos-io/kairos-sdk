@@ -318,7 +318,7 @@ func GetCurrentPlatform() string {
 }
 
 // GetEfiGrubFiles Return possible paths for the grub.efi
-// Used in enki and agent
+// Used in auroraboot and agent.
 func GetEfiGrubFiles(arch string) []string {
 	var modNames []string
 	switch arch {
@@ -344,12 +344,12 @@ func GetEfiGrubFiles(arch string) []string {
 }
 
 // GetEfiShimFiles Return possible paths for the shim.efi
-// Used in enki and agent
+// Used in auroraboot and agent.
 func GetEfiShimFiles(arch string) []string {
 	var modNames []string
 	switch arch {
 	case "arm64":
-		modNames = append(modNames, "/usr/share/efi/aarch64/shim.efi")          // suse
+		modNames = append(modNames, "/usr/share/efi/aarch64/shim.efi")          // suse + Hadron
 		modNames = append(modNames, "/usr/lib/shim/shimaa64.efi.dualsigned")    // ubuntu
 		modNames = append(modNames, "/usr/lib/shim/shimaa64.efi.signed.latest") // ubuntu
 		modNames = append(modNames, "/usr/lib/shim/shimaa64.efi.signed")        // debian, maybe ubuntu but its a link so it can be broken
@@ -359,7 +359,7 @@ func GetEfiShimFiles(arch string) []string {
 		modNames = append(modNames, "/boot/efi/EFI/redhat/shimaa64.efi")        // redhat
 		modNames = append(modNames, "/boot/efi/EFI/almalinux/shim.efi")         // almalinux
 	default:
-		modNames = append(modNames, "/usr/share/efi/x86_64/shim.efi")          // suse
+		modNames = append(modNames, "/usr/share/efi/x86_64/shim.efi")          // suse + Hadron
 		modNames = append(modNames, "/usr/lib/shim/shimx64.efi.dualsigned")    // ubuntu
 		modNames = append(modNames, "/usr/lib/shim/shimx64.efi.signed.latest") // ubuntu
 		modNames = append(modNames, "/usr/lib/shim/shimx64.efi.signed")        // debian, maybe ubuntu but its a link so it can be broken
