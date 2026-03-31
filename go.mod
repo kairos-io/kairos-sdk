@@ -7,7 +7,7 @@ require (
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/containerd/containerd v1.7.30
 	github.com/denisbrodbeck/machineid v1.0.1
-	github.com/diskfs/go-diskfs v1.8.0
+	github.com/diskfs/go-diskfs v1.9.1
 	github.com/distribution/reference v0.6.0
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/edsrzf/mmap-go v1.2.0
