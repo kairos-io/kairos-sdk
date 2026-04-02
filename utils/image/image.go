@@ -127,13 +127,16 @@ func GetImage(targetImage, targetPlatform string, auth *registrytypes.AuthConfig
 	)
 
 	// Try to get the image from the local Docker daemon
-	image, err = daemon.Image(ref)
-	if err == nil {
-		// Check if the image matches the requested platform
-		imgConfig, err := image.ConfigFile()
-		if err == nil && imgConfig.Architecture == platform.Architecture && imgConfig.OS == platform.OS {
+	image, daemonErr := daemon.Image(ref)
+	if daemonErr == nil {
+		imgConfig, cfgErr := image.ConfigFile()
+		if cfgErr != nil {
+			logs.Warn.Printf("local daemon image %q: read config: %v; falling back to remote", ref.String(), cfgErr)
+		} else if imgConfig.Architecture == platform.Architecture && imgConfig.OS == platform.OS {
 			return image, nil
 		}
+	} else {
+		logs.Warn.Printf("local daemon image %q: %v; falling back to remote", ref.String(), daemonErr)
 	}
 
 	opts := []remote.Option{
