@@ -57,8 +57,10 @@ func luksifyWithPassphrase(label string, passphrase string, logger sdkLogger.Kai
 	mapper := partitionMapperPath(info)
 	device := info.Path
 
+	// LUKS header gets a DISTINCT label from the inner ext4 (see encryptor.go
+	// luksify() for the rationale: kairos-io/kairos#4033).
 	extraArgs := []string{"--uuid", uuid.NewV5(uuid.NamespaceURL, label).String()}
-	extraArgs = append(extraArgs, "--label", label)
+	extraArgs = append(extraArgs, "--label", luksHeaderLabel(label))
 	extraArgs = append(extraArgs, argsCreate...)
 
 	logger.Logger.Info().Str("device", device).Msg("Checking if device is mounted")
@@ -183,8 +185,10 @@ func luksifyMeasurements(label string, publicKeyPcrs []string, pcrs []string, lo
 	mapper := partitionMapperPath(info)
 	device := info.Path
 
+	// LUKS header gets a DISTINCT label from the inner ext4 (see encryptor.go
+	// luksify() for the rationale: kairos-io/kairos#4033).
 	extraArgs := []string{"--uuid", uuid.NewV5(uuid.NamespaceURL, label).String()}
-	extraArgs = append(extraArgs, "--label", label)
+	extraArgs = append(extraArgs, "--label", luksHeaderLabel(label))
 	extraArgs = append(extraArgs, argsCreate...)
 
 	// Unmount the device if it's mounted before attempting to encrypt it

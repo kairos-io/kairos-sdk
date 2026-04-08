@@ -179,8 +179,15 @@ func (e *RemoteKMSEncryptor) luksify(label string, argsCreate ...string) (string
 	mapper := partitionMapperPath(info)
 	device := info.Path
 
+	// The LUKS2 header is given a DISTINCT label (LUKS_<label>) from the inner
+	// ext4 filesystem (which is labeled <label> by formatLuks). If both layers
+	// shared the same label, blkid/udev would create /dev/disk/by-label/<label>
+	// for both the raw LUKS device and the decrypted mapper, racing each other
+	// and breaking mounts (see kairos-io/kairos#4033). The LUKS_-prefixed label
+	// is what findPartitionByLabel uses to locate the partition while it is
+	// still locked.
 	extraArgs := []string{"--uuid", uuid.NewV5(uuid.NamespaceURL, label).String()}
-	extraArgs = append(extraArgs, "--label", label)
+	extraArgs = append(extraArgs, "--label", luksHeaderLabel(label))
 	extraArgs = append(extraArgs, argsCreate...)
 
 	// Unmount the device if it's mounted before attempting to encrypt it
@@ -626,34 +633,88 @@ func partitionMapperPath(p *partitions.Partition) string {
 	return filepath.Join("/dev", "mapper", p.Name)
 }
 
+// luksHeaderLabel returns the label written into the LUKS2 header for a
+// partition whose inner filesystem is labeled `label`. The header label is
+// intentionally distinct from the filesystem label so that blkid/udev do not
+// create two competing /dev/disk/by-label/<label> symlinks (one pointing at
+// the raw LUKS device, one at the decrypted mapper). See kairos-io/kairos#4033.
+func luksHeaderLabel(label string) string {
+	return "LUKS_" + label
+}
+
 // findPartitionByLabel finds a partition by its filesystem label and returns its information.
 // It performs all the common logic needed before attempting to unlock a partition.
 // Returns an error if the partition is not found. Use partitionLocked() to check if the partition is locked.
+//
+// While a LUKS partition is still locked the inner filesystem label is not
+// visible; in that case the LUKS header label (LUKS_<label>) is used as the
+// fallback lookup key.
 func findPartitionByLabel(partitionLabel string) (*partitions.Partition, error) {
-	// Find the partition device by label
-	devicePath, err := utils.SH(fmt.Sprintf("blkid -L %s", partitionLabel))
-	devicePath = strings.TrimSpace(devicePath)
+	blkid := func(label string) string {
+		out, err := utils.SH(fmt.Sprintf("blkid -L %s", label))
+		if err != nil {
+			return ""
+		}
+		return strings.TrimSpace(out)
+	}
 
-	if err != nil || devicePath == "" {
+	listPartitions := func() []*partitions.Partition {
+		logger := sdkLogger.NewNullLogger()
+		disks := ghw.GetDisks(ghw.NewPaths(""), &logger)
+		if disks == nil {
+			return nil
+		}
+		var all []*partitions.Partition
+		for _, disk := range disks {
+			all = append(all, disk.Partitions...)
+		}
+		return all
+	}
+
+	return resolvePartitionByLabel(partitionLabel, blkid, listPartitions)
+}
+
+// resolvePartitionByLabel is the testable core of findPartitionByLabel.
+// It tries the inner filesystem label first and falls back to the LUKS
+// header label (LUKS_<label>) when the partition is still locked.
+// blkidByLabel must return the device path for a label or "" if not found.
+// listPartitions must return all partitions on the system or nil on failure.
+func resolvePartitionByLabel(
+	partitionLabel string,
+	blkidByLabel func(string) string,
+	listPartitions func() []*partitions.Partition,
+) (*partitions.Partition, error) {
+	headerLabel := luksHeaderLabel(partitionLabel)
+
+	devicePath := blkidByLabel(partitionLabel)
+	if devicePath == "" {
+		devicePath = blkidByLabel(headerLabel)
+	}
+	if devicePath == "" {
 		return nil, fmt.Errorf("partition not found")
 	}
 
-	logger := sdkLogger.NewNullLogger()
-	disks := ghw.GetDisks(ghw.NewPaths(""), &logger)
-	if disks == nil {
+	parts := listPartitions()
+	if parts == nil {
 		return nil, fmt.Errorf("failed to scan block devices")
 	}
 
+	// Prefer the inner FS label (post-unlock / pre-encryption state) over
+	// the LUKS header label, so that if both happen to be present we resolve
+	// to the decrypted mapper rather than the raw LUKS device.
 	var partition *partitions.Partition
-	for _, disk := range disks {
-		for _, p := range disk.Partitions {
-			if p.FilesystemLabel == partitionLabel {
+	for _, p := range parts {
+		if p.FilesystemLabel == partitionLabel {
+			partition = p
+			break
+		}
+	}
+	if partition == nil {
+		for _, p := range parts {
+			if p.FilesystemLabel == headerLabel {
 				partition = p
 				break
 			}
-		}
-		if partition != nil {
-			break
 		}
 	}
 
@@ -661,12 +722,9 @@ func findPartitionByLabel(partitionLabel string) (*partitions.Partition, error) 
 		return nil, fmt.Errorf("partition not found in block devices")
 	}
 
-	// Ensure Path is set to the device path found by blkid
-	// This ensures we use the actual device path even if Partition.Path wasn't set
 	if partition.Path == "" {
 		partition.Path = devicePath
 	}
-	// Ensure Name is set if it wasn't populated
 	if partition.Name == "" {
 		partition.Name = filepath.Base(devicePath)
 	}
