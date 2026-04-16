@@ -35,7 +35,7 @@ require (
 	github.com/zcalusic/sysinfo v1.1.3
 	golang.org/x/mod v0.34.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/mount-utils v0.35.3
+	k8s.io/mount-utils v0.35.4
 )
 
 require (
