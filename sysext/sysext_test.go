@@ -10,8 +10,7 @@ import (
 	"regexp"
 	"testing"
 
-	dockerImage "github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/client"
+	"github.com/moby/moby/client"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -62,7 +61,7 @@ var _ = Describe("sysext", Label("sysext"), Ordered, func() {
 		})
 		AfterEach(func() {
 			cli, _ := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-			_, _ = cli.ImageRemove(context.Background(), imageTag, dockerImage.RemoveOptions{Force: true})
+			_, _ = cli.ImageRemove(context.Background(), imageTag, client.ImageRemoveOptions{Force: true})
 			By(fmt.Sprintf("Removed image %s", imageTag))
 		})
 		It("should extract the files into the dir", func() {
@@ -101,7 +100,7 @@ var _ = Describe("sysext", Label("sysext"), Ordered, func() {
 		})
 		AfterEach(func() {
 			cli, _ := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-			_, _ = cli.ImageRemove(context.Background(), imageTag, dockerImage.RemoveOptions{Force: true})
+			_, _ = cli.ImageRemove(context.Background(), imageTag, client.ImageRemoveOptions{Force: true})
 			By(fmt.Sprintf("Removed image %s", imageTag))
 		})
 		It("Fails with no layers image", func() {

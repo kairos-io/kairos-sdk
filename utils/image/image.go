@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/archive"
-	registrytypes "github.com/docker/docker/api/types/registry"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/logs"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -23,6 +22,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
+	registrytypes "github.com/moby/moby/api/types/registry"
 )
 
 // referrence: https://github.com/mudler/luet/blob/master/pkg/helpers/docker/docker.go#L117
