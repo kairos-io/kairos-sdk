@@ -58,7 +58,7 @@ device: foobar`
 		It("errors", func() {
 			Expect(config.IsValid()).NotTo(BeTrue())
 			Expect(config.ValidationError.Error()).
-				To(ContainSubstring("does not match pattern '^(auto|/dev/.+)$'"))
+				To(ContainSubstring("does not match pattern '^(auto|/dev/.+|script://.+)$'"))
 		})
 	})
 
