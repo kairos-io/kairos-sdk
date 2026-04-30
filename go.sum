@@ -73,8 +73,12 @@ github.com/alecthomas/repr v0.4.0 h1:GhI2A8MACjfegCPVq9f1FLvIBS+DrQ2KQBFZP1iFzXc
 github.com/alecthomas/repr v0.4.0/go.mod h1:Fr0507jx4eOXV7AlPV6AVZLYrLIuIeSOWtW57eE/O/4=
 github.com/anatol/devmapper.go v0.0.0-20230829043248-59ac2b9706ba h1:LJ/tQNki21ep58+YZElkXQVpswENcK66NMNv4JGZf7w=
 github.com/anatol/devmapper.go v0.0.0-20230829043248-59ac2b9706ba/go.mod h1:yZpXZj/k3rAZDY43DteaEzbnnxiz9OYijJqRcqWMKSw=
+github.com/anatol/devmapper.go v0.0.0-20250316020617-2671eefd35d7 h1:rmzBzcHwcMj/yd0KSIpUThfhBSHDaCwja+UOMpBL8ug=
+github.com/anatol/devmapper.go v0.0.0-20250316020617-2671eefd35d7/go.mod h1:gc23OPOgbAUVQPvBD6aJTlpnwmKfx3AdrmjkBXstafE=
 github.com/anatol/luks.go v0.0.0-20250316021219-8cd744c3576f h1:4tLJrnm3h3biCFsXHQ9w6DVGwuZXW4KMfiKV/atSYXg=
 github.com/anatol/luks.go v0.0.0-20250316021219-8cd744c3576f/go.mod h1:kEOnWwULAKOORfFvE4dEkdRZJS7+NMJKxRb/vWvmARk=
+github.com/anatol/luks.go v0.0.0-20260315175739-98c0a50095cb h1:QY6+xwGNree0q4CiQXbxQ/uY63eGO97pGxJn2wcolNI=
+github.com/anatol/luks.go v0.0.0-20260315175739-98c0a50095cb/go.mod h1:lFWvMshFyjkl9gCaM8wfvBk06H7isWw4AuaHdFH0+QQ=
 github.com/anatol/vmtest v0.0.0-20230711210602-87511df0d4bc h1:xMQuzBhj6hXQZufedPQM2OiGX2UcQHSptXtG3+28S8Q=
 github.com/anatol/vmtest v0.0.0-20230711210602-87511df0d4bc/go.mod h1:NC+g66bgkUjV1unIJXhHO35RHxVViWUzNeeKAkkO7DU=
 github.com/anchore/go-lzo v0.1.0 h1:NgAacnzqPeGH49Ky19QKLBZEuFRqtTG9cdaucc3Vncs=
