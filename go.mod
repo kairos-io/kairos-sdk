@@ -1,9 +1,9 @@
 module github.com/kairos-io/kairos-sdk
 
-go 1.25.9
+go 1.26.0
 
 require (
-	github.com/anatol/luks.go v0.0.0-20250316021219-8cd744c3576f
+	github.com/anatol/luks.go v0.0.0-20260315175739-98c0a50095cb
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/containerd/containerd v1.7.30
 	github.com/denisbrodbeck/machineid v1.0.1
@@ -30,13 +30,13 @@ require (
 	github.com/rs/zerolog v1.35.1
 	github.com/saferwall/pe v1.6.4
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
-	github.com/swaggest/jsonschema-go v0.3.62
+	github.com/swaggest/jsonschema-go v0.3.79
 	github.com/twpayne/go-vfs/v4 v4.3.0
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/zcalusic/sysinfo v1.1.3
 	golang.org/x/mod v0.35.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/mount-utils v0.35.4
+	k8s.io/mount-utils v0.36.0
 )
 
 require (
@@ -49,7 +49,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/Microsoft/hcsshim v0.14.0 // indirect
-	github.com/anatol/devmapper.go v0.0.0-20230829043248-59ac2b9706ba // indirect
+	github.com/anatol/devmapper.go v0.0.0-20250316020617-2671eefd35d7 // indirect
 	github.com/anchore/go-lzo v0.1.0 // indirect
 	github.com/aybabtme/rgbterm v0.0.0-20170906152045-cc83f3b3ce59 // indirect
 	github.com/ayoubfaouzi/pkcs7 v0.2.3 // indirect
@@ -66,7 +66,6 @@ require (
 	github.com/containerd/typeurl/v2 v2.2.3 // indirect
 	github.com/coreos/go-systemd/v22 v22.7.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dgryski/go-camellia v0.0.0-20191119043421-69a8a13fb23d // indirect
 	github.com/djherbis/times v1.6.0 // indirect
 	github.com/docker/cli v29.4.0+incompatible // indirect
@@ -115,14 +114,13 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/xattr v0.4.12 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/swaggest/refl v1.3.0 // indirect
+	github.com/swaggest/refl v1.4.0 // indirect
 	github.com/twpayne/go-vfs/v5 v5.0.5 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
 	github.com/vbatts/tar-split v0.12.2 // indirect
@@ -150,6 +148,6 @@ require (
 	google.golang.org/grpc v1.80.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	howett.net/plist v1.0.2-0.20250314012144-ee69052608d9 // indirect
-	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect
+	k8s.io/klog/v2 v2.140.0 // indirect
+	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // indirect
 )
