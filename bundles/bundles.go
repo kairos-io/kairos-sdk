@@ -258,9 +258,13 @@ func (e OCIImageRunner) Install(config *BundleConfig) error {
 		return err
 	}
 
+	if err = os.Chmod(filepath.Join(tempDir, "run.sh"), 0700); err != nil {
+		return err
+	}
+
 	// We want to expect tempDir as context
 	out, err := utils.SHInDir(
-		"/bin/sh run.sh",
+		"./run.sh",
 		tempDir,
 		fmt.Sprintf("CONTAINERDIR=%s", tempDir), fmt.Sprintf("BUNDLE_TARGET=%s", target))
 	if err != nil {

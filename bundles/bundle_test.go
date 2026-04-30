@@ -115,7 +115,7 @@ var _ = Describe("Bundle", func() {
 			When("type is run", func() {
 				BeforeEach(func() {
 					// Ensure no leftovers from previous tests
-					// These tests are meant to run in a container (Earthly), so it should
+					// These tests are meant to run in a container, so it should
 					// be ok to delete files like this.
 					os.RemoveAll("/var/lib/rancher/k3s/server/manifests/longhorn.yaml")
 
@@ -218,7 +218,7 @@ func copyFile(src, dst string) {
 
 func expectInstalled(installer BundleInstaller, config *BundleConfig) {
 	// Ensure no leftovers from previous tests
-	// These tests are meant to run in a container (Earthly), so it should
+	// These tests are meant to run in a container, so it should
 	// be ok to delete files like this.
 	err := os.RemoveAll("/etc/cos/grub.cfg")
 	Expect(err).ToNot(HaveOccurred())

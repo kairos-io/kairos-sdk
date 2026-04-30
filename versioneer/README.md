@@ -4,4 +4,4 @@ Versioneer is a library and a wrapping cli that is concerned with everything rel
 
 There is a standalone CLI in the bin/versioneer directory of thie repository. It's also embedded in kairos-agent
 as a command "kairos-agent versioneer". This allows to use it wherever we have kairos-agent available (e.g. within a Kairos OS)
-or inside Earthly (by running the standalone cli in an Earthly target).
+or inside a CI pipeline (by running the standalone cli directly).
