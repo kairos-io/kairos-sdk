@@ -11,7 +11,7 @@ type InstallSchema struct {
 	BindMounts          []string       `json:"bind_mounts,omitempty"`
 	Bundles             []BundleSchema `json:"bundles,omitempty" description:"Add bundles in runtime"`
 	NoFormat            bool           `json:"no_format,omitempty"`
-	Device              string         `json:"device,omitempty" pattern:"^(auto|/dev/.+)$" description:"Device for automated installs" examples:"[\"auto\",\"/dev/sda\"]"`
+	Device              string         `json:"device,omitempty" pattern:"^(auto|/dev/.+|script://.+)$" description:"Device for automated installs" examples:"[\"auto\",\"/dev/sda\",\"script:///usr/local/bin/pick-disk.sh\"]"`
 	EphemeralMounts     []string       `json:"ephemeral_mounts,omitempty"`
 	EncryptedPartitions []string       `json:"encrypted_partitions,omitempty"`
 	Env                 []interface{}  `json:"env,omitempty"`

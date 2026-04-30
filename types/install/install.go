@@ -16,7 +16,7 @@ type Install struct {
 	Auto                   bool                           `yaml:"auto,omitempty" mapstructure:"auto" json:"auto,omitempty"`
 	Reboot                 bool                           `yaml:"reboot,omitempty" mapstructure:"reboot" json:"reboot,omitempty"`
 	NoFormat               bool                           `yaml:"no-format,omitempty" mapstructure:"no-format" json:"no-format,omitempty"`
-	Device                 string                         `yaml:"device,omitempty" mapstructure:"device" json:"device,omitempty"`
+	Device                 string                         `yaml:"device,omitempty" mapstructure:"device" json:"device,omitempty" pattern:"^(auto|/dev/.+|script://.+)$" description:"Device for automated installs" examples:"[\"auto\",\"/dev/sda\",\"script:///usr/local/bin/pick-disk.sh\"]"`
 	Poweroff               bool                           `yaml:"poweroff,omitempty" mapstructure:"poweroff" json:"poweroff,omitempty"`
 	GrubOptions            map[string]string              `yaml:"grub_options,omitempty" mapstructure:"grub_options" json:"grub_options,omitempty"`
 	Bundles                bundles.Bundles                `yaml:"bundles,omitempty" mapstructure:"bundles" json:"bundles,omitempty"`
