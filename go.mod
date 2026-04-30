@@ -30,7 +30,7 @@ require (
 	github.com/rs/zerolog v1.35.1
 	github.com/saferwall/pe v1.6.4
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
-	github.com/swaggest/jsonschema-go v0.3.62
+	github.com/swaggest/jsonschema-go v0.3.79
 	github.com/twpayne/go-vfs/v4 v4.3.0
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/zcalusic/sysinfo v1.1.3
@@ -122,7 +122,7 @@ require (
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/swaggest/refl v1.3.0 // indirect
+	github.com/swaggest/refl v1.4.0 // indirect
 	github.com/twpayne/go-vfs/v5 v5.0.5 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
 	github.com/vbatts/tar-split v0.12.2 // indirect
