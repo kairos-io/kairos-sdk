@@ -1,6 +1,6 @@
 module github.com/kairos-io/kairos-sdk
 
-go 1.26.2
+go 1.26.3
 
 require (
 	github.com/anatol/luks.go v0.0.0-20260315175739-98c0a50095cb
