@@ -17,6 +17,13 @@ var _ = Describe("Types", Label("types", "common"), func() {
 			Expect(platform.OS).To(Equal("linux"))
 			Expect(platform.Arch).To(Equal(sdkPlatform.ArchArm64))
 			Expect(platform.GolangArch).To(Equal(sdkPlatform.ArchArm64))
+
+			platform, err = sdkPlatform.NewPlatform("linux", sdkPlatform.ArchRiscv)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(platform.OS).To(Equal("linux"))
+			Expect(platform.Arch).To(Equal(sdkPlatform.ArchRiscv))
+			Expect(platform.GolangArch).To(Equal(sdkPlatform.ArchRiscv))
+
 			platform, err = sdkPlatform.NewPlatform("linux", sdkPlatform.Archx86)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(platform.OS).To(Equal("linux"))
@@ -45,6 +52,11 @@ var _ = Describe("Types", Label("types", "common"), func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(platform.Arch).To(Equal(sdkPlatform.ArchArm64))
 			Expect(platform.GolangArch).To(Equal(sdkPlatform.ArchArm64))
+
+			platform, err = sdkPlatform.NewPlatformFromArch(sdkPlatform.ArchRiscv)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(platform.Arch).To(Equal(sdkPlatform.ArchRiscv))
+			Expect(platform.GolangArch).To(Equal(sdkPlatform.ArchRiscv))
 
 			platform, err = sdkPlatform.NewPlatformFromArch(sdkPlatform.Archx86)
 			Expect(err).ToNot(HaveOccurred())
