@@ -5,19 +5,26 @@ import "testing"
 func TestGetEfiGrubFiles(t *testing.T) {
 	tests := []struct {
 		arch     string
-		expected string
+		expected []string
 	}{
 		{
 			arch:     "amd64",
-			expected: "/usr/share/efi/x86_64/grub.efi",
+			expected: []string{"/usr/share/efi/x86_64/grub.efi"},
 		},
 		{
 			arch:     "arm64",
-			expected: "/usr/share/efi/aarch64/grub.efi",
+			expected: []string{"/usr/share/efi/aarch64/grub.efi"},
 		},
 		{
-			arch:     "riscv64",
-			expected: "/usr/lib/grub/riscv64-efi/grubriscv64.efi",
+			arch: "riscv64",
+			expected: []string{
+				"/usr/lib/grub/riscv64-efi/grubriscv64.efi",
+				"/usr/lib/grub/riscv64-efi/monolithic/grubriscv64.efi",
+				"/boot/efi/EFI/debian/grubriscv64.efi",
+				"/boot/efi/EFI/ubuntu/grubriscv64.efi",
+				"/boot/efi/EFI/fedora/grubriscv64.efi",
+				"/boot/efi/EFI/BOOT/BOOTRISCV64.EFI",
+			},
 		},
 	}
 
@@ -27,15 +34,17 @@ func TestGetEfiGrubFiles(t *testing.T) {
 			t.Fatalf("GetEfiGrubFiles(%q) returned no files", tt.arch)
 		}
 
-		found := false
-		for _, file := range files {
-			if file == tt.expected {
-				found = true
-				break
+		for _, expected := range tt.expected {
+			found := false
+			for _, file := range files {
+				if file == expected {
+					found = true
+					break
+				}
 			}
-		}
-		if !found {
-			t.Fatalf("GetEfiGrubFiles(%q) did not include %q; got %v", tt.arch, tt.expected, files)
+			if !found {
+				t.Fatalf("GetEfiGrubFiles(%q) did not include %q; got %v", tt.arch, expected, files)
+			}
 		}
 	}
 }

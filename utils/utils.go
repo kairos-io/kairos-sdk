@@ -332,9 +332,31 @@ func GetEfiGrubFiles(arch string) []string {
 		modNames = append(modNames, "/usr/lib/grub/arm64-efi/grubaa64.efi")               // hadron
 
 	case "riscv64":
-		modNames = append(modNames, "/usr/lib/grub/riscv64-efi/grubriscv64.efi")            // debian-style EFI install
-		modNames = append(modNames, "/usr/lib/grub/riscv64-efi/monolithic/grubriscv64.efi") // ubuntu
-		modNames = append(modNames, "/boot/efi/EFI/BOOT/BOOTRISCV64.EFI")                   // removable media fallback
+		// Verified Debian 13 modules path:
+		// https://packages.debian.org/trixie/riscv64/grub-efi-riscv64-bin/filelist
+		modNames = append(modNames, "/usr/lib/grub/riscv64-efi/grubriscv64.efi")
+		// Ubuntu Noble ships grub-efi-riscv64 / grub-efi-riscv64-bin for riscv64, and
+		// Debian-family layouts commonly use the monolithic output here. Ubuntu file list
+		// was not directly available during implementation, so treat this as a Debian-style
+		// derivative path to validate against images:
+		// https://packages.ubuntu.com/noble/admin/grub-efi
+		modNames = append(modNames, "/usr/lib/grub/riscv64-efi/monolithic/grubriscv64.efi")
+		// Verified Debian-family ESP path for Debian 13 systems:
+		// https://wiki.debian.org/InstallingDebianOn/StarFive/VisionFiveV2
+		modNames = append(modNames, "/boot/efi/EFI/debian/grubriscv64.efi")
+		// Ubuntu Noble likely follows the same ESP filename convention under /EFI/ubuntu/.
+		// Keep this separate from the Debian path because external consumers test Ubuntu
+		// images directly:
+		// https://packages.ubuntu.com/noble/admin/grub-efi
+		// https://bugs.launchpad.net/bugs/2104572
+		modNames = append(modNames, "/boot/efi/EFI/ubuntu/grubriscv64.efi")
+		// Verified Fedora 42 ESP path:
+		// https://riscv-koji.fedoraproject.org/koji/rpminfo?rpmID=25558
+		modNames = append(modNames, "/boot/efi/EFI/fedora/grubriscv64.efi")
+		// Verified removable-media fallback name used by Debian-family riscv64 installs:
+		// https://wiki.debian.org/UEFI
+		// https://wiki.debian.org/InstallingDebianOn/StarFive/VisionFiveV2
+		modNames = append(modNames, "/boot/efi/EFI/BOOT/BOOTRISCV64.EFI")
 
 	default:
 		modNames = append(modNames, "/usr/share/efi/x86_64/grub.efi")                     // suse
