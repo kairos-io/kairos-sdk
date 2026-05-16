@@ -331,6 +331,11 @@ func GetEfiGrubFiles(arch string) []string {
 		modNames = append(modNames, "/boot/efi/EFI/almalinux/grubaa64.efi")               // almalinux
 		modNames = append(modNames, "/usr/lib/grub/arm64-efi/grubaa64.efi")               // hadron
 
+	case "riscv64":
+		modNames = append(modNames, "/usr/lib/grub/riscv64-efi/grubriscv64.efi")            // debian-style EFI install
+		modNames = append(modNames, "/usr/lib/grub/riscv64-efi/monolithic/grubriscv64.efi") // ubuntu
+		modNames = append(modNames, "/boot/efi/EFI/BOOT/BOOTRISCV64.EFI")                   // removable media fallback
+
 	default:
 		modNames = append(modNames, "/usr/share/efi/x86_64/grub.efi")                     // suse
 		modNames = append(modNames, "/usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed") // ubuntu + debian
@@ -358,6 +363,8 @@ func GetEfiShimFiles(arch string) []string {
 		modNames = append(modNames, "/boot/efi/EFI/redhat/shim.efi")            // redhat
 		modNames = append(modNames, "/boot/efi/EFI/redhat/shimaa64.efi")        // redhat
 		modNames = append(modNames, "/boot/efi/EFI/almalinux/shim.efi")         // almalinux
+	case "riscv64":
+		// No stable shim file conventions are handled here for riscv64 yet.
 	default:
 		modNames = append(modNames, "/usr/share/efi/x86_64/shim.efi")          // suse + Hadron
 		modNames = append(modNames, "/usr/lib/shim/shimx64.efi.dualsigned")    // ubuntu
