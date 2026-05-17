@@ -28,6 +28,7 @@ const (
 	ArchAmd64 = "amd64"
 	Archx86   = "x86_64"
 	ArchArm64 = "arm64"
+	ArchRiscv = "riscv64"
 )
 
 type Platform struct {
@@ -119,6 +120,8 @@ func archToGolangArch(arch string) (string, error) {
 		return ArchAmd64, nil
 	case ArchArm64:
 		return ArchArm64, nil
+	case ArchRiscv:
+		return ArchRiscv, nil
 	default:
 		return "", errInvalidArch
 	}
@@ -132,6 +135,8 @@ func golangArchToArch(arch string) (string, error) {
 		return Archx86, nil
 	case ArchArm64:
 		return ArchArm64, nil
+	case ArchRiscv:
+		return ArchRiscv, nil
 	default:
 		return "", errInvalidArch
 	}

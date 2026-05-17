@@ -56,7 +56,7 @@ func (tl TagList) Less(i, j int) bool {
 // - sig
 // - -img
 func (tl TagList) Images() TagList {
-	pattern := `.*-(core|standard)-(amd64|arm64)-.*-v.*`
+	pattern := `.*-(core|standard)-(amd64|arm64|riscv64)-.*-v.*`
 	regexpObject := regexp.MustCompile(pattern)
 
 	newTags := []string{}

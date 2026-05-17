@@ -41,6 +41,15 @@ var _ = Describe("TagList", func() {
 			expectOnlyImages(images.Tags)
 		})
 
+		It("includes riscv64 image tags", func() {
+			goodTag := "tumbleweed-core-riscv64-generic-v2.4.2"
+			tagList.Tags = append(tagList.Tags, goodTag)
+
+			images := tagList.Images()
+
+			Expect(images.Tags).To(ContainElement(goodTag))
+		})
+
 		// Fixed bug
 		It("filters out -uki suffixed images", func() {
 			// Add a -uki suffixed (otherwise matching) artifact
@@ -372,5 +381,5 @@ func expectOnlyImages(images []string) {
 	Expect(images).ToNot(ContainElement(ContainSubstring("-img")))
 	Expect(images).ToNot(ContainElement(ContainSubstring("-uki")))
 
-	Expect(images).To(HaveEach(MatchRegexp((".*-(core|standard)-(amd64|arm64)-.*-v.*"))))
+	Expect(images).To(HaveEach(MatchRegexp((".*-(core|standard)-(amd64|arm64|riscv64)-.*-v.*"))))
 }
