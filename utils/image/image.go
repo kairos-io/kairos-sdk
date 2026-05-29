@@ -3,6 +3,7 @@ package image
 import (
 	"archive/tar"
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -92,13 +93,35 @@ func ExtractOCIImage(img v1.Image, targetDestination string, excludes ...string)
 	return err
 }
 
+// GetOption configures the behaviour of GetImage and GetOCIImageSize.
+type GetOption func(*getOptions)
+
+type getOptions struct {
+	insecure bool
+}
+
+// WithInsecureRegistry allows pulling from registries that serve over plain
+// HTTP or that present an untrusted/self-signed TLS certificate. When set, the
+// reference is parsed as insecure (the client also attempts HTTP) and, unless a
+// custom transport is provided, TLS certificate verification is skipped.
+func WithInsecureRegistry() GetOption {
+	return func(o *getOptions) {
+		o.insecure = true
+	}
+}
+
 // GetImage if returns the proper image to pull with transport and auth
 // tries local daemon first and then fallbacks into remote
 // if auth is nil, it will try to use the default keychain https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package
-func GetImage(targetImage, targetPlatform string, auth *registrytypes.AuthConfig, t http.RoundTripper) (v1.Image, error) {
+func GetImage(targetImage, targetPlatform string, auth *registrytypes.AuthConfig, t http.RoundTripper, opts ...GetOption) (v1.Image, error) {
 	var platform *v1.Platform
 	var image v1.Image
 	var err error
+
+	o := &getOptions{}
+	for _, fn := range opts {
+		fn(o)
+	}
 
 	if targetPlatform != "" {
 		platform, err = v1.ParsePlatform(targetPlatform)
@@ -112,13 +135,25 @@ func GetImage(targetImage, targetPlatform string, auth *registrytypes.AuthConfig
 		}
 	}
 
-	ref, err := name.ParseReference(targetImage)
+	var nameOpts []name.Option
+	if o.insecure {
+		nameOpts = append(nameOpts, name.Insecure)
+	}
+	ref, err := name.ParseReference(targetImage, nameOpts...)
 	if err != nil {
 		return image, err
 	}
 
 	if t == nil {
-		t = http.DefaultTransport
+		if o.insecure {
+			// Skip TLS verification so registries with self-signed/untrusted
+			// certificates can still be reached over HTTPS.
+			insecureTransport := http.DefaultTransport.(*http.Transport).Clone()
+			insecureTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+			t = insecureTransport
+		} else {
+			t = http.DefaultTransport
+		}
 	}
 
 	tr := transport.NewRetry(t,
@@ -139,27 +174,27 @@ func GetImage(targetImage, targetPlatform string, auth *registrytypes.AuthConfig
 		logs.Warn.Printf("local daemon image %q: %v; falling back to remote", ref.String(), daemonErr)
 	}
 
-	opts := []remote.Option{
+	remoteOpts := []remote.Option{
 		remote.WithTransport(tr),
 		remote.WithPlatform(*platform),
 	}
 	if auth != nil {
-		opts = append(opts, remote.WithAuth(staticAuth{auth}))
+		remoteOpts = append(remoteOpts, remote.WithAuth(staticAuth{auth}))
 	} else {
-		opts = append(opts, remote.WithAuthFromKeychain(authn.DefaultKeychain))
+		remoteOpts = append(remoteOpts, remote.WithAuthFromKeychain(authn.DefaultKeychain))
 	}
 
-	image, err = remote.Image(ref, opts...)
+	image, err = remote.Image(ref, remoteOpts...)
 
 	return image, err
 }
 
-func GetOCIImageSize(targetImage, targetPlatform string, auth *registrytypes.AuthConfig, t http.RoundTripper) (int64, error) {
+func GetOCIImageSize(targetImage, targetPlatform string, auth *registrytypes.AuthConfig, t http.RoundTripper, opts ...GetOption) (int64, error) {
 	var size int64
 	var img v1.Image
 	var err error
 
-	img, err = GetImage(targetImage, targetPlatform, auth, t)
+	img, err = GetImage(targetImage, targetPlatform, auth, t, opts...)
 	if err != nil {
 		return size, err
 	}
