@@ -22,7 +22,7 @@ require (
 	github.com/moby/moby/api v1.54.2
 	github.com/moby/moby/client v0.4.1
 	github.com/mudler/go-pluggable v0.0.0-20230126220627-7710299a0ae5
-	github.com/mudler/yip v1.23.6
+	github.com/mudler/yip v1.24.0
 	github.com/onsi/ginkgo/v2 v2.29.0
 	github.com/onsi/gomega v1.41.0
 	github.com/pterm/pterm v0.12.83
@@ -134,10 +134,10 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.43.0 // indirect
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.51.0 // indirect
+	golang.org/x/crypto v0.52.0 // indirect
 	golang.org/x/net v0.54.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/term v0.43.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/tools v0.45.0 // indirect
