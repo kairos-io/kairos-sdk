@@ -18,9 +18,14 @@ import (
 )
 
 // insecureTransport returns an http transport that skips TLS verification, used
-// to talk to the self-signed test registry when seeding it with an image.
+// to talk to the self-signed test registry when seeding it with an image. The
+// type assertion on http.DefaultTransport is guarded so a replaced default
+// transport in the test process does not turn into a runtime panic.
 func insecureTransport() *http.Transport {
-	tr := http.DefaultTransport.(*http.Transport).Clone()
+	tr := &http.Transport{}
+	if dt, ok := http.DefaultTransport.(*http.Transport); ok {
+		tr = dt.Clone()
+	}
 	tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
 	return tr
 }

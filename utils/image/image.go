@@ -110,6 +110,24 @@ func WithInsecureRegistry() GetOption {
 	}
 }
 
+// insecureTransport clones base into an *http.Transport whose TLS verification
+// is disabled, preserving any other settings already present on base. base is
+// usually http.DefaultTransport, which is a RoundTripper that consumers (and
+// tests) can replace, so the type assertion is guarded to avoid panicking when
+// it is not an *http.Transport.
+func insecureTransport(base http.RoundTripper) *http.Transport {
+	t, ok := base.(*http.Transport)
+	if !ok {
+		t = &http.Transport{}
+	}
+	t = t.Clone()
+	if t.TLSClientConfig == nil {
+		t.TLSClientConfig = &tls.Config{} //nolint:gosec
+	}
+	t.TLSClientConfig.InsecureSkipVerify = true //nolint:gosec
+	return t
+}
+
 // GetImage if returns the proper image to pull with transport and auth
 // tries local daemon first and then fallbacks into remote
 // if auth is nil, it will try to use the default keychain https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package
@@ -148,9 +166,7 @@ func GetImage(targetImage, targetPlatform string, auth *registrytypes.AuthConfig
 		if o.insecure {
 			// Skip TLS verification so registries with self-signed/untrusted
 			// certificates can still be reached over HTTPS.
-			insecureTransport := http.DefaultTransport.(*http.Transport).Clone()
-			insecureTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
-			t = insecureTransport
+			t = insecureTransport(http.DefaultTransport)
 		} else {
 			t = http.DefaultTransport
 		}
