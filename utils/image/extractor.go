@@ -1,7 +1,6 @@
 package image
 
 import (
-	v1 "github.com/google/go-containerregistry/pkg/v1"
 	imagetypes "github.com/kairos-io/kairos-sdk/types/images"
 	"github.com/kairos-io/kairos-sdk/utils"
 )
@@ -25,15 +24,15 @@ func (e OCIImageExtractor) pullOptions() []GetOption {
 	return nil
 }
 
-// resolvePlatform keeps a valid explicit platform, otherwise falls back to the
-// current host platform.
+// resolvePlatform defaults to the current host platform only when no platform
+// was requested. An explicit platformRef is passed through untouched so GetImage
+// validates it and surfaces an error, rather than silently falling back to the
+// host platform and pulling the wrong image.
 func resolvePlatform(platformRef string) string {
-	if platformRef != "" {
-		if _, err := v1.ParsePlatform(platformRef); err == nil {
-			return platformRef
-		}
+	if platformRef == "" {
+		return utils.GetCurrentPlatform()
 	}
-	return utils.GetCurrentPlatform()
+	return platformRef
 }
 
 func (e OCIImageExtractor) ExtractImage(imageRef, destination, platformRef string, excludes ...string) error {

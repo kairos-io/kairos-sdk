@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -99,9 +100,11 @@ var _ = Describe("OCIImageExtractor", func() {
 			err := image.OCIImageExtractor{Insecure: true}.ExtractImage(imageRef, destDir, "linux/amd64")
 			Expect(err).ToNot(HaveOccurred())
 
-			entries, err := os.ReadDir(destDir)
+			// Assert the known file from currentUserImage was extracted verbatim,
+			// not merely that something landed in the directory.
+			content, err := os.ReadFile(filepath.Join(destDir, "hello.txt"))
 			Expect(err).ToNot(HaveOccurred())
-			Expect(entries).ToNot(BeEmpty())
+			Expect(string(content)).To(Equal("hello from the insecure registry"))
 		})
 
 		It("GetOCIImageSize requires Insecure for this registry", func() {
