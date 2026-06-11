@@ -18,6 +18,45 @@ import (
 // EnvAgentBin overrides agent discovery with an explicit path.
 const EnvAgentBin = "KAIROS_AGENT_BIN"
 
+// Contract vocabulary — the JSON-Lines progress protocol that kairos-agent
+// emits and installer frontends consume. Both sides should reference these
+// constants instead of hard-coding the strings.
+const (
+	// EnvProgress, when set to a non-empty value in the agent's environment,
+	// makes kairos-agent emit progress events on stdout.
+	EnvProgress = "KAIROS_AGENT_PROGRESS"
+
+	// Event values for ProgressEvent.Event.
+	EventStep  = "step"
+	EventError = "error"
+)
+
+// Step values for ProgressEvent.Step, in the order the agent emits them.
+const (
+	StepPartition     = "partition"
+	StepBeforeInstall = "before-install"
+	StepActive        = "active"
+	StepBootloader    = "bootloader"
+	StepRecovery      = "recovery"
+	StepPassive       = "passive"
+	StepAfterInstall  = "after-install"
+	StepDone          = "done"
+)
+
+// Steps lists the step events in the order the agent emits them on a full,
+// successful install. Steps that do not run (e.g. partition on a NoFormat
+// install) are simply omitted from the stream.
+var Steps = []string{
+	StepPartition,
+	StepBeforeInstall,
+	StepActive,
+	StepBootloader,
+	StepRecovery,
+	StepPassive,
+	StepAfterInstall,
+	StepDone,
+}
+
 // agentBinName is the fixed name looked up on PATH.
 const agentBinName = "kairos-agent"
 
@@ -60,7 +99,7 @@ func Command(agentBin, cfgPath, source, finishAction string) *exec.Cmd {
 	args = append(args, cfgPath)
 
 	cmd := exec.Command(agentBin, args...)
-	cmd.Env = append(os.Environ(), "KAIROS_AGENT_PROGRESS=1")
+	cmd.Env = append(os.Environ(), EnvProgress+"=1")
 	return cmd
 }
 
