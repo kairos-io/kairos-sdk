@@ -124,3 +124,17 @@ var _ = Describe("agentrun", func() {
 		})
 	})
 })
+
+var _ = Describe("contract constants", func() {
+	It("exposes the step vocabulary in emission order", func() {
+		Expect(agentrun.Steps).To(Equal([]string{
+			"partition", "before-install", "active", "bootloader",
+			"recovery", "passive", "after-install", "done",
+		}))
+	})
+	It("names the progress env var and event values", func() {
+		Expect(agentrun.EnvProgress).To(Equal("KAIROS_AGENT_PROGRESS"))
+		Expect(agentrun.EventStep).To(Equal("step"))
+		Expect(agentrun.EventError).To(Equal("error"))
+	})
+})
