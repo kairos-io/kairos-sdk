@@ -113,6 +113,17 @@ func GetDisks(paths *Paths, logger *sdkLogger.KairosLogger) []*partitions.Disk {
 			// We don't care about unused loop devices...
 			continue
 		}
+
+		// Skip kernel-hidden block devices (/sys/block/<dev>/hidden == 1).
+		// These include the NVMe per-controller path device (nvmeXcYnZ)
+		// exposed by native NVMe multipath, which shadows the real namespace
+		// (nvmeXnY) with the same size but has no usable /dev node. Returning
+		// it makes callers pick an unusable install target that fails with
+		// "Disk /dev/nvmeXcYnZ does not exist".
+		if isHiddenDevice(paths, dname) {
+			logger.Logger.Trace().Str("file", dname).Msg("Skipping hidden device")
+			continue
+		}
 		d := &partitions.Disk{
 			Name:      dname,
 			SizeBytes: size,
@@ -151,6 +162,17 @@ func isMultipathPartition(entry os.DirEntry, paths *Paths, logger *sdkLogger.Kai
 	// this is the primary check for multipath partitions and should be safe.
 	_, ok := udevInfo["DM_PART"]
 	return ok
+}
+
+// isHiddenDevice reports whether the block device is marked hidden by the
+// kernel via /sys/block/<dev>/hidden == 1. A missing attribute is treated as
+// not hidden, matching devices/kernels that do not expose it.
+func isHiddenDevice(paths *Paths, disk string) bool {
+	contents, err := os.ReadFile(filepath.Join(paths.SysBlock, disk, "hidden"))
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(string(contents)) == "1"
 }
 
 func diskSizeBytes(paths *Paths, disk string, logger *sdkLogger.KairosLogger) uint64 {

@@ -1,6 +1,8 @@
 package ghw_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/kairos-io/kairos-sdk/ghw"
@@ -66,6 +68,26 @@ var _ = Describe("GHW functions tests", func() {
 			ghwMock.CreateDevices()
 			disks := ghw.GetDisks(ghw.NewPaths(ghwMock.Chroot), nil)
 			Expect(len(disks)).To(Equal(0), disks)
+		})
+	})
+
+	Describe("With a kernel-hidden device", func() {
+		It("Skips the hidden device and returns only the real one", func() {
+			// Native NVMe multipath exposes the per-controller path device
+			// (nvme1c1n1) alongside the real namespace (nvme1n1). The path
+			// device is marked hidden (/sys/block/<dev>/hidden == 1) and must
+			// not be returned: it has no usable /dev node.
+			ghwMock.AddDisk(partitions.Disk{Name: "nvme1n1", UUID: "aaa", SizeBytes: 100})
+			ghwMock.AddDisk(partitions.Disk{Name: "nvme1c1n1", UUID: "bbb", SizeBytes: 100})
+			ghwMock.CreateDevices()
+			// The mock does not write the hidden attribute, so set it like the
+			// kernel does for the per-controller path device.
+			hiddenPath := filepath.Join(ghwMock.Chroot, "sys", "block", "nvme1c1n1", "hidden")
+			Expect(os.WriteFile(hiddenPath, []byte("1\n"), 0644)).To(Succeed())
+
+			disks := ghw.GetDisks(ghw.NewPaths(ghwMock.Chroot), nil)
+			Expect(len(disks)).To(Equal(1), disks)
+			Expect(disks[0].Name).To(Equal("nvme1n1"), disks)
 		})
 	})
 
