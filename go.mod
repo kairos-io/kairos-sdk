@@ -3,7 +3,7 @@ module github.com/kairos-io/kairos-sdk
 go 1.26.4
 
 require (
-	github.com/anatol/luks.go v0.0.0-20260315175739-98c0a50095cb
+	github.com/anatol/luks.go v0.0.0-20260615185044-2658459c8ca5
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/containerd/containerd v1.7.32
 	github.com/denisbrodbeck/machineid v1.0.1
