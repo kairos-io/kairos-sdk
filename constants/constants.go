@@ -36,3 +36,13 @@ const (
 	PersistentSize = uint(0)     // Size of the PERSISTENT partition in MiB by default. Set to 0 so its expanded to fill remaining space
 	ImgSize        = uint(3072)  // Size of the image files in MiB by default. For active/passive/recovery.img
 )
+
+// Installer binary locations. These define the contract, shared across kairos
+// projects, for where the installer lives in an image: kairos-init bundles the
+// default and kairos-agent execs whichever is resolved at install time. The
+// resolution helpers live in the installer package.
+const (
+	InstallerDefaultPath  = "/system/installer/kairos-installer" // Default installer path, bundled by kairos-init
+	InstallerOverridePath = "/system/installer/installer"        // Override slot the base image or user can drop their own installer into; takes precedence over the default
+	InstallerEnvVar       = "KAIROS_INSTALLER"                   // Env var that, when set to an existing path, overrides both installer locations
+)
