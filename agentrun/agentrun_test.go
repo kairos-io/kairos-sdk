@@ -3,6 +3,7 @@ package agentrun_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -120,6 +121,73 @@ var _ = Describe("agentrun", func() {
 			Expect(os.WriteFile(bin, []byte("#!/bin/sh\nexit 5\n"), 0o755)).To(Succeed())
 			err := agentrun.Run(bin, "/tmp/cc.yaml", "", "nothing",
 				func(agentrun.ProgressEvent) {}, func(string) {})
+			Expect(err).To(HaveOccurred())
+		})
+	})
+
+	Describe("RunWithOutput", func() {
+		It("tees the full agent transcript (raw stdout + stderr) into out", func() {
+			dir := GinkgoT().TempDir()
+			bin := filepath.Join(dir, "kairos-agent")
+			script := "#!/bin/sh\n" +
+				`echo '{"event":"step","step":"partition"}'` + "\n" +
+				"echo 'plain log line'\n" +
+				"echo 'a stderr warning' 1>&2\n" +
+				`echo '{"event":"step","step":"done"}'` + "\n" +
+				"exit 0\n"
+			Expect(os.WriteFile(bin, []byte(script), 0o755)).To(Succeed())
+
+			var out strings.Builder
+			var steps, logs []string
+			err := agentrun.RunWithOutput(bin, "/tmp/cc.yaml", "", "nothing",
+				func(ev agentrun.ProgressEvent) {
+					if ev.Event == agentrun.EventStep {
+						steps = append(steps, ev.Step)
+					}
+				},
+				func(line string) { logs = append(logs, line) },
+				&out,
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			// Callbacks still fire exactly as with Run.
+			Expect(steps).To(Equal([]string{"partition", "done"}))
+			Expect(logs).To(Equal([]string{"plain log line"}))
+
+			// out captures the complete transcript: raw stdout (progress JSON
+			// included) AND stderr.
+			transcript := out.String()
+			Expect(transcript).To(ContainSubstring(`{"event":"step","step":"partition"}`))
+			Expect(transcript).To(ContainSubstring("plain log line"))
+			Expect(transcript).To(ContainSubstring(`{"event":"step","step":"done"}`))
+			Expect(transcript).To(ContainSubstring("a stderr warning"))
+		})
+
+		It("still parses events when out is nil", func() {
+			dir := GinkgoT().TempDir()
+			bin := filepath.Join(dir, "kairos-agent")
+			script := "#!/bin/sh\n" +
+				`echo '{"event":"step","step":"done"}'` + "\n" +
+				"exit 0\n"
+			Expect(os.WriteFile(bin, []byte(script), 0o755)).To(Succeed())
+
+			var steps []string
+			err := agentrun.RunWithOutput(bin, "/tmp/cc.yaml", "", "nothing",
+				func(ev agentrun.ProgressEvent) { steps = append(steps, ev.Step) },
+				func(string) {},
+				nil,
+			)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(steps).To(Equal([]string{"done"}))
+		})
+
+		It("returns the exit error when the agent fails", func() {
+			dir := GinkgoT().TempDir()
+			bin := filepath.Join(dir, "kairos-agent")
+			Expect(os.WriteFile(bin, []byte("#!/bin/sh\nexit 5\n"), 0o755)).To(Succeed())
+			var out strings.Builder
+			err := agentrun.RunWithOutput(bin, "/tmp/cc.yaml", "", "nothing",
+				func(agentrun.ProgressEvent) {}, func(string) {}, &out)
 			Expect(err).To(HaveOccurred())
 		})
 	})
