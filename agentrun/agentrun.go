@@ -15,10 +15,12 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+
+	"github.com/kairos-io/kairos-sdk/constants"
 )
 
 // EnvAgentBin overrides agent discovery with an explicit path.
-const EnvAgentBin = "KAIROS_AGENT_BIN"
+const EnvAgentBin = constants.AgentEnvVar
 
 // Contract vocabulary — the JSON-Lines progress protocol that kairos-agent
 // emits and installer frontends consume. Both sides should reference these
@@ -59,9 +61,6 @@ var Steps = []string{
 	StepDone,
 }
 
-// agentBinName is the fixed name looked up on PATH.
-const agentBinName = "kairos-agent"
-
 // ProgressEvent is one parsed JSON-Lines progress line from the agent.
 type ProgressEvent struct {
 	Event   string `json:"event"`
@@ -69,15 +68,20 @@ type ProgressEvent struct {
 	Message string `json:"message"`
 }
 
-// ResolveAgentBin returns the kairos-agent path: KAIROS_AGENT_BIN (must exist)
-// then kairos-agent on PATH, else "".
+// ResolveAgentBin returns the kairos-agent path. Resolution order matches the
+// agent contract shared with kairos-init:
+//
+//	$KAIROS_AGENT_BIN (when set and existing) -> AgentDefaultPath -> kairos-agent on PATH.
 func ResolveAgentBin() string {
-	if p := os.Getenv(EnvAgentBin); p != "" {
+	if p := os.Getenv(constants.AgentEnvVar); p != "" {
 		if _, err := os.Stat(p); err == nil {
 			return p
 		}
 	}
-	if p, err := exec.LookPath(agentBinName); err == nil {
+	if _, err := os.Stat(constants.AgentDefaultPath); err == nil {
+		return constants.AgentDefaultPath
+	}
+	if p, err := exec.LookPath(constants.AgentBinName); err == nil {
 		return p
 	}
 	return ""

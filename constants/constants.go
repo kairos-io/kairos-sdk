@@ -46,3 +46,12 @@ const (
 	InstallerOverridePath = "/system/installer/installer"        // Override slot the base image or user can drop their own installer into; takes precedence over the default
 	InstallerEnvVar       = "KAIROS_INSTALLER"                   // Env var that, when set to an existing path, overrides both installer locations
 )
+
+// Agent binary location. kairos-init installs kairos-agent to AgentDefaultPath;
+// kairos-agent systemd units and phone-home services must use the same path.
+// Resolution helpers live in the agentrun package.
+const (
+	AgentBinName     = "kairos-agent"
+	AgentDefaultPath = "/usr/bin/kairos-agent"
+	AgentEnvVar      = "KAIROS_AGENT_BIN" // Env var override for dev/tests; must point at an existing binary
+)
