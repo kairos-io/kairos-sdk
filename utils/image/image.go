@@ -14,7 +14,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/containerd/archive"
+	"github.com/containerd/containerd/v2/pkg/archive"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/logs"
 	"github.com/google/go-containerregistry/pkg/name"
