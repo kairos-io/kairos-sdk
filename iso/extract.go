@@ -32,7 +32,7 @@ func ExtractFileFromIso(file, iso, destination string, logger *sdkLogger.KairosL
 
 	log.Trace().Msg("Opening iso file")
 	log.Debug().Msg("Extracting file from iso")
-	open, err := diskfs.Open(iso)
+	open, err := diskfs.Open(iso, diskfs.WithOpenMode(diskfs.ReadOnly))
 	if err != nil {
 		log.Error().Err(err).Msg("opening iso file")
 		return err
