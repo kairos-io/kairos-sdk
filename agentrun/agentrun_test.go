@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/kairos-io/kairos-sdk/agentrun"
+	"github.com/kairos-io/kairos-sdk/constants"
 )
 
 var _ = Describe("agentrun", func() {
@@ -21,7 +22,10 @@ var _ = Describe("agentrun", func() {
 			Expect(agentrun.ResolveAgentBin()).To(Equal(bin))
 		})
 
-		It("falls back to kairos-agent on PATH", func() {
+		It("falls back to kairos-agent on PATH when AgentDefaultPath is absent", func() {
+			if _, err := os.Stat(constants.AgentDefaultPath); err == nil {
+				Skip(constants.AgentDefaultPath + " is present on this system")
+			}
 			GinkgoT().Setenv(agentrun.EnvAgentBin, "")
 			dir := GinkgoT().TempDir()
 			bin := filepath.Join(dir, "kairos-agent")
@@ -31,6 +35,9 @@ var _ = Describe("agentrun", func() {
 		})
 
 		It("returns empty when nothing is found", func() {
+			if _, err := os.Stat(constants.AgentDefaultPath); err == nil {
+				Skip(constants.AgentDefaultPath + " is present on this system")
+			}
 			GinkgoT().Setenv(agentrun.EnvAgentBin, "")
 			GinkgoT().Setenv("PATH", GinkgoT().TempDir())
 			Expect(agentrun.ResolveAgentBin()).To(BeEmpty())
@@ -204,5 +211,10 @@ var _ = Describe("contract constants", func() {
 		Expect(agentrun.EnvProgress).To(Equal("KAIROS_AGENT_PROGRESS"))
 		Expect(agentrun.EventStep).To(Equal("step"))
 		Expect(agentrun.EventError).To(Equal("error"))
+	})
+	It("names the agent install contract", func() {
+		Expect(constants.AgentBinName).To(Equal("kairos-agent"))
+		Expect(constants.AgentDefaultPath).To(Equal("/usr/bin/kairos-agent"))
+		Expect(agentrun.EnvAgentBin).To(Equal(constants.AgentEnvVar))
 	})
 })
