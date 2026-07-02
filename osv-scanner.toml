@@ -1,0 +1,7 @@
+[[IgnoredVulns]]
+id = "GO-2026-5298"
+ignoreUntil = 2026-10-01
+reason = """
+Fixed in github.com/google/go-attestation v0.6.0+ (GHSA-9r4w-jg96-92mv).
+The OSV database has not yet recorded a fixed version range for this advisory.
+"""

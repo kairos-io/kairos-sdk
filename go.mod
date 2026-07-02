@@ -18,7 +18,7 @@ require (
 	github.com/itchyny/gojq v0.12.19
 	github.com/jaypipes/ghw v0.24.0
 	github.com/joho/godotenv v1.5.1
-	github.com/kairos-io/tpm-helpers v0.0.0-20260608091616-8a4ccb53d8f7
+	github.com/kairos-io/tpm-helpers v0.0.0-20260702080541-9b3e057e2f32
 	github.com/moby/moby/api v1.55.0
 	github.com/moby/moby/client v0.5.0
 	github.com/mudler/go-pluggable v0.0.0-20230126220627-7710299a0ae5
@@ -80,11 +80,10 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/certificate-transparency-go v1.1.4 // indirect
-	github.com/google/go-attestation v0.5.1 // indirect
+	github.com/google/go-attestation v0.6.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/go-tpm v0.9.6 // indirect
-	github.com/google/go-tpm-tools v0.4.4 // indirect
-	github.com/google/go-tspi v0.3.0 // indirect
+	github.com/google/go-tpm v0.9.8 // indirect
+	github.com/google/go-tpm-tools v0.4.7 // indirect
 	github.com/google/pprof v0.0.0-20260402051712-545e8a4df936 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gookit/color v1.6.0 // indirect
