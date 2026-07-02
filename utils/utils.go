@@ -264,11 +264,18 @@ func Reboot() {
 
 func PowerOFF() {
 	pterm.Info.Println("Shutdown node")
-	if IsOpenRCBased() {
-		SH("poweroff") //nolint:errcheck
-	} else {
-		SH("shutdown") //nolint:errcheck
+	SH(poweroffCommand(IsOpenRCBased())) //nolint:errcheck
+}
+
+// poweroffCommand returns the command used to power the node off. On systemd
+// based systems `shutdown` defaults to a one minute delay, so `shutdown now` is
+// used to power off immediately. openRC based systems use `poweroff`, which
+// already takes effect immediately.
+func poweroffCommand(openRC bool) string {
+	if openRC {
+		return "poweroff"
 	}
+	return "shutdown now"
 }
 
 func ListToOutput(rels []string, output string) []string {

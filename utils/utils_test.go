@@ -60,3 +60,29 @@ func TestGetEfiShimFiles(t *testing.T) {
 		t.Fatalf("GetEfiShimFiles(\"riscv64\") = %v, want no shim paths", riscv64Files)
 	}
 }
+
+func TestPoweroffCommand(t *testing.T) {
+	tests := []struct {
+		name     string
+		openRC   bool
+		expected string
+	}{
+		{
+			name:     "systemd based uses shutdown now to avoid the default one minute delay",
+			openRC:   false,
+			expected: "shutdown now",
+		},
+		{
+			name:     "openRC based uses poweroff",
+			openRC:   true,
+			expected: "poweroff",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := poweroffCommand(tt.openRC); got != tt.expected {
+				t.Fatalf("poweroffCommand(%v) = %q, want %q", tt.openRC, got, tt.expected)
+			}
+		})
+	}
+}
