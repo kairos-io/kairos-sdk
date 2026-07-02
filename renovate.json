@@ -20,7 +20,7 @@
     {
       "enabled": false,
       "matchPackageNames": [
-        "/^github\\.com/containerd/containerd/"
+        "/^github\\.com/containerd/containerd$/"
       ]
     }
   ]
