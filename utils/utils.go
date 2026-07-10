@@ -339,6 +339,8 @@ func GetEfiGrubFiles(arch string) []string {
 		modNames = append(modNames, "/usr/lib/grub/arm64-efi/grubaa64.efi")               // hadron
 
 	case "riscv64":
+		// openSUSE / SLE layout (grub2-riscv64-efi):
+		modNames = append(modNames, "/usr/share/efi/riscv64/grub.efi")
 		// Verified Debian 13 modules path:
 		// https://packages.debian.org/trixie/riscv64/grub-efi-riscv64-bin/filelist
 		modNames = append(modNames, "/usr/lib/grub/riscv64-efi/grubriscv64.efi")

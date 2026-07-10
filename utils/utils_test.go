@@ -18,6 +18,7 @@ func TestGetEfiGrubFiles(t *testing.T) {
 		{
 			arch: "riscv64",
 			expected: []string{
+				"/usr/share/efi/riscv64/grub.efi",
 				"/usr/lib/grub/riscv64-efi/grubriscv64.efi",
 				"/usr/lib/grub/riscv64-efi/monolithic/grubriscv64.efi",
 				"/boot/efi/EFI/debian/grubriscv64.efi",
