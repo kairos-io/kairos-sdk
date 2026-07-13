@@ -5,3 +5,8 @@ reason = """
 Fixed in github.com/google/go-attestation v0.6.0+ (GHSA-9r4w-jg96-92mv).
 The OSV database has not yet recorded a fixed version range for this advisory.
 """
+
+[[IgnoredVulns]]
+id = "GO-2026-5932"
+ignoreUntil = 2026-07-27
+reason = "Indirect golang.org/x/crypto dep; we do not import golang.org/x/crypto/openpgp. No fixed version exists yet. Re-check after upstream dependency updates."
