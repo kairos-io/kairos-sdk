@@ -17,23 +17,30 @@ type RootSchema struct {
 	Env                       []string       `json:"env,omitempty"`
 	FailOnBundleErrors        bool           `json:"fail_on_bundles_errors,omitempty"`
 	GrubOptionsSchema         `json:"grub_options,omitempty"`
-	Install                   InstallSchema  `json:"install,omitempty"`
-	Options                   []interface{}  `json:"options,omitempty" description:"Various options."`
-	Users                     []UserSchema   `json:"users,omitempty" minItems:"1" required:"true"`
-	P2P                       P2PSchema      `json:"p2p,omitempty"`
-	Debug                     bool           `json:"debug,omitempty" mapstructure:"debug"`
-	Strict                    bool           `json:"strict,omitempty" mapstructure:"strict"`
-	CloudInitPaths            []string       `json:"cloud-init-paths,omitempty" mapstructure:"cloud-init-paths"`
-	EjectCD                   bool           `json:"eject-cd,omitempty" mapstructure:"eject-cd"`
-	FullCloudConfig           string         `json:"fullcloudconfig,omitempty" mapstructure:"fullcloudconfig"`
-	Cosign                    bool           `json:"cosign,omitempty" mapstructure:"cosign"`
-	Verify                    bool           `json:"verify,omitempty" mapstructure:"verify"`
-	CosignPubKey              string         `json:"cosign-key,omitempty" mapstructure:"cosign-key"`
-	Arch                      string         `json:"arch,omitempty" mapstructure:"arch"`
-	Platform                  PlatformSchema `json:"platform,omitempty" mapstructure:"platform"`
-	SquashFsCompressionConfig []string       `json:"squash-compression,omitempty" mapstructure:"squash-compression"`
-	SquashFsNoCompression     bool           `json:"squash-no-compression,omitempty" mapstructure:"squash-no-compression"`
-	UkiMaxEntries             int            `json:"uki-max-entries,omitempty" mapstructure:"uki-max-entries"`
+	Install                   InstallSchema            `json:"install,omitempty"`
+	Options                   []interface{}            `json:"options,omitempty" description:"Various options."`
+	Users                     []UserSchema             `json:"users,omitempty" minItems:"1" required:"true"`
+	P2P                       P2PSchema                `json:"p2p,omitempty"`
+	Debug                     bool                     `json:"debug,omitempty" mapstructure:"debug"`
+	Strict                    bool                     `json:"strict,omitempty" mapstructure:"strict"`
+	CloudInitPaths            []string                 `json:"cloud-init-paths,omitempty" mapstructure:"cloud-init-paths"`
+	EjectCD                   bool                     `json:"eject-cd,omitempty" mapstructure:"eject-cd"`
+	FullCloudConfig           string                   `json:"fullcloudconfig,omitempty" mapstructure:"fullcloudconfig"`
+	Cosign                    bool                     `json:"cosign,omitempty" mapstructure:"cosign"`
+	Verify                    bool                     `json:"verify,omitempty" mapstructure:"verify"`
+	CosignPubKey              string                   `json:"cosign-key,omitempty" mapstructure:"cosign-key"`
+	Arch                      string                   `json:"arch,omitempty" mapstructure:"arch"`
+	Platform                  PlatformSchema           `json:"platform,omitempty" mapstructure:"platform"`
+	SquashFsCompressionConfig []string                 `json:"squash-compression,omitempty" mapstructure:"squash-compression"`
+	SquashFsNoCompression     bool                     `json:"squash-no-compression,omitempty" mapstructure:"squash-no-compression"`
+	UkiMaxEntries             int                      `json:"uki-max-entries,omitempty" mapstructure:"uki-max-entries"`
+	Stages                    map[string][]StageSchema `json:"stages,omitempty" description:"Cloud-init stages to execute"`
+}
+
+// StageSchema defines the stage fields validated by the Kairos configuration schema.
+// Other yip stage fields remain accepted as additional properties.
+type StageSchema struct {
+	Commands []string `json:"commands,omitempty" description:"Commands to execute"`
 }
 
 type PlatformSchema struct {
