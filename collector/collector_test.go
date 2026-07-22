@@ -15,6 +15,44 @@ import (
 )
 
 var _ = Describe("Config Collector", func() {
+	Describe("ParseKairosCmdline", func() {
+		writeCmdline := func(contents string) string {
+			f, err := os.CreateTemp("", "cmdline")
+			Expect(err).ToNot(HaveOccurred())
+			DeferCleanup(func() { _ = os.Remove(f.Name()) })
+			Expect(os.WriteFile(f.Name(), []byte(contents), 0o644)).To(Succeed())
+			return f.Name()
+		}
+
+		It("returns an empty Config when no stanzas are set", func() {
+			path := writeCmdline("root=LABEL=X rd.immucore.debug\n")
+			c, err := ParseKairosCmdline(path)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(c.Values).To(BeEmpty())
+			Expect(c.Sources).To(ConsistOf("cmdline"))
+		})
+
+		It("builds a Config from kairos.config stanzas with dot notation", func() {
+			path := writeCmdline(`kairos.config=hostname=box kairos.config=config_url=https://example.com/a.yaml kairos.config=install.auto=true`)
+			c, err := ParseKairosCmdline(path)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(c.Values).To(HaveKeyWithValue("hostname", "box"))
+			Expect(c.Values).To(HaveKeyWithValue("config_url", "https://example.com/a.yaml"))
+			install, ok := c.Values["install"].(ConfigValues)
+			Expect(ok).To(BeTrue())
+			Expect(install).To(HaveKeyWithValue("auto", true))
+		})
+
+		It("Scan merges kairos.config stanzas when MergeBootCMDLine is set", func() {
+			path := writeCmdline(`kairos.config=hostname=box`)
+			o := &Options{}
+			Expect(o.Apply(MergeBootLine, WithBootCMDLineFile(path), NoLogs)).To(Succeed())
+			c, err := Scan(o, func(d []byte) ([]byte, error) { return d, nil })
+			Expect(err).ToNot(HaveOccurred())
+			Expect(c.Values).To(HaveKeyWithValue("hostname", "box"))
+		})
+	})
+
 	Describe("Options", func() {
 		var options *Options
 

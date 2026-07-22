@@ -262,6 +262,12 @@ func Scan(o *Options, filter func(d []byte) ([]byte, error)) (*Config, error) {
 		if err == nil { // best-effort
 			configs = append(configs, cConfig)
 		}
+
+		kConfig, err := ParseKairosCmdline(o.BootCMDLineFile)
+		o.SoftErr("parsing kairos.config cmdline stanzas", err)
+		if err == nil && len(kConfig.Values) > 0 {
+			configs = append(configs, kConfig)
+		}
 	}
 
 	mergedConfig, err := configs.Merge()
@@ -419,6 +425,34 @@ func ParseCmdLine(file string, filter func(d []byte) ([]byte, error)) (*Config, 
 	}
 
 	return &result, nil
+}
+
+// ParseKairosCmdline builds a Config from every "kairos.config=KEY=VALUE"
+// stanza found on the given cmdline file (defaults to /proc/cmdline when
+// empty). KEY supports dot notation for nested maps, e.g.
+//
+//	kairos.config=config_url=https://example.com/extra.yaml
+//	kairos.config=hostname=box
+//	kairos.config=install.auto=true
+//
+// List/array indices in the key are not supported. Repeated stanzas are
+// merged; the last value for a given key wins. Returns a Config with an
+// empty Values map when nothing is set so callers can merge it
+// unconditionally. Call MergeConfigURL on the result to recursively pull
+// any remote config referenced through config_url.
+func ParseKairosCmdline(file string) (*Config, error) {
+	result := &Config{Sources: []string{"cmdline"}, Values: ConfigValues{}}
+	y, err := machine.KairosCmdlineYAML(file)
+	if err != nil {
+		return result, err
+	}
+	if y == nil {
+		return result, nil
+	}
+	if err := yaml.Unmarshal(y, &result.Values); err != nil {
+		return result, err
+	}
+	return result, nil
 }
 
 // ConfigURL returns the value of config_url if set or empty string otherwise.
