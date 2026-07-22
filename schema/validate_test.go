@@ -23,6 +23,21 @@ var _ = Describe("Validate", func() {
 	Context("Validate", func() {
 		var yaml string
 
+		Context("with commands defined as a scalar", func() {
+			BeforeEach(func() {
+				yaml = `#cloud-config
+users:
+  - name: example
+stages:
+  example:
+    - commands: "echo whoops"`
+			})
+
+			It("rejects the invalid stage", func() {
+				Expect(Validate(yaml)).To(MatchError(ContainSubstring("expected array, but got string")))
+			})
+		})
+
 		Context("With a really long config string", func() {
 			BeforeEach(func() {
 				yaml = `#cloud-config
