@@ -262,12 +262,6 @@ func Scan(o *Options, filter func(d []byte) ([]byte, error)) (*Config, error) {
 		if err == nil { // best-effort
 			configs = append(configs, cConfig)
 		}
-
-		kConfig, err := ParseKairosCmdline(o.BootCMDLineFile)
-		o.SoftErr("parsing kairos.config cmdline stanzas", err)
-		if err == nil && len(kConfig.Values) > 0 {
-			configs = append(configs, kConfig)
-		}
 	}
 
 	mergedConfig, err := configs.Merge()
@@ -405,61 +399,65 @@ func listFiles(dir string) ([]string, error) {
 	return content, err
 }
 
-// ParseCmdLine reads options from the kernel cmdline and returns the equivalent
-// Config. It treats every KEY=VALUE token on the cmdline as config and relies
-// on the caller-supplied filter to drop non-config kernel args. Tokens using
-// any Kairos-owned prefix (kairos.config=, kairos.config_url=, cos.setup=) are
-// skipped here so they flow exclusively through ParseKairosCmdline, which
-// supports quoted values with spaces, list indices and a dedicated
-// kairos.config_url= URL form.
+// ParseCmdLine reads the kernel cmdline (defaults to /proc/cmdline when
+// file is empty) and returns a single Config that merges two token
+// families in one pass:
+//
+//   - Kairos-owned prefixes (kairos.config=, kairos.config_url=,
+//     cos.setup=) go through machine.KairosCmdlineYAMLFromString, which
+//     supports dot notation with numeric segments for list indices, a
+//     dedicated URL entrypoint (kairos.config_url=URL) and the legacy
+//     cos.setup= alias. Values here bypass the caller-supplied filter
+//     because they have dedicated semantics, not a schema-driven shape.
+//   - Every other KEY=VALUE token is fed to machine.DotStringToYAML
+//     (which skips the Kairos-owned prefixes) and then handed to the
+//     caller-supplied filter so unrelated kernel args are dropped.
+//
+// Both partial YAMLs are unmarshalled and deep-merged; Kairos-owned
+// values win on collision so a kairos.config= stanza cannot be shadowed
+// by a stray generic token with the same key. Call MergeConfigURL on
+// the result to recursively pull any remote config referenced through
+// config_url.
 func ParseCmdLine(file string, filter func(d []byte) ([]byte, error)) (*Config, error) {
-	result := Config{Sources: []string{"cmdline"}}
-	dotToYAML, err := machine.DotToYAML(file)
-	if err != nil {
-		return &result, err
-	}
-
-	filteredYAML, err := filter(dotToYAML)
-	if err != nil {
-		return &result, err
-	}
-
-	err = yaml.Unmarshal(filteredYAML, &result.Values)
-	if err != nil {
-		return &result, err
-	}
-
-	return &result, nil
-}
-
-// ParseKairosCmdline builds a Config from every Kairos-owned cmdline
-// stanza found on the given file (defaults to /proc/cmdline when empty).
-// Three token forms are recognised:
-//
-//	kairos.config=KEY=VALUE     — dot+index path, repeatable, last wins
-//	kairos.config_url=URL       — dedicated URL entrypoint (sets config_url)
-//	cos.setup=X                 — legacy: URI routes to config_url,
-//	                              KEY=VALUE behaves as kairos.config
-//
-// KEY supports dot notation for nested maps and numeric segments for list
-// indices (e.g. install.auto=true, users.0.name=kairos). Values are
-// stored as strings; downstream schemas coerce as needed. Returns a
-// Config with an empty Values map when nothing is set so callers can
-// merge it unconditionally. Call MergeConfigURL on the result to
-// recursively pull any remote config referenced through config_url.
-// See machine.KairosCmdlineYAML for the underlying syntax details.
-func ParseKairosCmdline(file string) (*Config, error) {
 	result := &Config{Sources: []string{"cmdline"}, Values: ConfigValues{}}
-	y, err := machine.KairosCmdlineYAML(file)
+
+	if file == "" {
+		file = "/proc/cmdline"
+	}
+	dat, err := os.ReadFile(file)
 	if err != nil {
 		return result, err
 	}
-	if y == nil {
-		return result, nil
-	}
-	if err := yaml.Unmarshal(y, &result.Values); err != nil {
+	s := string(dat)
+
+	genericYAML, err := machine.DotStringToYAML(s)
+	if err != nil {
 		return result, err
 	}
+	if len(genericYAML) > 0 {
+		filteredYAML, err := filter(genericYAML)
+		if err != nil {
+			return result, err
+		}
+		if err := yaml.Unmarshal(filteredYAML, &result.Values); err != nil {
+			return result, err
+		}
+	}
+
+	kairosYAML, err := machine.KairosCmdlineYAMLFromString(s)
+	if err != nil {
+		return result, err
+	}
+	if len(kairosYAML) > 0 {
+		kairosVals := ConfigValues{}
+		if err := yaml.Unmarshal(kairosYAML, &kairosVals); err != nil {
+			return result, err
+		}
+		if err := result.MergeConfig(&Config{Values: kairosVals}); err != nil {
+			return result, err
+		}
+	}
+
 	return result, nil
 }
 
