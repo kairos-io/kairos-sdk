@@ -100,10 +100,13 @@ func KairosCmdlineYAMLFromString(s string) ([]byte, error) {
 	return yaml.Marshal(root)
 }
 
-// DotToYAML preserves the pre-existing generic dot-nested cmdline parser
-// used by collector.ParseCmdLine. It intentionally skips every
-// Kairos-owned prefix (see KairosOwnedPrefixes) so those tokens flow
-// exclusively through KairosCmdlineYAML.
+// DotToYAML is the generic dot-nested cmdline parser: every KEY=VALUE
+// token on the given file (defaults to /proc/cmdline when empty)
+// becomes a YAML entry, with dots in KEY producing nested maps.
+// Kairos-owned prefixes (see KairosOwnedPrefixes) are intentionally
+// skipped so those tokens flow exclusively through KairosCmdlineYAML.
+// Callers wanting both families merged should use
+// collector.ParseCmdLine, which routes each token to the right parser.
 func DotToYAML(file string) ([]byte, error) {
 	if file == "" {
 		file = "/proc/cmdline"
