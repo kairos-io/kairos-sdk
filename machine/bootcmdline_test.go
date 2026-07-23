@@ -9,118 +9,123 @@ import (
 )
 
 var _ = Describe("BootCMDLine", func() {
-	Context("kairos.config stanzas", func() {
-		writeCmdline := func(contents string) string {
-			f, err := os.CreateTemp("", "cmdline")
-			Expect(err).ToNot(HaveOccurred())
-			DeferCleanup(func() { _ = os.Remove(f.Name()) })
-			Expect(os.WriteFile(f.Name(), []byte(contents), 0o644)).To(Succeed())
-			return f.Name()
-		}
+	writeCmdline := func(contents string) string {
+		f, err := os.CreateTemp("", "cmdline")
+		Expect(err).ToNot(HaveOccurred())
+		DeferCleanup(func() { _ = os.Remove(f.Name()) })
+		Expect(os.WriteFile(f.Name(), []byte(contents), 0o644)).To(Succeed())
+		return f.Name()
+	}
 
-		It("returns nothing when no stanzas are present", func() {
+	Context("KairosCmdlineYAML", func() {
+		It("returns nil when no owned stanzas are present", func() {
 			path := writeCmdline("root=LABEL=X rd.immucore.debug\n")
-			stanzas, err := KairosConfigStanzas(path)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(stanzas).To(BeEmpty())
-
 			y, err := KairosCmdlineYAML(path)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(y).To(BeNil())
 		})
 
-		It("extracts a single stanza", func() {
-			path := writeCmdline("root=X kairos.config=config_url=https://example.com/a.yaml\n")
-			stanzas, err := KairosConfigStanzas(path)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(stanzas).To(ConsistOf("config_url=https://example.com/a.yaml"))
-		})
-
-		It("collects multiple stanzas and builds nested YAML", func() {
-			path := writeCmdline(`kairos.config=hostname=box kairos.config=config_url=https://example.com/a.yaml kairos.config=install.auto=true`)
-			y, err := KairosCmdlineYAML(path)
+		It("parses a single kairos.config stanza", func() {
+			y, err := KairosCmdlineYAMLFromString(`root=X kairos.config=hostname=box`)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(string(y)).To(ContainSubstring("hostname: box"))
-			Expect(string(y)).To(ContainSubstring("config_url: https://example.com/a.yaml"))
+		})
+
+		It("builds nested maps from dot notation", func() {
+			y, err := KairosCmdlineYAMLFromString(
+				`kairos.config=install.auto=true kairos.config=install.reboot=false`,
+			)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(string(y)).To(ContainSubstring("install:"))
-			Expect(string(y)).To(ContainSubstring("auto: true"))
+			Expect(string(y)).To(ContainSubstring("auto: \"true\""))
+			Expect(string(y)).To(ContainSubstring("reboot: \"false\""))
+		})
+
+		It("builds lists from numeric segments", func() {
+			y, err := KairosCmdlineYAMLFromString(
+				`kairos.config=users.0.name=kairos kairos.config=users.0.passwd=k kairos.config=users.1.name=foo`,
+			)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(string(y)).To(ContainSubstring("users:"))
+			Expect(string(y)).To(ContainSubstring("- name: kairos"))
+			Expect(string(y)).To(ContainSubstring("passwd: k"))
+			Expect(string(y)).To(ContainSubstring("- name: foo"))
 		})
 
 		It("supports quoted values with spaces", func() {
-			path := writeCmdline(`kairos.config=hostname="my box"`)
-			y, err := KairosCmdlineYAML(path)
+			y, err := KairosCmdlineYAMLFromString(`kairos.config=hostname="my box"`)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(string(y)).To(ContainSubstring("hostname: my box"))
 		})
 
 		It("drops empty payloads", func() {
-			path := writeCmdline(`kairos.config= kairos.config=hostname=box`)
-			stanzas, err := KairosConfigStanzas(path)
+			y, err := KairosCmdlineYAMLFromString(`kairos.config= kairos.config=hostname=box`)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(stanzas).To(ConsistOf("hostname=box"))
+			Expect(string(y)).To(ContainSubstring("hostname: box"))
+			Expect(string(y)).ToNot(ContainSubstring("kairos"))
+		})
+
+		It("kairos.config_url sets top-level config_url and keeps '=' in the URL intact", func() {
+			y, err := KairosCmdlineYAMLFromString(
+				`kairos.config_url=https://example.com/x.yaml?token=abc=def`,
+			)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(string(y)).To(ContainSubstring("config_url: https://example.com/x.yaml?token=abc=def"))
+		})
+
+		It("cos.setup with a bare URI routes into config_url (legacy)", func() {
+			y, err := KairosCmdlineYAMLFromString(`cos.setup=https://example.com/legacy.yaml`)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(string(y)).To(ContainSubstring("config_url: https://example.com/legacy.yaml"))
+		})
+
+		It("cos.setup with KEY=VALUE behaves like kairos.config (legacy)", func() {
+			y, err := KairosCmdlineYAMLFromString(`cos.setup=hostname=box`)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(string(y)).To(ContainSubstring("hostname: box"))
+		})
+
+		It("merges all three prefixes into one document", func() {
+			y, err := KairosCmdlineYAMLFromString(
+				`kairos.config=hostname=box kairos.config_url=https://a/x.yaml cos.setup=install.auto=true`,
+			)
+			Expect(err).ToNot(HaveOccurred())
+			out := string(y)
+			Expect(out).To(ContainSubstring("hostname: box"))
+			Expect(out).To(ContainSubstring("config_url: https://a/x.yaml"))
+			Expect(out).To(ContainSubstring("install:"))
+			Expect(out).To(ContainSubstring("auto: \"true\""))
+		})
+
+		It("later occurrences of the same key win", func() {
+			y, err := KairosCmdlineYAMLFromString(
+				`kairos.config=hostname=a kairos.config=hostname=b`,
+			)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(string(y)).To(ContainSubstring("hostname: b"))
+			Expect(string(y)).ToNot(ContainSubstring("hostname: a"))
 		})
 	})
 
-	Context("cos.setup stanza", func() {
-		writeCmdline := func(contents string) string {
-			f, err := os.CreateTemp("", "cmdline")
+	Context("DotToYAML", func() {
+		It("parses generic KEY=VALUE cmdline into nested YAML", func() {
+			path := writeCmdline(`config_url="foo bar" baz.bar=""`)
+			b, err := DotToYAML(path)
 			Expect(err).ToNot(HaveOccurred())
-			DeferCleanup(func() { _ = os.Remove(f.Name()) })
-			Expect(os.WriteFile(f.Name(), []byte(contents), 0o644)).To(Succeed())
-			return f.Name()
-		}
-
-		It("returns empty when not set", func() {
-			path := writeCmdline("root=LABEL=X rd.immucore.debug\n")
-			uri, err := CosSetupURI(path)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(uri).To(BeEmpty())
-		})
-
-		It("extracts a URL value", func() {
-			path := writeCmdline("root=X cos.setup=https://example.com/legacy.yaml\n")
-			uri, err := CosSetupURI(path)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(uri).To(Equal("https://example.com/legacy.yaml"))
-		})
-
-		It("extracts a file path value", func() {
-			uri := CosSetupURIFromString(`cos.setup=/oem/50-extra.yaml`)
-			Expect(uri).To(Equal("/oem/50-extra.yaml"))
-		})
-
-		It("drops empty payloads and lets the last occurrence win", func() {
-			uri := CosSetupURIFromString(`cos.setup= cos.setup=https://example.com/a.yaml cos.setup=https://example.com/b.yaml`)
-			Expect(uri).To(Equal("https://example.com/b.yaml"))
-		})
-	})
-
-	Context("parses data", func() {
-
-		It("returns cmdline if provided", func() {
-			f, err := os.CreateTemp("", "test")
-			Expect(err).ToNot(HaveOccurred())
-			defer os.RemoveAll(f.Name())
-
-			err = os.WriteFile(f.Name(), []byte(`config_url="foo bar" baz.bar=""`), os.ModePerm)
-			Expect(err).ToNot(HaveOccurred())
-
-			b, err := DotToYAML(f.Name())
-			Expect(err).ToNot(HaveOccurred())
-
 			Expect(string(b)).To(Equal("baz:\n    bar: \"\"\nconfig_url: foo bar\n"), string(b))
 		})
-		It("skips kairos.config= and cos.setup= tokens so their payload does not leak", func() {
-			f, err := os.CreateTemp("", "test")
-			Expect(err).ToNot(HaveOccurred())
-			defer os.RemoveAll(f.Name())
 
-			err = os.WriteFile(f.Name(),
-				[]byte(`root=LABEL=X kairos.config=hostname=box cos.setup=/oem/50-extra.yaml foo=bar`),
-				os.ModePerm)
+		It("works if cmdline contains a dash or underscore", func() {
+			path := writeCmdline(`config-url="foo bar" ba_z.bar=""`)
+			_, err := DotToYAML(path)
 			Expect(err).ToNot(HaveOccurred())
+		})
 
-			b, err := DotToYAML(f.Name())
+		It("skips every Kairos-owned prefix so payload does not leak", func() {
+			path := writeCmdline(
+				`root=LABEL=X kairos.config=hostname=box kairos.config_url=https://a/x.yaml cos.setup=/oem/50-extra.yaml foo=bar`,
+			)
+			b, err := DotToYAML(path)
 			Expect(err).ToNot(HaveOccurred())
 			out := string(b)
 			Expect(out).ToNot(ContainSubstring("kairos:"))
@@ -128,17 +133,6 @@ var _ = Describe("BootCMDLine", func() {
 			Expect(out).ToNot(ContainSubstring("hostname=box"))
 			Expect(out).ToNot(ContainSubstring("50-extra.yaml"))
 			Expect(out).To(ContainSubstring("foo: bar"))
-		})
-		It("works if cmdline contains a dash or underscore", func() {
-			f, err := os.CreateTemp("", "test")
-			Expect(err).ToNot(HaveOccurred())
-			defer os.RemoveAll(f.Name())
-
-			err = os.WriteFile(f.Name(), []byte(`config-url="foo bar" ba_z.bar=""`), os.ModePerm)
-			Expect(err).ToNot(HaveOccurred())
-
-			_, err = DotToYAML(f.Name())
-			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 })

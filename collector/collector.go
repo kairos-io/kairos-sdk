@@ -408,10 +408,10 @@ func listFiles(dir string) ([]string, error) {
 // ParseCmdLine reads options from the kernel cmdline and returns the equivalent
 // Config. It treats every KEY=VALUE token on the cmdline as config and relies
 // on the caller-supplied filter to drop non-config kernel args. Tokens using
-// the namespaced kairos.config= and cos.setup= forms are skipped here because
-// they have dedicated parsers (ParseKairosCmdline / machine.CosSetupURI); use
-// those for the namespaced form (no filter required, supports quoted values
-// with spaces).
+// any Kairos-owned prefix (kairos.config=, kairos.config_url=, cos.setup=) are
+// skipped here so they flow exclusively through ParseKairosCmdline, which
+// supports quoted values with spaces, list indices and a dedicated
+// kairos.config_url= URL form.
 func ParseCmdLine(file string, filter func(d []byte) ([]byte, error)) (*Config, error) {
 	result := Config{Sources: []string{"cmdline"}}
 	dotToYAML, err := machine.DotToYAML(file)
@@ -432,19 +432,22 @@ func ParseCmdLine(file string, filter func(d []byte) ([]byte, error)) (*Config, 
 	return &result, nil
 }
 
-// ParseKairosCmdline builds a Config from every "kairos.config=KEY=VALUE"
-// stanza found on the given cmdline file (defaults to /proc/cmdline when
-// empty). KEY supports dot notation for nested maps, e.g.
+// ParseKairosCmdline builds a Config from every Kairos-owned cmdline
+// stanza found on the given file (defaults to /proc/cmdline when empty).
+// Three token forms are recognised:
 //
-//	kairos.config=config_url=https://example.com/extra.yaml
-//	kairos.config=hostname=box
-//	kairos.config=install.auto=true
+//	kairos.config=KEY=VALUE     — dot+index path, repeatable, last wins
+//	kairos.config_url=URL       — dedicated URL entrypoint (sets config_url)
+//	cos.setup=X                 — legacy: URI routes to config_url,
+//	                              KEY=VALUE behaves as kairos.config
 //
-// List/array indices in the key are not supported. Repeated stanzas are
-// merged; the last value for a given key wins. Returns a Config with an
-// empty Values map when nothing is set so callers can merge it
-// unconditionally. Call MergeConfigURL on the result to recursively pull
-// any remote config referenced through config_url.
+// KEY supports dot notation for nested maps and numeric segments for list
+// indices (e.g. install.auto=true, users.0.name=kairos). Values are
+// stored as strings; downstream schemas coerce as needed. Returns a
+// Config with an empty Values map when nothing is set so callers can
+// merge it unconditionally. Call MergeConfigURL on the result to
+// recursively pull any remote config referenced through config_url.
+// See machine.KairosCmdlineYAML for the underlying syntax details.
 func ParseKairosCmdline(file string) (*Config, error) {
 	result := &Config{Sources: []string{"cmdline"}, Values: ConfigValues{}}
 	y, err := machine.KairosCmdlineYAML(file)

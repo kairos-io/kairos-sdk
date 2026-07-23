@@ -33,17 +33,39 @@ var _ = Describe("Config Collector", func() {
 		})
 
 		It("builds a Config from kairos.config stanzas with dot notation", func() {
-			path := writeCmdline(`kairos.config=hostname=box kairos.config=config_url=https://example.com/a.yaml kairos.config=install.auto=true`)
+			path := writeCmdline(`kairos.config=hostname=box kairos.config=install.auto=true`)
 			c, err := ParseKairosCmdline(path)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(c.Values).To(HaveKeyWithValue("hostname", "box"))
-			Expect(c.Values).To(HaveKeyWithValue("config_url", "https://example.com/a.yaml"))
 			install, ok := c.Values["install"].(ConfigValues)
 			Expect(ok).To(BeTrue())
-			Expect(install).To(HaveKeyWithValue("auto", true))
+			Expect(install).To(HaveKeyWithValue("auto", "true"))
 		})
 
-		It("Scan merges kairos.config stanzas when MergeBootCMDLine is set", func() {
+		It("kairos.config_url is a dedicated URL-only entrypoint that sets config_url verbatim", func() {
+			path := writeCmdline(`kairos.config_url=https://example.com/x.yaml?token=abc=def`)
+			c, err := ParseKairosCmdline(path)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(c.Values).To(HaveKeyWithValue("config_url", "https://example.com/x.yaml?token=abc=def"))
+		})
+
+		It("builds nested lists from numeric segments", func() {
+			path := writeCmdline(`kairos.config=users.0.name=kairos kairos.config=users.1.name=foo`)
+			c, err := ParseKairosCmdline(path)
+			Expect(err).ToNot(HaveOccurred())
+			users, ok := c.Values["users"].([]interface{})
+			Expect(ok).To(BeTrue())
+			Expect(users).To(HaveLen(2))
+		})
+
+		It("cos.setup with a bare URI is a legacy alias that populates config_url", func() {
+			path := writeCmdline(`cos.setup=https://example.com/legacy.yaml`)
+			c, err := ParseKairosCmdline(path)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(c.Values).To(HaveKeyWithValue("config_url", "https://example.com/legacy.yaml"))
+		})
+
+		It("Scan merges Kairos-owned stanzas when MergeBootCMDLine is set", func() {
 			path := writeCmdline(`kairos.config=hostname=box`)
 			o := &Options{}
 			Expect(o.Apply(MergeBootLine, WithBootCMDLineFile(path), NoLogs)).To(Succeed())
@@ -52,15 +74,16 @@ var _ = Describe("Config Collector", func() {
 			Expect(c.Values).To(HaveKeyWithValue("hostname", "box"))
 		})
 
-		It("Scan does not double-parse kairos.config= / cos.setup= via the generic dot parser", func() {
-			path := writeCmdline(`kairos.config=hostname=box cos.setup=/oem/extra.yaml`)
+		It("Scan does not double-parse kairos.config= / kairos.config_url= / cos.setup= via the generic dot parser", func() {
+			path := writeCmdline(
+				`kairos.config=hostname=box kairos.config_url=https://a/x.yaml cos.setup=/oem/extra.yaml`,
+			)
 			o := &Options{}
 			Expect(o.Apply(MergeBootLine, WithBootCMDLineFile(path), NoLogs)).To(Succeed())
 			c, err := Scan(o, func(d []byte) ([]byte, error) { return d, nil })
 			Expect(err).ToNot(HaveOccurred())
-			// namespaced parser still populates the real key
 			Expect(c.Values).To(HaveKeyWithValue("hostname", "box"))
-			// generic parser must not leak spurious kairos/cos nesting
+			Expect(c.Values).To(HaveKeyWithValue("config_url", "/oem/extra.yaml"))
 			Expect(c.Values).ToNot(HaveKey("kairos"))
 			Expect(c.Values).ToNot(HaveKey("cos"))
 		})

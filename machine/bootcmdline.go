@@ -2,52 +2,108 @@ package machine
 
 import (
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/google/shlex"
 	"github.com/kairos-io/kairos-sdk/unstructured"
+	"gopkg.in/yaml.v3"
 )
 
+// Cmdline stanzas owned exclusively by this package. ParseCmdLine and any
+// other generic dot-parser must skip these so their payload is not double
+// processed and does not leak spurious kairos/cos top-level keys.
 const (
-	kairosConfigPrefix = "kairos.config="
-	cosSetupPrefix     = "cos.setup="
+	kairosConfigPrefix    = "kairos.config="
+	kairosConfigURLPrefix = "kairos.config_url="
+	cosSetupPrefix        = "cos.setup="
 )
 
-// CosSetupURI returns the URI referenced by the legacy "cos.setup=" cmdline
-// stanza, or an empty string when it is not set. An empty file argument
-// defaults to /proc/cmdline. This stanza points at a yip config source
-// (file, directory or URL) that callers should feed straight to yip.Run
-// so yip fetches and executes it.
-func CosSetupURI(file string) (string, error) {
+// KairosOwnedPrefixes lists the cmdline token prefixes this package owns.
+// Callers implementing their own cmdline parsing (e.g. the generic
+// dot-nested parser in collector.ParseCmdLine) must skip any token that
+// starts with one of these so the payload is not double-parsed.
+var KairosOwnedPrefixes = []string{kairosConfigPrefix, kairosConfigURLPrefix, cosSetupPrefix}
+
+// KairosCmdlineYAML builds a YAML document from every Kairos-owned cmdline
+// stanza on the given file (defaults to /proc/cmdline when empty).
+//
+// Three token forms are recognised, all handled by this single entrypoint:
+//
+//   - kairos.config=KEY=VALUE — sets KEY to VALUE. KEY supports dot notation
+//     for nested maps (e.g. install.auto=true) and numeric segments for list
+//     indices (e.g. users.0.name=kairos). Repeatable; later occurrences of
+//     the same key win. Values may contain spaces if the whole token is
+//     quoted (e.g. kairos.config="hostname=my box"). All values are stored
+//     as strings; downstream schemas coerce as needed.
+//   - kairos.config_url=URL — convenience form that sets the top-level
+//     config_url key. URL is stored verbatim (no KEY=VALUE parsing) so it
+//     can contain '=' safely.
+//   - cos.setup=X — legacy alias, kept so existing installs keep booting.
+//     If X contains '=' it is treated exactly like kairos.config=X;
+//     otherwise the bare value is routed into config_url (matching the
+//     historical "cos.setup points at a config" behavior). Prefer
+//     kairos.config / kairos.config_url in new deployments.
+//
+// Returns (nil, nil) when no Kairos-owned stanzas are present so callers
+// can skip cheaply.
+func KairosCmdlineYAML(file string) ([]byte, error) {
 	if file == "" {
 		file = "/proc/cmdline"
 	}
 	dat, err := os.ReadFile(file)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return CosSetupURIFromString(string(dat)), nil
+	return KairosCmdlineYAMLFromString(string(dat))
 }
 
-// CosSetupURIFromString is the string-based counterpart of CosSetupURI.
-func CosSetupURIFromString(s string) string {
+// KairosCmdlineYAMLFromString is the string-based counterpart of
+// KairosCmdlineYAML. Useful for tests and for callers that have already
+// read the cmdline from a mock filesystem.
+func KairosCmdlineYAMLFromString(s string) ([]byte, error) {
 	tokens, _ := shlex.Split(s)
-	uri := ""
+	root := map[string]interface{}{}
+	present := false
 	for _, t := range tokens {
-		if !strings.HasPrefix(t, cosSetupPrefix) {
-			continue
+		switch {
+		case strings.HasPrefix(t, kairosConfigURLPrefix):
+			v := strings.Trim(strings.TrimPrefix(t, kairosConfigURLPrefix), `"`)
+			if v == "" {
+				continue
+			}
+			root["config_url"] = v
+			present = true
+		case strings.HasPrefix(t, kairosConfigPrefix):
+			payload := strings.TrimPrefix(t, kairosConfigPrefix)
+			if payload == "" {
+				continue
+			}
+			applyKairosConfigStanza(root, payload)
+			present = true
+		case strings.HasPrefix(t, cosSetupPrefix):
+			payload := strings.TrimPrefix(t, cosSetupPrefix)
+			if payload == "" {
+				continue
+			}
+			if strings.Contains(payload, "=") {
+				applyKairosConfigStanza(root, payload)
+			} else {
+				root["config_url"] = strings.Trim(payload, `"`)
+			}
+			present = true
 		}
-		v := strings.TrimPrefix(t, cosSetupPrefix)
-		if v == "" {
-			continue
-		}
-		// last occurrence wins, matching how repeated cmdline flags
-		// behave in the rest of the codebase.
-		uri = strings.Trim(v, `"`)
 	}
-	return uri
+	if !present {
+		return nil, nil
+	}
+	return yaml.Marshal(root)
 }
 
+// DotToYAML preserves the pre-existing generic dot-nested cmdline parser
+// used by collector.ParseCmdLine. It intentionally skips every
+// Kairos-owned prefix (see KairosOwnedPrefixes) so those tokens flow
+// exclusively through KairosCmdlineYAML.
 func DotToYAML(file string) ([]byte, error) {
 	if file == "" {
 		file = "/proc/cmdline"
@@ -56,104 +112,74 @@ func DotToYAML(file string) ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
-
-	v := stringToMap(string(dat))
-
-	return unstructured.ToYAML(v)
+	return unstructured.ToYAML(stringToMap(string(dat)))
 }
 
-// DotStringToYAML turns a whitespace-separated set of KEY=VALUE tokens (with
-// KEY supporting dot notation) into a YAML document. It is the string-based
-// counterpart of DotToYAML.
+// DotStringToYAML is the string-based counterpart of DotToYAML.
 func DotStringToYAML(s string) ([]byte, error) {
 	return unstructured.ToYAML(stringToMap(s))
 }
 
-// KairosConfigStanzas returns the value part of every "kairos.config=" stanza
-// found in the given cmdline file. The "kairos.config=" prefix is stripped so
-// callers get the raw KEY=VALUE payload. An empty file argument defaults to
-// /proc/cmdline. Stanzas whose payload is empty are dropped.
-func KairosConfigStanzas(file string) ([]string, error) {
-	if file == "" {
-		file = "/proc/cmdline"
+// applyKairosConfigStanza parses a "KEY=VALUE" payload (KEY may use
+// dot notation with numeric segments for list indices) and writes it into
+// root. Payloads without '=' set the key to the literal string "true", so
+// bare-flag stanzas like kairos.config=install.auto behave sensibly.
+func applyKairosConfigStanza(root map[string]interface{}, payload string) {
+	parts := strings.SplitN(payload, "=", 2)
+	value := "true"
+	if len(parts) > 1 {
+		value = strings.Trim(parts[1], `"`)
 	}
-	dat, err := os.ReadFile(file)
-	if err != nil {
-		return nil, err
+	key := strings.Trim(parts[0], `"`)
+	if key == "" {
+		return
 	}
-	return KairosConfigStanzasFromString(string(dat)), nil
+	segs := strings.Split(key, ".")
+	// The root is always a map keyed by the first segment (numeric first
+	// segments are treated as string keys, since the top level is a map).
+	first := segs[0]
+	root[first] = setDotIndexPath(root[first], segs[1:], value)
 }
 
-// KairosConfigStanzasFromString is the string-based counterpart of
-// KairosConfigStanzas.
-func KairosConfigStanzasFromString(s string) []string {
-	tokens, _ := shlex.Split(s)
-	var out []string
-	for _, t := range tokens {
-		if !strings.HasPrefix(t, kairosConfigPrefix) {
-			continue
+// setDotIndexPath writes value at the given path into node, creating
+// nested maps for non-numeric segments and slices for numeric segments.
+// The node argument may be nil, a map[string]interface{}, or a
+// []interface{}. Returns the possibly-replaced node so callers can
+// re-assign into their parent container.
+func setDotIndexPath(node interface{}, segs []string, value interface{}) interface{} {
+	if len(segs) == 0 {
+		return value
+	}
+	seg := segs[0]
+	rest := segs[1:]
+	if idx, err := strconv.Atoi(seg); err == nil && idx >= 0 {
+		var list []interface{}
+		if l, ok := node.([]interface{}); ok {
+			list = l
 		}
-		v := strings.TrimPrefix(t, kairosConfigPrefix)
-		if v == "" {
-			continue
+		for len(list) <= idx {
+			list = append(list, nil)
 		}
-		out = append(out, v)
+		list[idx] = setDotIndexPath(list[idx], rest, value)
+		return list
 	}
-	return out
+	m, ok := node.(map[string]interface{})
+	if !ok {
+		m = map[string]interface{}{}
+	}
+	m[seg] = setDotIndexPath(m[seg], rest, value)
+	return m
 }
 
-// KairosCmdlineYAML builds a YAML document out of every "kairos.config=KEY=VALUE"
-// stanza on the cmdline. KEY supports dot notation for nested maps, so
-//
-//	kairos.config=install.auto=true kairos.config=hostname=box
-//
-// yields nested YAML with both install.auto and hostname set. List/array
-// indices in the key (e.g. foo.0.bar) are not supported by the underlying
-// dot-to-yaml pipeline. Repeated occurrences are merged and the last value
-// for a given key wins. Values may contain spaces if the whole stanza is
-// quoted on the kernel command line (e.g. kairos.config="hostname=my box").
-// Returns (nil, nil) when no stanzas are present so callers can skip cheaply.
-func KairosCmdlineYAML(file string) ([]byte, error) {
-	stanzas, err := KairosConfigStanzas(file)
-	if err != nil {
-		return nil, err
-	}
-	return kairosCmdlineYAMLFromStanzas(stanzas)
-}
-
-// KairosCmdlineYAMLFromString is the string-based counterpart of KairosCmdlineYAML.
-// It is useful when the cmdline has already been read from a mock filesystem.
-func KairosCmdlineYAMLFromString(s string) ([]byte, error) {
-	return kairosCmdlineYAMLFromStanzas(KairosConfigStanzasFromString(s))
-}
-
-func kairosCmdlineYAMLFromStanzas(stanzas []string) ([]byte, error) {
-	if len(stanzas) == 0 {
-		return nil, nil
-	}
-	v := map[string]interface{}{}
-	for _, entry := range stanzas {
-		parts := strings.SplitN(entry, "=", 2)
-		value := "true"
-		if len(parts) > 1 {
-			value = strings.Trim(parts[1], `"`)
-		}
-		key := strings.Trim(parts[0], `"`)
-		v[key] = value
-	}
-	return unstructured.ToYAML(v)
-}
-
+// stringToMap is the generic dot-nested KEY=VALUE parser used by
+// DotToYAML / DotStringToYAML. It skips every Kairos-owned prefix so
+// those tokens are handled exclusively by KairosCmdlineYAML.
 func stringToMap(s string) map[string]interface{} {
 	v := map[string]interface{}{}
 
 	splitted, _ := shlex.Split(s)
 	for _, item := range splitted {
-		// kairos.config= and cos.setup= have dedicated parsers
-		// (KairosCmdlineYAML, CosSetupURI). Skip them here so their
-		// KEY=VALUE payload does not leak into the generic dot-nested
-		// map as a spurious "kairos.config" / "cos.setup" key.
-		if strings.HasPrefix(item, kairosConfigPrefix) || strings.HasPrefix(item, cosSetupPrefix) {
+		if isKairosOwned(item) {
 			continue
 		}
 		parts := strings.SplitN(item, "=", 2)
@@ -166,4 +192,13 @@ func stringToMap(s string) map[string]interface{} {
 	}
 
 	return v
+}
+
+func isKairosOwned(token string) bool {
+	for _, p := range KairosOwnedPrefixes {
+		if strings.HasPrefix(token, p) {
+			return true
+		}
+	}
+	return false
 }
