@@ -15,6 +15,93 @@ import (
 )
 
 var _ = Describe("Config Collector", func() {
+	Describe("ParseCmdLine", func() {
+		writeCmdline := func(contents string) string {
+			f, err := os.CreateTemp("", "cmdline")
+			Expect(err).ToNot(HaveOccurred())
+			DeferCleanup(func() { _ = os.Remove(f.Name()) })
+			Expect(os.WriteFile(f.Name(), []byte(contents), 0o644)).To(Succeed())
+			return f.Name()
+		}
+
+		passthrough := func(d []byte) ([]byte, error) { return d, nil }
+
+		It("returns an empty Config when no cmdline tokens match", func() {
+			path := writeCmdline("root=LABEL=X rd.immucore.debug\n")
+			c, err := ParseCmdLine(path, FilterKeysTestMerge)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(c.Values).To(BeEmpty())
+			Expect(c.Sources).To(ConsistOf("cmdline"))
+		})
+
+		It("parses generic KEY=VALUE tokens through the filter", func() {
+			path := writeCmdline(`root=X config_url="https://example.com/a.yaml" options.foo=bar`)
+			c, err := ParseCmdLine(path, FilterKeysTest)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(c.Values).To(HaveKeyWithValue("config_url", "https://example.com/a.yaml"))
+			opts, ok := c.Values["options"].(ConfigValues)
+			Expect(ok).To(BeTrue())
+			Expect(opts).To(HaveKeyWithValue("foo", "bar"))
+		})
+
+		It("parses kairos.config stanzas with dot notation, bypassing the filter", func() {
+			path := writeCmdline(`kairos.config=hostname=box kairos.config=install.auto=true`)
+			c, err := ParseCmdLine(path, passthrough)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(c.Values).To(HaveKeyWithValue("hostname", "box"))
+			install, ok := c.Values["install"].(ConfigValues)
+			Expect(ok).To(BeTrue())
+			Expect(install).To(HaveKeyWithValue("auto", "true"))
+		})
+
+		It("kairos.config_url is a dedicated URL-only entrypoint that sets config_url verbatim", func() {
+			path := writeCmdline(`kairos.config_url=https://example.com/x.yaml?token=abc=def`)
+			c, err := ParseCmdLine(path, passthrough)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(c.Values).To(HaveKeyWithValue("config_url", "https://example.com/x.yaml?token=abc=def"))
+		})
+
+		It("builds nested lists from numeric segments", func() {
+			path := writeCmdline(`kairos.config=users.0.name=kairos kairos.config=users.1.name=foo`)
+			c, err := ParseCmdLine(path, passthrough)
+			Expect(err).ToNot(HaveOccurred())
+			users, ok := c.Values["users"].([]interface{})
+			Expect(ok).To(BeTrue())
+			Expect(users).To(HaveLen(2))
+		})
+
+		It("cos.setup with a bare URI is a legacy alias that populates config_url", func() {
+			path := writeCmdline(`cos.setup=https://example.com/legacy.yaml`)
+			c, err := ParseCmdLine(path, passthrough)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(c.Values).To(HaveKeyWithValue("config_url", "https://example.com/legacy.yaml"))
+		})
+
+		It("merges Kairos-owned stanzas and generic tokens in one pass", func() {
+			path := writeCmdline(
+				`root=X options.foo=bar kairos.config=hostname=box kairos.config_url=https://a/x.yaml`,
+			)
+			c, err := ParseCmdLine(path, FilterKeysTest)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(c.Values).To(HaveKeyWithValue("hostname", "box"))
+			Expect(c.Values).To(HaveKeyWithValue("config_url", "https://a/x.yaml"))
+			opts, ok := c.Values["options"].(ConfigValues)
+			Expect(ok).To(BeTrue())
+			Expect(opts).To(HaveKeyWithValue("foo", "bar"))
+			Expect(c.Values).ToNot(HaveKey("kairos"))
+			Expect(c.Values).ToNot(HaveKey("cos"))
+		})
+
+		It("Scan wires ParseCmdLine when MergeBootCMDLine is set", func() {
+			path := writeCmdline(`kairos.config=hostname=box`)
+			o := &Options{}
+			Expect(o.Apply(MergeBootLine, WithBootCMDLineFile(path), NoLogs)).To(Succeed())
+			c, err := Scan(o, passthrough)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(c.Values).To(HaveKeyWithValue("hostname", "box"))
+		})
+	})
+
 	Describe("Options", func() {
 		var options *Options
 
