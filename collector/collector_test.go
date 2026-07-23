@@ -51,6 +51,19 @@ var _ = Describe("Config Collector", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(c.Values).To(HaveKeyWithValue("hostname", "box"))
 		})
+
+		It("Scan does not double-parse kairos.config= / cos.setup= via the generic dot parser", func() {
+			path := writeCmdline(`kairos.config=hostname=box cos.setup=/oem/extra.yaml`)
+			o := &Options{}
+			Expect(o.Apply(MergeBootLine, WithBootCMDLineFile(path), NoLogs)).To(Succeed())
+			c, err := Scan(o, func(d []byte) ([]byte, error) { return d, nil })
+			Expect(err).ToNot(HaveOccurred())
+			// namespaced parser still populates the real key
+			Expect(c.Values).To(HaveKeyWithValue("hostname", "box"))
+			// generic parser must not leak spurious kairos/cos nesting
+			Expect(c.Values).ToNot(HaveKey("kairos"))
+			Expect(c.Values).ToNot(HaveKey("cos"))
+		})
 	})
 
 	Describe("Options", func() {

@@ -110,6 +110,25 @@ var _ = Describe("BootCMDLine", func() {
 
 			Expect(string(b)).To(Equal("baz:\n    bar: \"\"\nconfig_url: foo bar\n"), string(b))
 		})
+		It("skips kairos.config= and cos.setup= tokens so their payload does not leak", func() {
+			f, err := os.CreateTemp("", "test")
+			Expect(err).ToNot(HaveOccurred())
+			defer os.RemoveAll(f.Name())
+
+			err = os.WriteFile(f.Name(),
+				[]byte(`root=LABEL=X kairos.config=hostname=box cos.setup=/oem/50-extra.yaml foo=bar`),
+				os.ModePerm)
+			Expect(err).ToNot(HaveOccurred())
+
+			b, err := DotToYAML(f.Name())
+			Expect(err).ToNot(HaveOccurred())
+			out := string(b)
+			Expect(out).ToNot(ContainSubstring("kairos:"))
+			Expect(out).ToNot(ContainSubstring("cos:"))
+			Expect(out).ToNot(ContainSubstring("hostname=box"))
+			Expect(out).ToNot(ContainSubstring("50-extra.yaml"))
+			Expect(out).To(ContainSubstring("foo: bar"))
+		})
 		It("works if cmdline contains a dash or underscore", func() {
 			f, err := os.CreateTemp("", "test")
 			Expect(err).ToNot(HaveOccurred())

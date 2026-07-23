@@ -149,6 +149,13 @@ func stringToMap(s string) map[string]interface{} {
 
 	splitted, _ := shlex.Split(s)
 	for _, item := range splitted {
+		// kairos.config= and cos.setup= have dedicated parsers
+		// (KairosCmdlineYAML, CosSetupURI). Skip them here so their
+		// KEY=VALUE payload does not leak into the generic dot-nested
+		// map as a spurious "kairos.config" / "cos.setup" key.
+		if strings.HasPrefix(item, kairosConfigPrefix) || strings.HasPrefix(item, cosSetupPrefix) {
+			continue
+		}
 		parts := strings.SplitN(item, "=", 2)
 		value := "true"
 		if len(parts) > 1 {

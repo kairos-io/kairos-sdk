@@ -406,7 +406,12 @@ func listFiles(dir string) ([]string, error) {
 }
 
 // ParseCmdLine reads options from the kernel cmdline and returns the equivalent
-// Config.
+// Config. It treats every KEY=VALUE token on the cmdline as config and relies
+// on the caller-supplied filter to drop non-config kernel args. Tokens using
+// the namespaced kairos.config= and cos.setup= forms are skipped here because
+// they have dedicated parsers (ParseKairosCmdline / machine.CosSetupURI); use
+// those for the namespaced form (no filter required, supports quoted values
+// with spaces).
 func ParseCmdLine(file string, filter func(d []byte) ([]byte, error)) (*Config, error) {
 	result := Config{Sources: []string{"cmdline"}}
 	dotToYAML, err := machine.DotToYAML(file)
