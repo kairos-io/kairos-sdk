@@ -62,15 +62,16 @@ type EncryptedParts struct {
 }
 
 type Runtime struct {
-	UUID                string          `yaml:"uuid" json:"uuid"`
-	Persistent          PartitionState  `yaml:"persistent" json:"persistent"`
-	Recovery            PartitionState  `yaml:"recovery" json:"recovery"`
-	OEM                 PartitionState  `yaml:"oem" json:"oem"`
-	State               PartitionState  `yaml:"state" json:"state"`
-	EncryptedPartitions EncryptedParts  `yaml:"encrypted_partitions,omitempty" json:"encrypted_partitions,omitempty"`
-	BootState           Boot            `yaml:"boot" json:"boot"`
-	System              sysinfo.SysInfo `yaml:"system" json:"system"`
-	Kairos              Kairos          `yaml:"kairos" json:"kairos"`
+	UUID                string           `yaml:"uuid" json:"uuid"`
+	Persistent          PartitionState   `yaml:"persistent" json:"persistent"`
+	Recovery            PartitionState   `yaml:"recovery" json:"recovery"`
+	OEM                 PartitionState   `yaml:"oem" json:"oem"`
+	State               PartitionState   `yaml:"state" json:"state"`
+	EncryptedPartitions EncryptedParts   `yaml:"encrypted_partitions,omitempty" json:"encrypted_partitions,omitempty"`
+	BootState           Boot             `yaml:"boot" json:"boot"`
+	System              sysinfo.SysInfo  `yaml:"system" json:"system"`
+	Addresses           []MachineAddress `yaml:"addresses,omitempty" json:"addresses,omitempty"`
+	Kairos              Kairos           `yaml:"kairos" json:"kairos"`
 }
 
 type FndMnt struct {
@@ -131,6 +132,15 @@ func detectPartitionByFindmnt(b *block.Partition) PartitionState {
 	}
 }
 
+// DetectBoot returns the current boot state, UKI-aware: it inspects
+// /proc/cmdline and, on a UKI system, the EFI current-entry file. It is
+// lightweight (no partition or hardware probing, unlike NewRuntime) and returns
+// Unknown when it cannot classify. Useful for callers — such as fleet agents —
+// that only need the boot state.
+func DetectBoot(logger zerolog.Logger) Boot {
+	return detectBoot(logger)
+}
+
 func detectBoot(logger zerolog.Logger) Boot {
 	logger.Debug().Msg("detecting boot state")
 	cmdline, err := os.ReadFile("/proc/cmdline")
@@ -186,6 +196,12 @@ func getUKIBootState(logger zerolog.Logger) Boot {
 
 func getNonUKIBootState(cmdline string) Boot {
 	switch {
+	// The automatic state-reset boot (the statereset GRUB entry) boots the
+	// recovery system with `kairos.reset` on the command line; match it before
+	// the COS_RECOVERY case below, which it also satisfies. The UKI path already
+	// maps the `statereset` boot entry to AutoReset in getUKIBootState.
+	case strings.Contains(cmdline, "kairos.reset"):
+		return AutoReset
 	case strings.Contains(cmdline, "COS_ACTIVE"):
 		return Active
 	case strings.Contains(cmdline, "COS_PASSIVE"):
@@ -234,6 +250,10 @@ func DetectBootWithVFS(fs fs.KairosFS) (Boot, error) {
 	}
 	cmdlineS := string(cmdline)
 	switch {
+	// See getNonUKIBootState: the statereset boot carries `kairos.reset` on a
+	// recovery command line, so match it first.
+	case strings.Contains(cmdlineS, "kairos.reset"):
+		return AutoReset, nil
 	case strings.Contains(cmdlineS, "COS_ACTIVE"):
 		return Active, nil
 	case strings.Contains(cmdlineS, "COS_PASSIVE"):
@@ -379,6 +399,7 @@ func NewRuntimeWithLogger(logger zerolog.Logger) (Runtime, error) {
 	runtime := &Runtime{
 		BootState: detectBoot(logger),
 		UUID:      utils.UUID(),
+		Addresses: DetectAddresses(),
 	}
 
 	detectSystem(runtime)
