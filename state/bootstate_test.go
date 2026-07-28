@@ -24,10 +24,10 @@ var _ = DescribeTable("getNonUKIBootState",
 var _ = DescribeTable("DetectInRam",
 	func(cmdline string, want bool) { Expect(DetectInRam(cmdline)).To(Equal(want)) },
 	Entry("absent", "root=LABEL=COS_ACTIVE ro quiet", false),
-	Entry("present alone", "kairos.in_ram", true),
-	Entry("present alongside livecd", "root=live:LABEL=COS_LIVE ro kairos.in_ram rd.live.ram=1", true),
-	Entry("present alongside recovery", "root=LABEL=COS_RECOVERY kairos.in_ram", true),
-	Entry("substring only must NOT match", "root=/dev/sda1 kairos.in_ram_notreally=1", false),
+	Entry("present alone", "kairos.ram", true),
+	Entry("present alongside livecd", "root=live:LABEL=COS_LIVE ro kairos.ram rd.live.ram=1", true),
+	Entry("present alongside recovery", "root=LABEL=COS_RECOVERY kairos.ram", true),
+	Entry("substring only must NOT match", "root=/dev/sda1 kairos.ramnottreally=1", false),
 	Entry("empty cmdline", "", false),
 )
 
@@ -38,13 +38,13 @@ var _ = Describe("DetectInRamWithVFS", func() {
 		return fs
 	}
 
-	It("returns true when kairos.in_ram is present", func() {
-		v, err := DetectInRamWithVFS(withCmdline("root=live:LABEL=COS_LIVE ro kairos.in_ram"))
+	It("returns true when kairos.ram is present", func() {
+		v, err := DetectInRamWithVFS(withCmdline("root=live:LABEL=COS_LIVE ro kairos.ram"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(v).To(BeTrue())
 	})
 
-	It("returns false when kairos.in_ram is absent", func() {
+	It("returns false when kairos.ram is absent", func() {
 		v, err := DetectInRamWithVFS(withCmdline("root=LABEL=COS_ACTIVE ro"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(v).To(BeFalse())
@@ -79,7 +79,7 @@ var _ = Describe("DetectBootWithVFS", func() {
 	})
 
 	It("classifies an in-RAM boot as Active even from a live medium", func() {
-		b, err := DetectBootWithVFS(withCmdline("root=live:LABEL=COS_LIVE ro kairos.in_ram rd.live.ram=1"))
+		b, err := DetectBootWithVFS(withCmdline("root=live:LABEL=COS_LIVE ro kairos.ram rd.live.ram=1"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(b).To(Equal(Active))
 	})

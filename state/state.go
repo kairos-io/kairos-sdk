@@ -36,7 +36,7 @@ const (
 	// When present, BootState is forced to Active (the running system is the
 	// current install) and Runtime.InRam is set to true so callers that need
 	// the tmpfs-rooted distinction can still discover it.
-	KairosInRamCmdline = "kairos.in_ram"
+	KairosInRamCmdline = "kairos.ram"
 )
 
 var Log zerolog.Logger
@@ -160,7 +160,7 @@ func detectBoot(logger zerolog.Logger) Boot {
 
 	cmdlineS := string(cmdline)
 
-	// kairos.in_ram boots run the OS out of a tmpfs but are the currently
+	// kairos.ram boots run the OS out of a tmpfs but are the currently
 	// running system (not the ISO livecd, not a recovery slot). Classify them
 	// as Active so upgrade/reset gates in downstream consumers behave the same
 	// as on a real installation. Runtime.InRam still exposes the distinction
@@ -302,7 +302,7 @@ func DetectBootWithVFS(fs fs.KairosFS) (Boot, error) {
 	}
 	cmdlineS := string(cmdline)
 	switch {
-	// kairos.in_ram wins over everything else: the medium may still be an ISO
+	// kairos.ram wins over everything else: the medium may still be an ISO
 	// (live:LABEL...) but the running system is treated as Active. See
 	// detectBoot for the same rule.
 	case DetectInRam(cmdlineS):
