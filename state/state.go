@@ -241,12 +241,22 @@ func DetectUKIboot(cmdline string) bool {
 }
 
 // DetectInRam returns true when the kernel cmdline opts this boot into the
-// in-RAM workflow (KairosInRamCmdline is present as a token). It is a pure
-// string check with no side effects; callers can also read Runtime.InRam,
-// which is populated from /proc/cmdline by NewRuntime.
+// in-RAM workflow. Any of these token shapes enables the mode:
+//
+//   - `kairos.ram`               — bare toggle
+//   - `kairos.ram=<anything>`    — bare toggle with an ignored value
+//   - `kairos.ram.<child>[=...]` — any child under the namespace (e.g.
+//     `kairos.ram.auto_create_partitions`, `kairos.ram.oem=64`). This lets
+//     operators skip the bare stanza when they are already setting one of the
+//     sub-flags — the intent is unambiguous.
+//
+// It is a pure string check with no side effects; callers can also read
+// Runtime.InRam, which is populated from /proc/cmdline by NewRuntime.
 func DetectInRam(cmdline string) bool {
 	for _, tok := range strings.Fields(cmdline) {
-		if tok == KairosInRamCmdline {
+		if tok == KairosInRamCmdline ||
+			strings.HasPrefix(tok, KairosInRamCmdline+".") ||
+			strings.HasPrefix(tok, KairosInRamCmdline+"=") {
 			return true
 		}
 	}
