@@ -30,13 +30,13 @@ const (
 
 	UEFICurrentEntryFile = "/sys/firmware/efi/efivars/LoaderEntrySelected-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"
 
-	// KairosInRamCmdline is the kernel cmdline token that opts a boot into the
+	// KairosInRAMCmdline is the kernel cmdline token that opts a boot into the
 	// in-RAM workflow: the rootfs is copied to a tmpfs (via dracut's rd.live.ram)
 	// while OEM and persistent partitions are still mounted from disk.
 	// When present, BootState is forced to Active (the running system is the
-	// current install) and Runtime.InRam is set to true so callers that need
+	// current install) and Runtime.InRAM is set to true so callers that need
 	// the tmpfs-rooted distinction can still discover it.
-	KairosInRamCmdline = "kairos.ram"
+	KairosInRAMCmdline = "kairos.ram"
 )
 
 var Log zerolog.Logger
@@ -77,7 +77,7 @@ type Runtime struct {
 	State               PartitionState   `yaml:"state" json:"state"`
 	EncryptedPartitions EncryptedParts   `yaml:"encrypted_partitions,omitempty" json:"encrypted_partitions,omitempty"`
 	BootState           Boot             `yaml:"boot" json:"boot"`
-	InRam               bool             `yaml:"in_ram" json:"in_ram"`
+	InRAM               bool             `yaml:"in_ram" json:"in_ram"`
 	System              sysinfo.SysInfo  `yaml:"system" json:"system"`
 	Addresses           []MachineAddress `yaml:"addresses,omitempty" json:"addresses,omitempty"`
 	Kairos              Kairos           `yaml:"kairos" json:"kairos"`
@@ -163,9 +163,9 @@ func detectBoot(logger zerolog.Logger) Boot {
 	// kairos.ram boots run the OS out of a tmpfs but are the currently
 	// running system (not the ISO livecd, not a recovery slot). Classify them
 	// as Active so upgrade/reset gates in downstream consumers behave the same
-	// as on a real installation. Runtime.InRam still exposes the distinction
+	// as on a real installation. Runtime.InRAM still exposes the distinction
 	// to code that cares.
-	if DetectInRam(cmdlineS) {
+	if DetectInRAM(cmdlineS) {
 		logger.Debug().Msg("Detected in-RAM boot; classifying as Active")
 		return Active
 	}
@@ -240,7 +240,7 @@ func DetectUKIboot(cmdline string) bool {
 	return strings.Contains(cmdline, "rd.immucore.uki")
 }
 
-// DetectInRam returns true when the kernel cmdline opts this boot into the
+// DetectInRAM returns true when the kernel cmdline opts this boot into the
 // in-RAM workflow. Any of these token shapes enables the mode:
 //
 //   - `kairos.ram`               — bare toggle
@@ -251,36 +251,36 @@ func DetectUKIboot(cmdline string) bool {
 //     sub-flags — the intent is unambiguous.
 //
 // It is a pure string check with no side effects; callers can also read
-// Runtime.InRam, which is populated from /proc/cmdline by NewRuntime.
-func DetectInRam(cmdline string) bool {
+// Runtime.InRAM, which is populated from /proc/cmdline by NewRuntime.
+func DetectInRAM(cmdline string) bool {
 	for _, tok := range strings.Fields(cmdline) {
-		if tok == KairosInRamCmdline ||
-			strings.HasPrefix(tok, KairosInRamCmdline+".") ||
-			strings.HasPrefix(tok, KairosInRamCmdline+"=") {
+		if tok == KairosInRAMCmdline ||
+			strings.HasPrefix(tok, KairosInRAMCmdline+".") ||
+			strings.HasPrefix(tok, KairosInRAMCmdline+"=") {
 			return true
 		}
 	}
 	return false
 }
 
-// DetectInRamFromProc reads /proc/cmdline and returns whether the in-RAM
+// DetectInRAMFromProc reads /proc/cmdline and returns whether the in-RAM
 // workflow is enabled. Returns false if /proc/cmdline cannot be read.
-func DetectInRamFromProc() bool {
+func DetectInRAMFromProc() bool {
 	cmdline, err := os.ReadFile("/proc/cmdline")
 	if err != nil {
 		return false
 	}
-	return DetectInRam(string(cmdline))
+	return DetectInRAM(string(cmdline))
 }
 
-// DetectInRamWithVFS mirrors DetectInRamFromProc but uses a KairosFS so it can
+// DetectInRAMWithVFS mirrors DetectInRAMFromProc but uses a KairosFS so it can
 // be exercised from tests.
-func DetectInRamWithVFS(fs fs.KairosFS) (bool, error) {
+func DetectInRAMWithVFS(fs fs.KairosFS) (bool, error) {
 	cmdline, err := fs.ReadFile("/proc/cmdline")
 	if err != nil {
 		return false, err
 	}
-	return DetectInRam(string(cmdline)), nil
+	return DetectInRAM(string(cmdline)), nil
 }
 
 // EfiBootFromInstall will try to check the /sys/firmware/efi/LoaderDevicePartUUID-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f
@@ -315,7 +315,7 @@ func DetectBootWithVFS(fs fs.KairosFS) (Boot, error) {
 	// kairos.ram wins over everything else: the medium may still be an ISO
 	// (live:LABEL...) but the running system is treated as Active. See
 	// detectBoot for the same rule.
-	case DetectInRam(cmdlineS):
+	case DetectInRAM(cmdlineS):
 		return Active, nil
 	// See getNonUKIBootState: the statereset boot carries `kairos.reset` on a
 	// recovery command line, so match it first.
@@ -465,7 +465,7 @@ func getEfiCertsCommonNames() certs.EfiCerts {
 func NewRuntimeWithLogger(logger zerolog.Logger) (Runtime, error) {
 	runtime := &Runtime{
 		BootState: detectBoot(logger),
-		InRam:     DetectInRamFromProc(),
+		InRAM:     DetectInRAMFromProc(),
 		UUID:      utils.UUID(),
 		Addresses: DetectAddresses(),
 	}

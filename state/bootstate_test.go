@@ -21,8 +21,8 @@ var _ = DescribeTable("getNonUKIBootState",
 	Entry("no marker => Unknown", "root=/dev/vda1 ro quiet", Unknown),
 )
 
-var _ = DescribeTable("DetectInRam",
-	func(cmdline string, want bool) { Expect(DetectInRam(cmdline)).To(Equal(want)) },
+var _ = DescribeTable("DetectInRAM",
+	func(cmdline string, want bool) { Expect(DetectInRAM(cmdline)).To(Equal(want)) },
 	Entry("absent", "root=LABEL=COS_ACTIVE ro quiet", false),
 	Entry("bare toggle", "kairos.ram", true),
 	Entry("bare toggle alongside livecd", "root=live:LABEL=COS_LIVE ro kairos.ram rd.live.ram=1", true),
@@ -35,7 +35,7 @@ var _ = DescribeTable("DetectInRam",
 	Entry("empty cmdline", "", false),
 )
 
-var _ = Describe("DetectInRamWithVFS", func() {
+var _ = Describe("DetectInRAMWithVFS", func() {
 	withCmdline := func(cmdline string) *vfst.TestFS {
 		fs, _, err := vfst.NewTestFS(map[string]interface{}{"/proc/cmdline": cmdline})
 		Expect(err).ToNot(HaveOccurred())
@@ -43,13 +43,13 @@ var _ = Describe("DetectInRamWithVFS", func() {
 	}
 
 	It("returns true when kairos.ram is present", func() {
-		v, err := DetectInRamWithVFS(withCmdline("root=live:LABEL=COS_LIVE ro kairos.ram"))
+		v, err := DetectInRAMWithVFS(withCmdline("root=live:LABEL=COS_LIVE ro kairos.ram"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(v).To(BeTrue())
 	})
 
 	It("returns false when kairos.ram is absent", func() {
-		v, err := DetectInRamWithVFS(withCmdline("root=LABEL=COS_ACTIVE ro"))
+		v, err := DetectInRAMWithVFS(withCmdline("root=LABEL=COS_ACTIVE ro"))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(v).To(BeFalse())
 	})
@@ -57,7 +57,7 @@ var _ = Describe("DetectInRamWithVFS", func() {
 	It("returns an error when /proc/cmdline is unreadable", func() {
 		fs, _, err := vfst.NewTestFS(map[string]interface{}{})
 		Expect(err).ToNot(HaveOccurred())
-		v, err := DetectInRamWithVFS(fs)
+		v, err := DetectInRAMWithVFS(fs)
 		Expect(err).To(HaveOccurred())
 		Expect(v).To(BeFalse())
 	})
