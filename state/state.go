@@ -33,8 +33,9 @@ const (
 	// KairosInRamCmdline is the kernel cmdline token that opts a boot into the
 	// in-RAM workflow: the rootfs is copied to a tmpfs (via dracut's rd.live.ram)
 	// while OEM and persistent partitions are still mounted from disk.
-	// It is orthogonal to Boot state — an in-RAM boot from an ISO is classified
-	// as LiveCD by BootState but has Runtime.InRam=true.
+	// When present, BootState is forced to Active (the running system is the
+	// current install) and Runtime.InRam is set to true so callers that need
+	// the tmpfs-rooted distinction can still discover it.
 	KairosInRamCmdline = "kairos.in_ram"
 )
 
