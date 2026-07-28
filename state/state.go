@@ -159,6 +159,16 @@ func detectBoot(logger zerolog.Logger) Boot {
 
 	cmdlineS := string(cmdline)
 
+	// kairos.in_ram boots run the OS out of a tmpfs but are the currently
+	// running system (not the ISO livecd, not a recovery slot). Classify them
+	// as Active so upgrade/reset gates in downstream consumers behave the same
+	// as on a real installation. Runtime.InRam still exposes the distinction
+	// to code that cares.
+	if DetectInRam(cmdlineS) {
+		logger.Debug().Msg("Detected in-RAM boot; classifying as Active")
+		return Active
+	}
+
 	if DetectUKIboot(cmdlineS) {
 		logger.Debug().Msg("Detected uki boot")
 		return getUKIBootState(logger)
@@ -291,6 +301,11 @@ func DetectBootWithVFS(fs fs.KairosFS) (Boot, error) {
 	}
 	cmdlineS := string(cmdline)
 	switch {
+	// kairos.in_ram wins over everything else: the medium may still be an ISO
+	// (live:LABEL...) but the running system is treated as Active. See
+	// detectBoot for the same rule.
+	case DetectInRam(cmdlineS):
+		return Active, nil
 	// See getNonUKIBootState: the statereset boot carries `kairos.reset` on a
 	// recovery command line, so match it first.
 	case strings.Contains(cmdlineS, "kairos.reset"):

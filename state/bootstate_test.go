@@ -78,6 +78,12 @@ var _ = Describe("DetectBootWithVFS", func() {
 		Expect(b).To(Equal(Active))
 	})
 
+	It("classifies an in-RAM boot as Active even from a live medium", func() {
+		b, err := DetectBootWithVFS(withCmdline("root=live:LABEL=COS_LIVE ro kairos.in_ram rd.live.ram=1"))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(b).To(Equal(Active))
+	})
+
 	It("returns an error (and Unknown) when /proc/cmdline is unreadable", func() {
 		fs, _, err := vfst.NewTestFS(map[string]interface{}{})
 		Expect(err).ToNot(HaveOccurred())
